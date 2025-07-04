@@ -3,75 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { calculateElo } from './utils/eloCalculator';
+import { Player, Match } from './types/appTypes';
+import { INITIAL_ELO, PLAYERS_STORAGE_KEY, MATCH_HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_K_FACTOR } from './constants/appConstants';
+import { saveAppState, loadAppState } from './utils/localStoragePersistence';
+import { AppDOMElements, queryDOMElements } from './utils/domElements';
+import { renderLeaderboard } from './renderers/leaderboard';
+import { renderPodium } from './renderers/podium';
+import { renderBattleHistory } from './renderers/battleHistory';
+
 // --- TYPE DEFINITIONS ---
-interface Player {
-  id: string;
-  name: string;
-  elo: number;
-  wins: number;
-  losses: number;
-  draws: number;
-  previousRank: number; // 0 if new or unranked
-  currentStreakType: 'W' | 'L' | null; // 'W' for win, 'L' for loss, null for no streak
-  currentStreakLength: number; // Length of the current streak
-  lastEloChange?: number; // Optional: Stores the last ELO change for display
-}
-
-interface Match {
-    id: string;
-    timestamp: number;
-    player1Id: string;
-    player2Id: string;
-    player1Name: string;
-    player2Name: string;
-    player1EloBefore: number;
-    player2EloBefore: number;
-    player1EloAfter: number;
-    player2EloAfter: number;
-    outcome: 'p1' | 'p2' | 'draw';
-    player1EloChange?: number; // Optional: Stores ELO change for Player 1
-    player2EloChange?: number; // Optional: Stores ELO change for Player 2
-}
-
-interface AppDOMElements {
-    leaderboardBody: HTMLTableSectionElement | null;
-    leaderboardSection: HTMLElement | null;
-    updateLeaderboardBtnContainer: HTMLElement | null;
-    updateLeaderboardBtn: HTMLButtonElement | null;
-    addPlayerForm: HTMLFormElement | null;
-    newPlayerNameInput: HTMLInputElement | null;
-    addPlayerError: HTMLParagraphElement | null;
-    recordMatchForm: HTMLFormElement | null;
-    player1Input: HTMLInputElement | null;
-    player1IdInput: HTMLInputElement | null;
-    player1Suggestions: HTMLElement | null;
-    player2Input: HTMLInputElement | null;
-    player2IdInput: HTMLInputElement | null;
-    player2Suggestions: HTMLElement | null;
-    winnerP1Label: HTMLLabelElement | null;
-    winnerP2Label: HTMLLabelElement | null;
-    matchError: HTMLParagraphElement | null;
-    podiumContainer: HTMLElement | null;
-    kFactorInput: HTMLInputElement | null;
-    settingsForm: HTMLFormElement | null;
-    realtimeUpdateToggle: HTMLInputElement | null;
-    exportPlayersBtn: HTMLButtonElement | null;
-    exportMatchesBtn: HTMLButtonElement | null;
-    toggleBattleHistoryBtn: HTMLButtonElement | null;
-    battleHistoryContainer: HTMLElement | null;
-    battleHistoryList: HTMLElement | null;
-    importMatchesFile: HTMLInputElement | null;
-    importPlayersFile: HTMLInputElement | null;
-    clearHistoryBtn: HTMLButtonElement | null;
-    clearPlayersBtn: HTMLButtonElement | null;
-}
-
-// --- CONSTANTS ---
-const INITIAL_ELO = 1200;
-const PLAYERS_STORAGE_KEY = 'game-of-stick-players';
-const MATCH_HISTORY_STORAGE_KEY = 'game-of-stick-match-history';
-const SETTINGS_STORAGE_KEY = 'game-of-stick-settings';
-const DEFAULT_K_FACTOR = 60;
 
 // --- STATE ---
 let players: Player[] = [];
@@ -80,115 +21,9 @@ let kFactor: number = DEFAULT_K_FACTOR;
 let isRealtimeUpdate: boolean = true;
 
 // --- DOM ELEMENTS ---
-let DOMElements: AppDOMElements;
-
-function queryDOMElements() {
-    DOMElements = {
-        leaderboardBody: document.getElementById('leaderboard-body') as HTMLTableSectionElement,
-        leaderboardSection: document.querySelector('.leaderboard-section'),
-        updateLeaderboardBtnContainer: document.getElementById('update-leaderboard-container'),
-        updateLeaderboardBtn: document.getElementById('update-leaderboard-btn') as HTMLButtonElement,
-        addPlayerForm: document.getElementById('add-player-form') as HTMLFormElement,
-        newPlayerNameInput: document.getElementById('new-player-name') as HTMLInputElement,
-        addPlayerError: document.getElementById('add-player-error') as HTMLParagraphElement,
-        recordMatchForm: document.getElementById('record-match-form') as HTMLFormElement,
-        player1Input: document.getElementById('player1-input') as HTMLInputElement,
-        player1IdInput: document.getElementById('player1-id') as HTMLInputElement,
-        player1Suggestions: document.getElementById('player1-suggestions') as HTMLElement,
-        player2Input: document.getElementById('player2-input') as HTMLInputElement,
-        player2IdInput: document.getElementById('player2-id') as HTMLInputElement,
-        player2Suggestions: document.getElementById('player2-suggestions') as HTMLElement,
-        winnerP1Label: document.getElementById('winner-p1-label') as HTMLLabelElement,
-        winnerP2Label: document.getElementById('winner-p2-label') as HTMLLabelElement,
-        matchError: document.getElementById('match-error') as HTMLParagraphElement,
-        podiumContainer: document.getElementById('podium-container'),
-        kFactorInput: document.getElementById('k-factor-input') as HTMLInputElement,
-        settingsForm: document.getElementById('settings-form') as HTMLFormElement,
-        realtimeUpdateToggle: document.getElementById('realtime-update-toggle') as HTMLInputElement,
-        exportPlayersBtn: document.getElementById('export-players-btn') as HTMLButtonElement,
-        exportMatchesBtn: document.getElementById('export-matches-btn') as HTMLButtonElement,
-        toggleBattleHistoryBtn: document.getElementById('toggle-battle-history-btn') as HTMLButtonElement,
-        battleHistoryContainer: document.getElementById('battle-history-container') as HTMLElement,
-        battleHistoryList: document.getElementById('battle-history-list') as HTMLElement,
-        importMatchesFile: document.getElementById('import-matches-file') as HTMLInputElement,
-        importPlayersFile: document.getElementById('import-players-file') as HTMLInputElement,
-        clearHistoryBtn: document.getElementById('clear-history-btn') as HTMLButtonElement,
-        clearPlayersBtn: document.getElementById('clear-players-btn') as HTMLButtonElement,
-    };
-}
-
-
-// --- CORE LOGIC: ELO Calculation ---
-function calculateElo(
-  p1Elo: number,
-  p2Elo: number,
-  winner: 'p1' | 'p2' | 'draw'
-): { newP1Elo: number; newP2Elo: number } {
-  const expectedScoreP1 = 1 / (1 + 10 ** ((p2Elo - p1Elo) / 400));
-  const expectedScoreP2 = 1 / (1 + 10 ** ((p1Elo - p2Elo) / 400));
-
-  let actualScoreP1: number, actualScoreP2: number;
-
-  if (winner === 'p1') {
-    actualScoreP1 = 1;
-    actualScoreP2 = 0;
-  } else if (winner === 'p2') {
-    actualScoreP1 = 0;
-    actualScoreP2 = 1;
-  } else { // Draw
-    actualScoreP1 = 0.5;
-    actualScoreP2 = 0.5;
-  }
-
-  const newP1Elo = Math.round(p1Elo + kFactor * (actualScoreP1 - expectedScoreP1));
-  const newP2Elo = Math.round(p2Elo + kFactor * (actualScoreP2 - expectedScoreP2));
-
-  return { newP1Elo, newP2Elo };
-}
+let DOMElements: AppDOMElements; // Global declaration
 
 // --- DATA PERSISTENCE ---
-function saveState() {
-  localStorage.setItem(PLAYERS_STORAGE_KEY, JSON.stringify(players));
-  localStorage.setItem(MATCH_HISTORY_STORAGE_KEY, JSON.stringify(matchHistory));
-  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ kFactor, isRealtimeUpdate }));
-}
-
-function loadState() {
-  const storedPlayers = localStorage.getItem(PLAYERS_STORAGE_KEY);
-  if (storedPlayers) {
-    const parsedPlayers: Player[] = JSON.parse(storedPlayers);
-    // Backward compatibility
-    players = parsedPlayers.map(p => ({
-        ...p,
-        wins: p.wins || 0,
-        losses: p.losses || 0,
-        draws: p.draws || 0,
-        previousRank: p.previousRank || 0,
-        currentStreakType: p.currentStreakType || null,
-        currentStreakLength: p.currentStreakLength || 0,
-    }));
-  }
-
-  const storedMatchHistory = localStorage.getItem(MATCH_HISTORY_STORAGE_KEY);
-  if(storedMatchHistory) {
-      matchHistory = JSON.parse(storedMatchHistory);
-  }
-
-  const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-  if (storedSettings) {
-    const settings = JSON.parse(storedSettings);
-    kFactor = settings.kFactor || DEFAULT_K_FACTOR;
-    // Use ?? to correctly handle 'false' values
-    isRealtimeUpdate = settings.isRealtimeUpdate ?? true;
-  }
-  
-  if (DOMElements.kFactorInput) {
-    DOMElements.kFactorInput.value = kFactor.toString();
-  }
-  if (DOMElements.realtimeUpdateToggle) {
-    DOMElements.realtimeUpdateToggle.checked = isRealtimeUpdate;
-  }
-}
 
 // --- UI UPDATE ---
 function toggleUpdateModeUI() {
@@ -220,178 +55,13 @@ function updateKFactorInputState() {
     }
 }
 
-
-// --- RENDERING ---
-function renderPodium() {
-    if (!DOMElements.podiumContainer) return;
-
-    // Get top 3 players, sorted by ELO (descending)
-    const topThree = [...players].sort((a, b) => b.elo - a.elo).slice(0, 3);
-    
-    DOMElements.podiumContainer.innerHTML = '';
-    DOMElements.podiumContainer.style.display = topThree.length > 0 ? 'flex' : 'none';
-    if (topThree.length === 0) return; // Hide podium if no players
-
-    // Define podium spots and their visual properties
-    const podiumSpots = [
-        { rank: 2, className: 'second', icon: '🥈' },
-        { rank: 1, className: 'first', icon: '👑' }, // Crown for 1st place as per spec
-        { rank: 3, className: 'third', icon: '🥉' },
-    ];
-
-    // Filter out spots if less than 3 players
-    const visiblePodiumSpots = podiumSpots.filter(spot => spot.rank <= topThree.length);
-
-    // Map top three players to their podium positions
-    const rankedPlayers: { [key: number]: Player } = {};
-    topThree.forEach((player, index) => {
-        rankedPlayers[index + 1] = player;
-    });
-
-    visiblePodiumSpots.forEach(spotConfig => {
-        const player = rankedPlayers[spotConfig.rank];
-        if (player) { // Should always be true due to filtering, but good for safety
-            const spot = document.createElement('div');
-            spot.classList.add('podium-spot', spotConfig.className);
-
-            const keyStat = calculateWinLossRatio(player); // Default to W/L Ratio
-
-            spot.innerHTML = `
-                <div class="podium-icon-container"><span class="podium-icon">${spotConfig.icon}</span></div>
-                <div class="podium-name">${player.name}</div>
-                <div class="podium-elo">${player.elo} ELO</div>
-                <div class="podium-key-stat">${keyStat}</div>
-            `;
-            DOMElements.podiumContainer!.appendChild(spot);
-        }
-    });
-}
-
-function calculateWinLossRatio(player: Player): string {
-    const totalGames = player.wins + player.losses;
-    if (totalGames === 0) {
-        return '0 W/L';
-    }
-    const ratio = (player.wins / totalGames) * 100;
-    return `${ratio.toFixed(1)}% W/L`;
-}
-
-function renderLeaderboard() {
-  if (!DOMElements.leaderboardBody) return;
-  
-  const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
-  
-  console.log('Rendering Leaderboard with players:', sortedPlayers);
-
-  DOMElements.leaderboardBody.innerHTML = '';
-
-  if (players.length === 0) {
-    DOMElements.leaderboardBody.innerHTML = `<tr><td colspan="7">No players yet. Add one below!</td></tr>`;
-    return;
-  }
-
-  sortedPlayers.forEach((player, index) => {
-    const newRank = index + 1;
-    const oldRank = player.previousRank;
-
-    let rankChangeIndicator = '';
-    if (oldRank) { // Only show indicators for players who were ranked before
-        const diff = oldRank - newRank;
-        if (diff > 0) { // Rank improved (e.g., from 3 to 1, diff is 2)
-            rankChangeIndicator = `<span class="rank-change rank-up">▲ ${diff}</span>`;
-        } else if (diff < 0) { // Rank worsened (e.g., from 1 to 3, diff is -2)
-            rankChangeIndicator = `<span class="rank-change rank-down">▼ ${Math.abs(diff)}</span>`;
-        } else { // Rank is the same
-            rankChangeIndicator = `<span class="rank-change rank-no-change">=</span>`;
-        }
-    }
-
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td><div>${newRank} ${rankChangeIndicator}</div></td>
-      <td>${player.name} ${renderStreak(player.currentStreakType, player.currentStreakLength)}</td>
-      <td>
-        ${player.elo}
-        ${player.lastEloChange !== undefined && player.lastEloChange !== 0 
-          ? `<span class="elo-change ${player.lastEloChange > 0 ? 'elo-up' : 'elo-down'}">(${player.lastEloChange > 0 ? '+' : ''}${player.lastEloChange})</span>` 
-          : ''}
-      </td>
-      <td>${player.wins}</td>
-      <td>${player.losses}</td>
-      <td>${player.draws}</td>
-      <td>${player.wins + player.losses + player.draws}</td>
-    `;
-    DOMElements.leaderboardBody!.appendChild(row);
-  });
-  
-  // After rendering, update previousRank for all players for the next calculation
-  players.forEach(p => {
-    const sortedIndex = sortedPlayers.findIndex(sp => sp.id === p.id);
-    if(sortedIndex !== -1) {
-        p.previousRank = sortedIndex + 1;
-    }
-  });
-
-  // After updating ranks, recalculate streaks
-  calculatePlayerStreaks();
-}
-
-function renderBattleHistory() {
-    if (!DOMElements.battleHistoryList) return;
-    if (matchHistory.length === 0) {
-        DOMElements.battleHistoryList.innerHTML = '<div class="battle-history-entry">No matches recorded yet.</div>';
-        return;
-    }
-    // Reverse chronological order
-    const matches = [...matchHistory].sort((a, b) => b.timestamp - a.timestamp);
-    DOMElements.battleHistoryList.innerHTML = '';
-    matches.forEach(match => {
-        // Win probability calculation (before match)
-        const expectedScoreP1 = 1 / (1 + 10 ** ((match.player2EloBefore - match.player1EloBefore) / 400));
-        const expectedScoreP2 = 1 - expectedScoreP1;
-        const p1Prob = Math.round(expectedScoreP1 * 100);
-        const p2Prob = 100 - p1Prob;
-        // Outcome text
-        let outcomeText = '';
-        if (match.outcome === 'p1') outcomeText = `${match.player1Name} Won`;
-        else if (match.outcome === 'p2') outcomeText = `${match.player2Name} Won`;
-        else outcomeText = 'Draw';
-        // Timestamp
-        const date = new Date(match.timestamp);
-        const timestampStr = date.toLocaleString();
-        // Entry HTML
-        const entry = document.createElement('div');
-        entry.className = 'battle-history-entry';
-        entry.innerHTML = `
-            <div class="battle-history-header">
-                <span class="battle-history-players">
-                    ${match.player1Name} <span style="color:#888;font-size:0.95em">(${match.player1EloBefore} ELO ${match.player1EloChange ? (match.player1EloChange > 0 ? '<span class="elo-up">+' : '<span class="elo-down">' ) + match.player1EloChange + '</span>' : ''})</span>
-                    vs.
-                    ${match.player2Name} <span style="color:#888;font-size:0.95em">(${match.player2EloBefore} ELO ${match.player2EloChange ? (match.player2EloChange > 0 ? '<span class="elo-up">+' : '<span class="elo-down">' ) + match.player2EloChange + '</span>' : ''})</span>
-                </span>
-                <span class="battle-history-timestamp">${timestampStr}</span>
-            </div>
-            <div class="battle-history-outcome">${outcomeText}</div>
-            <div class="battle-history-winprob-bar">
-                <span class="winprob-label">${match.player1Name}: ${p1Prob}%</span>
-                <div class="winprob-bar">
-                    <div class="winprob-bar-p1" style="width:${p1Prob}%;"></div>
-                    <div class="winprob-bar-p2" style="width:${p2Prob}%;"></div>
-                </div>
-                <span class="winprob-label">${match.player2Name}: ${p2Prob}%</span>
-            </div>
-        `;
-        DOMElements.battleHistoryList!.appendChild(entry);
-    });
-}
-
 function render() {
-  // console.log('render() function called.'); // Removed for debugging
-  renderLeaderboard();
-  renderPodium();
-  renderBattleHistory();
+  // console.log('render() function called.');
+  renderLeaderboard(players, DOMElements, matchHistory);
+  renderPodium(players, DOMElements);
+  renderBattleHistory(matchHistory, DOMElements);
   // Now that ranks are updated (including previousRank), save the state.
-  saveState();
+  saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
 }
 
 // --- UTILITY FUNCTIONS ---
@@ -457,7 +127,7 @@ function handleAddPlayer(event: SubmitEvent) {
     if (isRealtimeUpdate) {
         render(); // This will also save the state
     } else {
-        saveState();
+        saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
     }
 
     if(DOMElements.newPlayerNameInput) DOMElements.newPlayerNameInput.value = '';
@@ -499,7 +169,7 @@ function handleRecordMatch(event: SubmitEvent) {
       return;
   }
 
-  const { newP1Elo, newP2Elo } = calculateElo(player1.elo, player2.elo, winner);
+  const { newP1Elo, newP2Elo } = calculateElo(player1.elo, player2.elo, winner, kFactor);
   
   const newMatch: Match = {
       id: generateUUID(),
@@ -546,7 +216,7 @@ function handleRecordMatch(event: SubmitEvent) {
   if (isRealtimeUpdate) {
     render();
   } else {
-    saveState();
+    saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
   }
   
   form.reset();
@@ -573,7 +243,7 @@ function handleKFactorChange(event: Event) {
     const value = parseInt(target.value, 10);
     if (!isNaN(value) && value > 0) {
         kFactor = value;
-        saveState();
+        saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
     }
 }
 
@@ -584,7 +254,7 @@ function handleRealtimeUpdateToggle(event: Event) {
     if (isRealtimeUpdate) {
         render();
     } else {
-        saveState();
+        saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
     }
     toggleUpdateModeUI();
 }
@@ -624,8 +294,8 @@ function handleExportMatches() {
 
     matchHistory.forEach(match => {
         let outcomeText = 'Draw';
-        if (match.outcome === 'p1') outcomeText = `${match.player1Name} Wins`;
-        if (match.outcome === 'p2') outcomeText = `${match.player2Name} Wins`;
+        if (match.outcome === 'p1') outcomeText = `${match.player1Name} Won`;
+        if (match.outcome === 'p2') outcomeText = `${match.player2Name} Won`;
 
         const row = [
             escapeCsvValue(new Date(match.timestamp).toISOString()),
@@ -744,7 +414,7 @@ async function handleImportMatches(event: Event) {
             const p1EloBeforeMatch = player1.elo;
             const p2EloBeforeMatch = player2.elo;
 
-            const { newP1Elo, newP2Elo } = calculateElo(player1.elo, player2.elo, outcome);
+            const { newP1Elo, newP2Elo } = calculateElo(player1.elo, player2.elo, outcome, kFactor);
             
             const newMatch: Match = {
                 id: generateUUID(),
@@ -871,6 +541,7 @@ async function handleImportPlayers(event: Event) {
                     previousRank: 0,
                     currentStreakType: null, // New: Initialize streak
                     currentStreakLength: 0,  // New: Initialize streak
+                    lastEloChange: 0, // Reset ELO change
                 });
                 existingPlayerNames.add(playerName.toLowerCase()); // Add to set to prevent duplicates from within the CSV
             } else {
@@ -887,6 +558,7 @@ async function handleImportPlayers(event: Event) {
                 if (sortedIndex !== -1) {
                     p.previousRank = sortedIndex + 1;
                 }
+                p.lastEloChange = 0; // Reset ELO change for all players after import
             });
             // After updating players and ranks, recalculate streaks
             calculatePlayerStreaks();
@@ -920,6 +592,7 @@ function handleClearMatchHistory() {
             player.previousRank = 0; // Reset previous rank for a fresh start
             player.currentStreakType = null; // New: Reset streak
             player.currentStreakLength = 0; // New: Reset streak
+            player.lastEloChange = 0; // Reset ELO change
         });
         updateKFactorInputState(); // K-factor might become editable again
         render(); // This will also save the state
@@ -941,6 +614,7 @@ function handleClearPlayers() {
         players.forEach(p => {
             p.currentStreakType = null;
             p.currentStreakLength = 0;
+            p.lastEloChange = 0;
         });
         render(); // This will also save the state
         alert('All players and match history cleared.');
@@ -1013,10 +687,21 @@ function handleAutocompleteInput(event: Event) {
 
 // --- INITIALIZATION ---
 function main() {
-  queryDOMElements();
-  loadState();
+  DOMElements = queryDOMElements(); // Assign to global DOMElements
+  const { players: loadedPlayers, matchHistory: loadedMatchHistory, kFactor: loadedKFactor, isRealtimeUpdate: loadedIsRealtimeUpdate } = loadAppState();
+  players = loadedPlayers;
+  matchHistory = loadedMatchHistory;
+  kFactor = loadedKFactor;
+  isRealtimeUpdate = loadedIsRealtimeUpdate;
   toggleUpdateModeUI();
   updateKFactorInputState();
+
+  // Extra safety: Always hide modal and clear content on load
+  if (DOMElements.playerCardModal) {
+    DOMElements.playerCardModal.setAttribute('hidden', 'true');
+    const contentDiv = document.getElementById('player-card-content');
+    if (contentDiv) contentDiv.innerHTML = '';
+  }
 
   // --- Event Listeners ---
   DOMElements.settingsForm?.addEventListener('submit', (e) => e.preventDefault());
@@ -1062,7 +747,7 @@ function main() {
         DOMElements.battleHistoryContainer.removeAttribute('hidden');
         DOMElements.toggleBattleHistoryBtn!.setAttribute('aria-expanded', 'true');
         DOMElements.toggleBattleHistoryBtn!.textContent = 'Hide Battle History';
-        renderBattleHistory();
+        renderBattleHistory(matchHistory, DOMElements);
     }
   });
 
