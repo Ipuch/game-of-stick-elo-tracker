@@ -14,6 +14,7 @@
   --bronze-color: #cd7f32;
   --rank-up-color: #28a745;
   --rank-down-color: #dc3545;
+  --combat-matrix-col-width: 40px;
 }
 
 * {
@@ -742,4 +743,75 @@ input:checked + .slider:before {
 
 #player-card-content {
   margin-top: 2.5rem;
+}
+
+.combat-matrix-section {
+  background-color: var(--surface-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  overflow-x: auto;
+}
+.combat-matrix-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 600px;
+  margin-bottom: 1rem;
+  table-layout: fixed;
+}
+.combat-matrix-table th, .combat-matrix-table td {
+  padding: 0.5rem 0.7rem;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  font-size: 0.95em;
+}
+.combat-matrix-table th {
+  background: #333;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.combat-matrix-table td {
+  transition: background 0.3s;
+}
+.combat-matrix-table th.vertical-header,
+.combat-matrix-table td:not(:first-child),
+.combat-matrix-table th:not(:first-child) {
+  width: var(--combat-matrix-col-width);
+  max-width: var(--combat-matrix-col-width);
+  min-width: var(--combat-matrix-col-width);
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  .combat-matrix-table {
+    min-width: 400px;
+    font-size: 0.85em;
+  }
+}
+
+.vertical-header {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  min-width: 24px;
+  max-width: 32px;
+  padding: 0.2rem 0.1rem;
+  font-size: 0.85em;
+  text-align: left;
+}
+
+.combat-matrix-tooltip {
+  background: #222;
+  color: #fff;
+  padding: 0.5em 0.9em;
+  border-radius: 6px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  font-size: 1em;
+  pointer-events: none;
+  max-width: 260px;
+  min-width: 120px;
+  text-align: center;
+  opacity: 0.97;
+  transition: opacity 0.15s;
 }
