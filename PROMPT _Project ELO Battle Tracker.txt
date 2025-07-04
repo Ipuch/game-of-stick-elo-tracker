@@ -1,0 +1,136 @@
+Project: ELO Battle Tracker for "Game of Stick"
+Project Overview:
+Create a web application to track player rankings for a "Game of Stick" using the ELO rating system. The app will feature a real-time leaderboard, match recording, player management, battle history, and configurable settings.
+Core App Logic & Data Models
+ELO System:
+The default starting ELO for any new player is 1000.
+The K-factor is a crucial variable in the ELO calculation that determines the magnitude of rating changes after a match.
+Data Models:
+Player:
+id: Unique identifier
+name: String (must be unique)
+elo: Integer (current ELO score)
+wins: Integer
+losses: Integer
+draws: Integer
+Match:
+id: Unique identifier
+player1_id: ID of Player 1
+player2_id: ID of Player 2
+player1_elo_before: ELO of Player 1 before the match
+player2_elo_before: ELO of Player 2 before the match
+outcome: Enum ('PLAYER1_WIN', 'PLAYER2_WIN', 'DRAW')
+timestamp: Date/Time of match submission
+Feature Breakdown by Component
+1. Main Dashboard: The Leaderboard
+This is the primary view of the application.
+Display Columns: The leaderboard should be a table with the following columns:
+Rank: The player's current numerical rank (1, 2, 3...).
+Rank Change: A visual indicator of rank change since the last update.
+▲ (Green Triangle): Rank has gone up.
+▼ (Red Triangle): Rank has gone down.
+▬ (Gray or Neutral Sign): Rank is unchanged.
+Player Name: The name of the player.
+ELO Score: The player's current ELO rating.
+Wins: Total number of victories.
+Losses: Total number of losses.
+Draws: Total number of draws.
+Total Battles: The sum of wins, losses, and draws.
+Win/Loss Streaks: A small visual indicator next to a player's name showing their current streak. Implementation:
+Display "🔥 W3" for a 3-win streak. double if 6 = 🔥🔥 triple if 9 🔥🔥🔥
+Display "🧊 L3" for a 3-loss streak.  double if 6 = 🧊🧊  triple if 9 🧊🧊🧊
+This adds a quick, at-a-glance story to the leaderboard.
+Update Mechanism:
+The leaderboard should have a "Real-time Updates" toggle switch (see Settings section).
+If ON: The leaderboard automatically refreshes and re-sorts whenever a new match is submitted.
+If OFF: The leaderboard remains static until a manual "Refresh" button is clicked by the user. This button should be visible when real-time updates are off.
+2. Record Match Form
+A dedicated section for inputting the results of a new battle.
+Player Selection:
+Player 1 Input: A text field with an autocomplete dropdown that filters player names from the database as the user types.
+Player 2 Input: A second text field with the same autocomplete functionality.
+Constraint: The same player cannot be selected for both Player 1 and Player 2. The form should prevent this.
+Outcome Selection:
+A set of radio buttons or a dropdown menu for the match outcome:
+Player 1 Wins
+Draw
+Player 2 Wins
+Submission:
+A "Submit Results" button.
+Action: On click, the app calculates the new ELO scores for both players based on the outcome and the K-factor, creates a new Match record, updates the Player records, and (if enabled) triggers a leaderboard update.
+3. Player Management
+Add New Player:
+A simple form with a text input for the Player Name and an "Add Player" button.
+Action: Creates a new Player record with the default ELO of 1000 and 0 for W/L/D.
+Import Players (in Settings): See section 5.
+4. Battle History Page
+A separate page or view that lists all matches played in reverse chronological order.
+List Format: Each entry in the history represents one match.
+Entry Details: Each list item should display:
+The match participants and their ELO scores at the time of the match: Player 1 Name (1050 ELO) vs. Player 2 Name (980 ELO).
+The final outcome (e.g., "Player 1 Won").
+Win Probability Visualizer: A horizontal bar plot that shows the pre-match win probability for each player, calculated from their ELO difference. Display the percentages next to or within the bar.
+Example: [ Player 1: 60% ]----|----[ Player 2: 40% ]
+5. Settings Page
+A page for configuring the application's behavior.
+K-Factor:
+A numeric input field to set the ELO K-factor.
+Default Value: 60.
+Locking Logic: This field should be editable only until the very first match is recorded. After that, it becomes a read-only display.
+Real-time Update Switch:
+A toggle switch (On/Off) that controls the leaderboard's automatic update behavior as described in section 1.
+Import Matches:
+An "Import Matches" button that opens a file selector for a CSV file.
+Include a help icon (?) next to the button. On hover, a tooltip should display the required CSV format:
+player1_name,player2_name,outcome
+Note: The outcome value should be 1 for Player 1 win, 2 for Player 2 win, and 0 for a draw.
+Import Players:
+An "Import Players" button for bulk-adding players from a CSV.
+Include a help icon (?) that shows the required format on hover:
+name,initial_elo
+Note: The initial_elo column is optional. If it's not provided for a player, their ELO defaults to 1000.
+Feature Addition: Top 3 Podium Display
+1. High-Level Concept:
+To visually celebrate the top three players, create a special "Podium" component. This component will be displayed prominently at the top of the page, directly above the main leaderboard table.
+2. Component Placement:
+Render this component in a dedicated section above the full leaderboard table.
+3. Structural & Visual Design:
+The podium should consist of three distinct player cards, arranged to mimic a real-life awards podium.
+Layout: Use a three-column layout (e.g., using CSS Flexbox or Grid). The order should be: 2nd Place, 1st Place, 3rd Place.
+Visual Hierarchy: The 1st place card in the center should be visually distinct and elevated.
+Make it slightly taller than the 2nd and 3rd place cards.
+Give it a unique background color, a subtle glow, or a more prominent border (e.g., gold).
+Each card should be styled cleanly, with clear separation of information.
+4. Content Details for Each Podium Card:
+For the 1st Place Card (Center, Highest):
+Icon: A large gold medal (🥇) or crown (👑) icon at the top.
+Rank: Text displaying "1st".
+Avatar (Optional but recommended): A placeholder for a player profile picture.
+Player Name: Displayed in a larger, bold font.
+ELO Score: Clearly visible, perhaps with the label "ELO".
+Key Stat: Display a standout stat like their Win/Loss Ratio or current Win Streak.
+For the 2nd Place Card (Left):
+Icon: A silver medal (🥈) icon.
+Rank: Text displaying "2nd".
+Avatar: Placeholder.
+Player Name: Standard font size.
+ELO Score: Clearly visible.
+Key Stat: W/L Ratio.
+For the 3rd Place Card (Right):
+Icon: A bronze medal (🥉) icon.
+Rank: Text displaying "3rd".
+Avatar: Placeholder.
+Player Name: Standard font size.
+ELO Score: Clearly visible.
+Key Stat: W/L Ratio.
+5. Dynamic Behavior & Edge Cases:
+The podium should be dynamically generated based on the current leaderboard rankings.
+Fewer than 3 Players:
+If there are only 2 players in total, only display the 1st and 2nd place cards. The 3rd place spot should not be rendered.
+If there is only 1 player, only display the 1st place card.
+If there are 0 players, the entire podium component should be hidden.
+Ties: If there's a tie in ELO for a podium spot, the app can decide on a tie-breaker (e.g., higher win rate, fewer games played) or simply pick one based on another secondary sort key (like player name alphabetically).
+6. Integration with Updates:
+The podium must update in sync with the main leaderboard.
+If "Real-time Updates" is ON, the podium should refresh immediately after a match is recorded.
+If "Real-time Updates" is OFF, the podium should only refresh when the user clicks the manual "Refresh" button.

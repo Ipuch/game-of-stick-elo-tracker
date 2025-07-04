@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game of Stick - ELO Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="index.css" />
+    <script type="module" src="index.tsx"></script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <main class="container">
+      <header>
+        <h1>Game of S.T.I.C.K.</h1>
+        <p>Parkour ELO Battle Tracker</p>
+      </header>
+
+      <section class="leaderboard-section" aria-labelledby="leaderboard-heading">
+        <h2 id="leaderboard-heading">Leaderboard</h2>
+        <div id="podium-container" class="podium-container" aria-label="Top 3 Players">
+            <!-- Podium spots will be dynamically inserted here -->
+        </div>
+        <div id="update-leaderboard-container" hidden>
+            <button id="update-leaderboard-btn" class="button-primary">Update Leaderboard</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Player</th>
+                <th>ELO</th>
+                <th>W</th>
+                <th>L</th>
+                <th>D</th>
+                <th>Total Battles</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <!-- Player rows will be dynamically inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="battle-history-section" aria-labelledby="battle-history-heading">
+        <button id="toggle-battle-history-btn" class="button-secondary" type="button" aria-expanded="false" aria-controls="battle-history-container">Show Battle History</button>
+        <div id="battle-history-container" class="battle-history-container" hidden>
+          <h2 id="battle-history-heading">Battle History</h2>
+          <div id="battle-history-list">
+            <!-- Battle history will be rendered here -->
+          </div>
+          <div class="battle-history-actions">
+            <button id="export-matches-btn" class="button-secondary">Export Matches (.csv)</button>
+            <div class="import-group">
+              <label for="import-matches-file" class="button-secondary">Import Matches (.csv)</label>
+              <input type="file" id="import-matches-file" accept=".csv" hidden>
+              <span class="help-icon" title="Required CSV format (from export): Timestamp,Player 1,Player 2,Outcome,P1 ELO Before,P1 ELO After,P2 ELO Before,P2 ELO After (Outcome: e.g., 'Player 1 Won', 'Player 2 Won', 'Draw')">?</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="panels">
+        <section class="panel" aria-labelledby="match-heading">
+          <h2 id="match-heading">Record Match</h2>
+          <form id="record-match-form">
+            <div class="form-group autocomplete-container">
+                <label for="player1-input">Player 1</label>
+                <input type="text" id="player1-input" name="player1Name" autocomplete="off" placeholder="Type to search..." required>
+                <input type="hidden" id="player1-id" name="player1">
+                <div class="suggestions-list" id="player1-suggestions"></div>
+            </div>
+            <div class="form-group autocomplete-container">
+                <label for="player2-input">Player 2</label>
+                <input type="text" id="player2-input" name="player2Name" autocomplete="off" placeholder="Type to search..." required>
+                <input type="hidden" id="player2-id" name="player2">
+                <div class="suggestions-list" id="player2-suggestions"></div>
+            </div>
+            <fieldset class="form-group">
+                <legend>Outcome</legend>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="winner-p1" name="winner" value="p1" required>
+                        <label for="winner-p1" id="winner-p1-label">Player 1 Wins</label>
+                    </div>
+                     <div class="radio-option">
+                        <input type="radio" id="winner-draw" name="winner" value="draw">
+                        <label for="winner-draw">Draw</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="winner-p2" name="winner" value="p2">
+                        <label for="winner-p2" id="winner-p2-label">Player 2 Wins</label>
+                    </div>
+                </div>
+            </fieldset>
+             <p id="match-error" class="error-message" aria-live="polite"></p>
+            <button type="submit" class="button-primary">Submit Result</button>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="player-heading">
+          <h2 id="player-heading">Add New Player</h2>
+          <form id="add-player-form">
+            <div class="form-group">
+              <label for="new-player-name">Player Name</label>
+              <input
+                type="text"
+                id="new-player-name"
+                name="playerName"
+                required
+                minlength="2"
+                placeholder="e.g., Flowmaster"
+              />
+            </div>
+            <p id="add-player-error" class="error-message" aria-live="polite"></p>
+            <button type="submit" class="button-primary">Add Player</button>
+            <div class="player-actions">
+                <button id="export-players-btn" class="button-secondary">Export Players (.csv)</button>
+                <div class="import-group">
+                  <label for="import-players-file" class="button-secondary">Import Players (.csv)</label>
+                  <input type="file" id="import-players-file" accept=".csv" hidden>
+                  <span class="help-icon" title="Required CSV format: name,initial_elo (initial_elo is optional)">?</span>
+                </div>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="settings-heading">
+            <h2 id="settings-heading">Settings</h2>
+            <form id="settings-form">
+                <div class="form-group">
+                    <label for="k-factor-input">K-Factor</label>
+                    <input type="number" id="k-factor-input" name="kFactor" min="1" step="1" required>
+                    <p class="form-hint">Determines ELO change. Default: 60. Locked after first match.</p>
+                </div>
+                 <div class="form-group switch-container">
+                    <label for="realtime-update-toggle">Realtime Update</label>
+                    <label class="switch">
+                        <input type="checkbox" id="realtime-update-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <p class="form-hint">If disabled, a button will appear to update the leaderboard manually.</p>
+                </div>
+            </form>
+            <div class="settings-actions">
+                <hr class="settings-divider">
+                <button id="clear-history-btn" class="button-danger">Clear Match History</button>
+                <button id="clear-players-btn" class="button-danger">Clear All Players</button>
+            </div>
+        </section>
+      </div>
+
+    </main>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

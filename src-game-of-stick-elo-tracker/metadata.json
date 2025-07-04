@@ -1,0 +1,5 @@
+{
+  "name": "Game of Stick - ELO Tracker",
+  "description": "An ELO ranking application for 'Game of Stick' parkour duels, featuring an AI challenge generator powered by Gemini.",
+  "requestFramePermissions": []
+}

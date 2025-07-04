@@ -1,0 +1,48 @@
+Guide étape par étape
+Créer un dossier de projet :
+Créez un nouveau dossier sur votre ordinateur (par exemple, tracker de jeu d'autocollant) et placez les quatre fichiers que vous avez (index.html, index.tsx, index.css, et métadonnées.json) à l'intérieur.
+Ouvrir un terminal :
+Accédez à votre nouveau dossier de projet à l’aide de votre ligne de commande ou de votre terminal.
+Bash généré
+cd path/to/your/game-of-stick-tracker
+Utiliser le code avec prudence.
+Bash
+Initialiser un projet Node.js :
+Exécutez la commande suivante pour créer un paquet.jsonfichier. Ce fichier gardera une trace des dépendances de votre projet.
+Bash généré
+npm init -y
+Utiliser le code avec prudence.
+Bash
+Install Vite:
+Installez Vite en tant que dépendance de développement. Il s'agit du serveur local qui compilera votre TypeScript et servira l'application.
+Bash généré
+npm install vite --save-dev
+Utiliser le code avec prudence.
+Bash
+Ajouter un script « dev » :
+Ouvrir le paquet.jsonfichier dans votre éditeur et ajoutez un devscript vers le scriptssection, comme ceci :
+JSON généré
+{
+  "name": "game-of-stick-tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^5.0.0" // Your version might differ slightly
+  }
+}
+Utiliser le code avec prudence.
+Json
+Exécutez l'application !
+Vous pouvez maintenant démarrer le serveur de développement en exécutant :
+Bash généré
+npm run dev
+Utiliser le code avec prudence.
+Bash
+Votre terminal affichera un message indiquant que le serveur est en cours d'exécution, ainsi qu'une URL locale, généralement http://localhost:5173. Ouvrez cette URL dans votre navigateur Web et vous verrez votre application fonctionner en direct ! Toutes les modifications que vous apportez aux fichiers seront désormais instantanément mises à jour dans le navigateur.

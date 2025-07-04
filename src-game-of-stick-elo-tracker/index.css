@@ -1,0 +1,697 @@
+:root {
+  --background-color: #1a1a1a;
+  --surface-color: #2c2c2c;
+  --primary-color: #007bff;
+  --primary-hover-color: #0056b3;
+  --secondary-color: #4CAF50;
+  --secondary-hover-color: #45a049;
+  --text-color: #f0f0f0;
+  --text-muted-color: #a0a0a0;
+  --border-color: #444;
+  --error-color: #dc3545;
+  --gold-color: #ffd700;
+  --silver-color: #c0c0c0;
+  --bronze-color: #cd7f32;
+  --rank-up-color: #28a745;
+  --rank-down-color: #dc3545;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  padding: 1rem;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+header p {
+    color: var(--text-muted-color);
+    font-size: 1.1rem;
+}
+
+.leaderboard-section {
+    background-color: var(--surface-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.leaderboard-section.manual-update-mode {
+    border: 1px solid var(--primary-color);
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.2);
+}
+
+#update-leaderboard-container {
+    margin-bottom: 1rem;
+}
+#update-leaderboard-btn {
+    width: 100%;
+}
+
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+/* Podium Styles */
+.podium-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 0.1rem;
+    padding: 1.5rem 0;
+    margin-bottom: 1rem;
+    min-height: 400px;
+}
+
+.podium-spot {
+    width: 32%;
+    max-width: 600px;
+    min-width: 180px;
+    padding: 7.0rem 0.5rem 1.0rem;
+    text-align: center;
+    background-color: #3a3a3a;
+    border-radius: 4px 4px 0 0;
+    border-top: 4px solid;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.podium-spot.first {
+    height: 400px;
+    border-color: var(--gold-color);
+    order: 2;
+    background: linear-gradient(145deg, #4d4d4d, #2c2c2c);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), 0 8px 16px rgba(0,0,0,0.3);
+    transform: translateY(-10px);
+}
+.podium-spot.second {
+    height: 200px;
+    border-color: var(--silver-color);
+    order: 1;
+    background: linear-gradient(145deg, #444, #222);
+}
+.podium-spot.third {
+    height: 170px;
+    border-color: var(--bronze-color);
+    order: 3;
+    background: linear-gradient(145deg, #444, #222);
+}
+
+.podium-icon-container {
+    position: absolute;
+    top: 1.0rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.podium-icon {
+    font-size: 4.5rem;
+    flex-shrink: 0;
+}
+.podium-spot.first .podium-icon {
+    font-size: 5.5rem;
+}
+
+.podium-name {
+    font-size: 2.8rem;
+    font-weight: 700;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: visible;
+    text-overflow: clip;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+.podium-spot.first .podium-name {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--gold-color);
+}
+
+.podium-elo {
+    font-size: 1.1rem;
+    color: var(--text-muted-color);
+    margin-top: 0.0rem;
+}
+
+.podium-key-stat {
+    font-size: 1.0rem;
+    font-weight: 500;
+    color: var(--primary-color);
+    margin-top: 0.0rem;
+}
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  background-color: #333;
+  font-weight: 500;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #313131;
+}
+
+tbody tr:hover {
+    background-color: #3a3a3a;
+}
+
+th:first-child, td:first-child { /* Rank */
+    text-align: center;
+    width: 80px;
+}
+td:first-child div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+th:nth-child(3), td:nth-child(3), /* ELO */
+th:nth-child(4), td:nth-child(4), /* W */
+th:nth-child(5), td:nth-child(5), /* L */
+th:nth-child(6), td:nth-child(6), /* D */
+th:nth-child(7), td:nth-child(7) { /* Total Battles */
+    text-align: center;
+    width: 70px;
+}
+
+.rank-change {
+    font-size: 0.8em;
+    font-weight: 700;
+}
+.rank-up {
+    color: var(--rank-up-color);
+}
+.rank-down {
+    color: var(--rank-down-color);
+}
+.rank-no-change {
+    color: var(--text-muted-color);
+}
+
+.streak-indicator {
+    font-size: 0.9em;
+    font-weight: 700;
+    margin-left: 0.5rem;
+    white-space: nowrap;
+}
+
+.panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.panel {
+    background-color: var(--surface-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label, fieldset legend {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-muted-color);
+}
+
+.form-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted-color);
+    margin-top: 0.25rem;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    background-color: #333;
+    color: var(--text-color);
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+input:disabled {
+    background-color: #444;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.form-group.disabled {
+    cursor: not-allowed;
+}
+
+.form-group.disabled label,
+.form-group.disabled .form-hint {
+    opacity: 0.6;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+fieldset {
+    border: none;
+    padding: 0;
+}
+
+.radio-group {
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.radio-option label {
+    font-weight: normal;
+    color: var(--text-color);
+}
+
+.error-message {
+    color: var(--error-color);
+    font-size: 0.9rem;
+    min-height: 1.2em;
+    margin-bottom: 1rem;
+}
+
+button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.button-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+.button-primary:hover {
+  background-color: var(--primary-hover-color);
+}
+
+.button-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+}
+.button-secondary:hover {
+  background-color: var(--secondary-hover-color);
+}
+
+.button-danger {
+    background-color: var(--error-color);
+    color: white;
+}
+.button-danger:hover {
+    background-color: #bd2130;
+}
+
+/* Autocomplete styles */
+.autocomplete-container {
+    position: relative;
+}
+
+.suggestions-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #3e3e3e;
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 100;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.suggestion-item {
+    padding: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.suggestion-item:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.suggestion-item small {
+    color: var(--text-muted-color);
+}
+.suggestion-item:hover small {
+    color: #e0e0e0;
+}
+
+.suggestion-item-none {
+    padding: 0.75rem;
+    color: var(--text-muted-color);
+    font-style: italic;
+    cursor: default;
+}
+
+/* Settings */
+.settings-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.player-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.switch-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+.switch-container label:first-child {
+    flex-basis: 100%;
+}
+.switch-container .form-hint {
+    flex-basis: 100%;
+    order: 3;
+    margin-top: 0.5rem;
+}
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+    order: 2;
+}
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #555;
+    transition: .4s;
+    border-radius: 28px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--primary-color);
+}
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+.battle-history-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.import-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.import-group .button-secondary {
+  margin-bottom: 0;
+  width: auto;
+  padding: 0.75rem 1.5rem;
+}
+
+.help-icon {
+  font-size: 0.9em;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  border-radius: 50%;
+  background-color: var(--text-muted-color);
+  color: var(--background-color);
+  text-align: center;
+  cursor: help;
+  position: relative;
+  display: inline-block;
+  margin-left: 0.25rem;
+}
+
+/* Tooltip for help icon */
+.help-icon::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 120%; /* Position above the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  z-index: 999;
+}
+
+.help-icon:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 768px) {
+    .panels {
+        /* On medium screens, maybe a 2-column layout is better */
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+}
+
+
+@media (max-width: 600px) {
+    body {
+        padding: 0.5rem;
+    }
+    .container {
+        padding: 0.5rem;
+    }
+    header h1 {
+        font-size: 2rem;
+    }
+    .panel, .leaderboard-section {
+        padding: 1rem;
+    }
+    h2 {
+        font-size: 1.25rem;
+    }
+}
+
+.battle-history-section {
+  background-color: var(--surface-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#toggle-battle-history-btn {
+  margin-bottom: 1rem;
+}
+
+.battle-history-container {
+  transition: max-height 0.3s ease;
+  overflow: hidden;
+}
+
+.battle-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.battle-history-entry {
+  background-color: #232323;
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.battle-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+}
+
+.battle-history-players {
+  font-size: 1.1rem;
+}
+
+.battle-history-outcome {
+  font-size: 1rem;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.battle-history-timestamp {
+  font-size: 0.85rem;
+  color: var(--text-muted-color);
+}
+
+.battle-history-winprob-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.winprob-bar {
+  flex: 1;
+  height: 18px;
+  background: #444;
+  border-radius: 9px;
+  display: flex;
+  overflow: hidden;
+}
+
+.winprob-bar-p1 {
+  background: var(--primary-color);
+  height: 100%;
+  transition: width 0.3s;
+}
+
+.winprob-bar-p2 {
+  background: var(--secondary-color);
+  height: 100%;
+  transition: width 0.3s;
+}
+
+.winprob-label {
+  font-size: 0.9rem;
+  min-width: 48px;
+  text-align: center;
+}
+
+.elo-change {
+    font-size: 0.8em;
+    font-weight: 700;
+    margin-left: 0.5rem;
+    white-space: nowrap;
+}
+
+.elo-up {
+    color: var(--rank-up-color); /* Green for positive ELO change */
+}
+
+.elo-down {
+    color: var(--rank-down-color); /* Red for negative ELO change */
+}
