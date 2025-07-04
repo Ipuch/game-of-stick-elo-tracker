@@ -601,8 +601,23 @@ input:checked + .slider:before {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-#toggle-battle-history-btn {
+#toggle-battle-history-btn,
+.profile-toggle-btn {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 4px;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
   margin-bottom: 1rem;
+}
+#toggle-battle-history-btn:hover,
+.profile-toggle-btn:hover {
+  background-color: var(--secondary-hover-color);
 }
 
 .battle-history-container {
@@ -814,4 +829,46 @@ input:checked + .slider:before {
   text-align: center;
   opacity: 0.97;
   transition: opacity 0.15s;
+}
+
+#profile-stats-section {
+  background-color: var(--surface-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  position: relative;
+}
+#profile-stats-section .profile-toggle-btn {
+  position: static;
+  display: block;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 2rem;
+  padding: 1.25rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-sizing: border-box;
+}
+#profile-stats-section .profile-toggle-btn:hover {
+  background-color: var(--secondary-hover-color);
+}
+#profile-stats-select {
+  margin-bottom: 1.2em;
+  padding: 0.5em 1em;
+  font-size: 1em;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: #333;
+  color: var(--text-color);
+}
+#profile-stats-content {
+  margin-top: 0.5em;
 }
