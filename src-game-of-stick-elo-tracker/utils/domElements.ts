@@ -19,7 +19,7 @@ export interface AppDOMElements {
     podiumContainer: HTMLElement | null;
     kFactorInput: HTMLInputElement | null;
     settingsForm: HTMLFormElement | null;
-    realtimeUpdateToggle: HTMLInputElement | null;
+
     exportPlayersBtn: HTMLButtonElement | null;
     exportMatchesBtn: HTMLButtonElement | null;
     toggleBattleHistoryBtn: HTMLButtonElement | null;
@@ -55,7 +55,7 @@ export function queryDOMElements(): AppDOMElements {
         podiumContainer: document.getElementById('podium-container'),
         kFactorInput: document.getElementById('k-factor-input') as HTMLInputElement,
         settingsForm: document.getElementById('settings-form') as HTMLFormElement,
-        realtimeUpdateToggle: document.getElementById('realtime-update-toggle') as HTMLInputElement,
+
         exportPlayersBtn: document.getElementById('export-players-btn') as HTMLButtonElement,
         exportMatchesBtn: document.getElementById('export-matches-btn') as HTMLButtonElement,
         toggleBattleHistoryBtn: document.getElementById('toggle-battle-history-btn') as HTMLButtonElement,

@@ -27,7 +27,7 @@
         <div id="podium-container" class="podium-container" aria-label="Top 3 Players">
             <!-- Podium spots will be dynamically inserted here -->
         </div>
-        <div id="update-leaderboard-container" hidden>
+        <div id="update-leaderboard-container">
             <button id="update-leaderboard-btn" class="button-primary">Update Leaderboard</button>
         </div>
         <div class="table-container">
@@ -146,14 +146,7 @@
                     <input type="number" id="k-factor-input" name="kFactor" min="1" step="1" required>
                     <p class="form-hint">Determines ELO change. Default: 60. Locked after first match.</p>
                 </div>
-                 <div class="form-group switch-container">
-                    <label for="realtime-update-toggle">Realtime Update</label>
-                    <label class="switch">
-                        <input type="checkbox" id="realtime-update-toggle" checked>
-                        <span class="slider"></span>
-                    </label>
-                    <p class="form-hint">If disabled, a button will appear to update the leaderboard manually.</p>
-                </div>
+
             </form>
             <div class="settings-actions">
                 <hr class="settings-divider">

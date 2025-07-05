@@ -19,7 +19,8 @@ import { renderCombatMatrix } from './renderers/combatMatrix';
 let players: Player[] = [];
 let matchHistory: Match[] = [];
 let kFactor: number = DEFAULT_K_FACTOR;
-let isRealtimeUpdate: boolean = true;
+// Realtime update disabled; users must click the Update Leaderboard button
+let isRealtimeUpdate: boolean = false;
 let lastLeaderboardElo: Record<string, number> = {};
 
 // --- DOM ELEMENTS ---
@@ -28,16 +29,7 @@ let DOMElements: AppDOMElements; // Global declaration
 // --- DATA PERSISTENCE ---
 
 // --- UI UPDATE ---
-function toggleUpdateModeUI() {
-    if (!DOMElements.updateLeaderboardBtnContainer || !DOMElements.leaderboardSection) return;
-    if (isRealtimeUpdate) {
-        DOMElements.updateLeaderboardBtnContainer.setAttribute('hidden', 'true');
-        DOMElements.leaderboardSection.classList.remove('manual-update-mode');
-    } else {
-        DOMElements.updateLeaderboardBtnContainer.removeAttribute('hidden');
-        DOMElements.leaderboardSection.classList.add('manual-update-mode');
-    }
-}
+
 
 function updateKFactorInputState() {
     const { kFactorInput } = DOMElements;
@@ -66,6 +58,8 @@ function render() {
   renderProfileStatsSection(players, matchHistory);
   // Now that ranks are updated (including previousRank), save the state.
   saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
+
+
 }
 
 function updateLeaderboardDiffs() {
@@ -77,8 +71,10 @@ function updateLeaderboardDiffs() {
 }
 
 function handleUpdateLeaderboardClick() {
-  updateLeaderboardDiffs();
+  // First render the leaderboard to display the cumulative ELO changes since the previous update,
+  // then refresh the baseline so the next diff will start from the freshly-rendered values.
   render();
+  updateLeaderboardDiffs();
 }
 
 // --- UTILITY FUNCTIONS ---
@@ -140,12 +136,9 @@ function handleAddPlayer(event: SubmitEvent) {
       currentStreakLength: 0,  // New: Initialize streak
     };
     players.push(newPlayer);
-    
-    if (isRealtimeUpdate) {
-        render(); // This will also save the state
-    } else {
-        saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
-    }
+
+    // Persist state; leaderboard will refresh when the user clicks "Update Leaderboard".
+    saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
 
     if(DOMElements.newPlayerNameInput) DOMElements.newPlayerNameInput.value = '';
   }
@@ -255,11 +248,8 @@ function handleRecordMatch(event: SubmitEvent) {
 
   updateKFactorInputState();
 
-  if (isRealtimeUpdate) {
-    render();
-  } else {
-    saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
-  }
+  // Persist state; user will update leaderboard manually.
+  saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
   
   form.reset();
   if (DOMElements.player1Input) DOMElements.player1Input.value = '';
@@ -289,17 +279,7 @@ function handleKFactorChange(event: Event) {
     }
 }
 
-function handleRealtimeUpdateToggle(event: Event) {
-    const target = event.target as HTMLInputElement;
-    isRealtimeUpdate = target.checked;
-    // If user toggles it on, refresh the leaderboard immediately.
-    if (isRealtimeUpdate) {
-        render();
-    } else {
-        saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
-    }
-    toggleUpdateModeUI();
-}
+
 
 function handleExportPlayers() {
     if (players.length === 0) {
@@ -748,12 +728,11 @@ function handleAutocompleteInput(event: Event) {
 // --- INITIALIZATION ---
 function main() {
   DOMElements = queryDOMElements(); // Assign to global DOMElements
-  const { players: loadedPlayers, matchHistory: loadedMatchHistory, kFactor: loadedKFactor, isRealtimeUpdate: loadedIsRealtimeUpdate } = loadAppState();
+  const { players: loadedPlayers, matchHistory: loadedMatchHistory, kFactor: loadedKFactor } = loadAppState();
   players = loadedPlayers;
   matchHistory = loadedMatchHistory;
   kFactor = loadedKFactor;
-  isRealtimeUpdate = loadedIsRealtimeUpdate;
-  toggleUpdateModeUI();
+  isRealtimeUpdate = true; // Realtime feature removed – always update instantly
   updateKFactorInputState();
 
   // Extra safety: Always hide modal and clear content on load
@@ -768,8 +747,8 @@ function main() {
   DOMElements.addPlayerForm?.addEventListener('submit', handleAddPlayer);
   DOMElements.recordMatchForm?.addEventListener('submit', handleRecordMatch);
   DOMElements.kFactorInput?.addEventListener('input', handleKFactorChange);
-  DOMElements.realtimeUpdateToggle?.addEventListener('change', handleRealtimeUpdateToggle);
   DOMElements.updateLeaderboardBtn?.addEventListener('click', handleUpdateLeaderboardClick);
+  // Realtime toggle & manual update button removed
   DOMElements.exportPlayersBtn?.addEventListener('click', handleExportPlayers);
   DOMElements.exportMatchesBtn?.addEventListener('click', handleExportMatches);
 
@@ -989,33 +968,34 @@ function renderProfileStatsContent(playerId: string, players: Player[], matchHis
     svgPath = `M ${padding},${svgHeight/2} L ${svgWidth-padding},${svgHeight/2}`;
   }
   
-  // Calculate best win streak
-  let bestWinStreak = 0;
-  let currentStreak = 0;
-  matchHistory
-    .filter(m => m.player1Id === player.id || m.player2Id === player.id)
-    .sort((a, b) => a.timestamp - b.timestamp)
-    .forEach(match => {
-      const isP1 = match.player1Id === player.id;
-      let win = false;
-      if ((isP1 && match.outcome === 'p1') || (!isP1 && match.outcome === 'p2')) win = true;
-      if (win) {
-        currentStreak++;
-        if (currentStreak > bestWinStreak) bestWinStreak = currentStreak;
-      } else {
-        currentStreak = 0;
-      }
-    });
+  
   // Get player rank
   const sortedByElo = [...players].sort((a, b) => b.elo - a.elo);
   const rank = sortedByElo.findIndex(p => p.id === player.id) + 1;
   // Stats (one line) with graph
-  let html = `<div style="margin-bottom:1em;font-size:1.1em;display:flex;align-items:center;gap:1rem;">
-    <div><span style='color:#888;'>#${rank}</span> <strong>${player.name}</strong> &nbsp; ELO: <strong>${player.elo}</strong> &nbsp; <span class='elo-up'>Wins: <strong>${player.wins}</strong></span> | <span class='elo-down'>Losses: <strong>${player.losses}</strong></span> | Draws: <strong>${player.draws}</strong> | <span style='color:var(--rank-up-color);'>Best Win Streak: <span title='Best Win Streak'>🔥${bestWinStreak}</span></span></div>
-    <svg width="${svgWidth}" height="${svgHeight}" style="flex-shrink:0;">
-      <path d="${svgPath}" stroke="#4CAF50" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </div>`;
+  let streakHtml = '';
+  if (player.currentStreakType === 'W' && player.currentStreakLength >= 2) {
+      streakHtml = `| <span class='win-streak'>Win Streak: <span title='Win Streak'>🔥${player.currentStreakLength}</span></span>`;
+  }
+  if (player.currentStreakType === 'L' && player.currentStreakLength >= 2) {
+    streakHtml = `| <span class='loss-streak'>Loss Streak: <span title= Loss Streak'>🧊${player.currentStreakLength}</span></span>`;
+}
+
+  let html = `
+    <div class="profile-stats-header">
+        <div class="profile-stats-info">
+            <span class='rank-number'>#${rank}</span> 
+            <strong>${player.name}</strong> &nbsp; 
+            ELO: <strong>${player.elo}</strong> &nbsp; 
+            <span class='elo-up'>Wins: <strong>${player.wins}</strong></span> | 
+            <span class='elo-down'>Losses: <strong>${player.losses}</strong></span> | 
+            Draws: <strong>${player.draws}</strong>
+            ${streakHtml}
+        </div>
+        <svg class="profile-elo-graph" width="${svgWidth}" height="${svgHeight}">
+            <path d="${svgPath}" stroke="#4CAF50" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </div>`;
   
   // Last battles
   const personalMatches = matchHistory.filter(m => m.player1Id === player.id || m.player2Id === player.id)
