@@ -20,6 +20,7 @@ let players: Player[] = [];
 let matchHistory: Match[] = [];
 let kFactor: number = DEFAULT_K_FACTOR;
 let isRealtimeUpdate: boolean = true;
+let lastLeaderboardElo: Record<string, number> = {};
 
 // --- DOM ELEMENTS ---
 let DOMElements: AppDOMElements; // Global declaration
@@ -57,14 +58,27 @@ function updateKFactorInputState() {
 }
 
 function render() {
-  // console.log('render() function called.');
-  renderLeaderboard(players, DOMElements, matchHistory);
+  // Do NOT update lastLeaderboardElo here!
+  renderLeaderboard(players, DOMElements, matchHistory, lastLeaderboardElo);
   renderPodium(players, DOMElements);
   renderBattleHistory(matchHistory, DOMElements);
   renderCombatMatrix(players, matchHistory, DOMElements);
   renderProfileStatsSection(players, matchHistory);
   // Now that ranks are updated (including previousRank), save the state.
   saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
+}
+
+function updateLeaderboardDiffs() {
+  // Save current ELOs for all players
+  lastLeaderboardElo = {};
+  players.forEach(p => {
+    lastLeaderboardElo[p.id] = p.elo;
+  });
+}
+
+function handleUpdateLeaderboardClick() {
+  updateLeaderboardDiffs();
+  render();
 }
 
 // --- UTILITY FUNCTIONS ---
@@ -287,10 +301,6 @@ function handleRealtimeUpdateToggle(event: Event) {
     toggleUpdateModeUI();
 }
 
-function handleUpdateLeaderboardClick() {
-    render();
-}
-
 function handleExportPlayers() {
     if (players.length === 0) {
         alert('No players to export.');
@@ -509,6 +519,15 @@ async function handleImportMatches(event: Event) {
         console.log('handleImportMatches: Match History state before render:', matchHistory);
         render(); // Re-render leaderboard, podium, and history, and save state
         alert(`Successfully imported ${importedMatches.length} matches.`);
+
+        // After render, set profile stats dropdown to first player and render their stats
+        setTimeout(() => {
+          const select = document.getElementById('profile-stats-select') as HTMLSelectElement | null;
+          if (select && players.length > 0) {
+            select.value = players[0].id;
+            renderProfileStatsContent(players[0].id, players, matchHistory);
+          }
+        }, 0);
     };
 
     reader.onerror = () => {

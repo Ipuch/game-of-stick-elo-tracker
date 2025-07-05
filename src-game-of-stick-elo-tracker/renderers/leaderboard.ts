@@ -27,7 +27,8 @@ function renderStreak(type: 'W' | 'L' | null, length: number): string {
 export function renderLeaderboard(
     players: Player[],
     DOMElements: AppDOMElements,
-    matchHistory: Match[]
+    matchHistory: Match[],
+    lastLeaderboardElo: Record<string, number>
 ) {
     if (!DOMElements.leaderboardBody) return;
     
@@ -43,10 +44,6 @@ export function renderLeaderboard(
     }
 
     sortedPlayers.forEach((player, index) => {
-        // Reset lastEloChange if ELO did not change since last render
-        if (typeof player.previousElo === 'number' && player.elo === player.previousElo) {
-            player.lastEloChange = 0;
-        }
         const newRank = index + 1;
         const oldRank = player.previousRank;
 
@@ -62,24 +59,28 @@ export function renderLeaderboard(
             }
         }
 
+        // Calculate ELO diff since last leaderboard update
+        const prevElo = lastLeaderboardElo[player.id] ?? player.elo;
+        const eloDiff = player.elo - prevElo;
+        console.log(`Player: ${player.name}, ELO: ${player.elo}, prevElo: ${prevElo}, eloDiff: ${eloDiff}`);
+        const eloDiffHtml = eloDiff !== 0 
+            ? `<span class="elo-change ${eloDiff > 0 ? 'elo-up' : 'elo-down'}">(${eloDiff > 0 ? '+' : ''}${eloDiff})</span>`
+            : '';
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><div>${newRank} ${rankChangeIndicator}</div></td>
             <td>${player.name} ${renderStreak(player.currentStreakType, player.currentStreakLength)}</td>
             <td>
                 ${player.elo}
-                ${player.lastEloChange !== undefined && player.lastEloChange !== 0 
-                    ? `<span class="elo-change ${player.lastEloChange > 0 ? 'elo-up' : 'elo-down'}">(${player.lastEloChange > 0 ? '+' : ''}${player.lastEloChange})</span>` 
-                    : ''}
+                ${eloDiffHtml}
             </td>
             <td>${player.wins}</td>
             <td>${player.losses}</td>
             <td>${player.draws}</td>
             <td>${player.wins + player.losses + player.draws}</td>
         `;
-        // Remove click event logic for player name
         DOMElements.leaderboardBody!.appendChild(row);
-        // Update previousElo for next render
         player.previousElo = player.elo;
     });
     

@@ -1,0 +1,4 @@
+Timestamp,Player 1,Player 2,Outcome,P1 ELO Before,P1 ELO After,P2 ELO Before,P2 ELO After
+2025-07-04T20:45:40.635Z,Pierre,Lison,Pierre Won,1200,1230,1200,1170
+2025-07-04T20:45:46.273Z,Pierre,Bastien,Pierre Won,1230,1257,1200,1173
+2025-07-04T20:45:52.509Z,Pierre,Bastien,Pierre Won,1257,1280,1173,1150
