@@ -117,13 +117,13 @@ h2 {
     transform: translateY(-10px);
 }
 .podium-spot.second {
-    height: 200px;
+    height: 300px;
     border-color: var(--silver-color);
     order: 1;
     background: linear-gradient(145deg, #444, #222);
 }
 .podium-spot.third {
-    height: 170px;
+    height: 260px;
     border-color: var(--bronze-color);
     order: 3;
     background: linear-gradient(145deg, #444, #222);
@@ -834,4 +834,58 @@ button:active {
 
 .profile-elo-graph {
     flex-shrink: 0;
+}
+
+/* ===================== Enhanced Podium Styling ===================== */
+.podium-container {
+    gap: 1.5rem; /* more breathing room */
+}
+
+.podium-spot {
+    position: relative;
+    overflow: visible;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* A subtle stage/shadow beneath each podium block */
+.podium-spot::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -14px;
+    height: 14px;
+    background: inherit;
+    filter: brightness(0.75);
+    border-radius: 0 0 4px 4px;
+}
+
+/* Hover lift effect */
+.podium-spot:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+}
+
+/* Rich metallic gradients */
+.podium-spot.first {
+    background: radial-gradient(circle at 50% -20%, rgba(255,255,255,0.15), transparent 60%), linear-gradient(145deg, #4d4d4d, #2c2c2c);
+    border-color: var(--gold-color);
+}
+.podium-spot.second {
+    background: radial-gradient(circle at 50% -20%, rgba(255,255,255,0.12), transparent 60%), linear-gradient(145deg, #5d5d5d, #2d2d2d);
+    border-color: var(--silver-color);
+}
+.podium-spot.third {
+    background: radial-gradient(circle at 50% -20%, rgba(255,255,255,0.10), transparent 60%), linear-gradient(145deg, #5d5d5d, #2d2d2d);
+    border-color: var(--bronze-color);
+}
+
+/* Crown glow */
+.podium-spot.first .podium-icon {
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.65);
+}
+
+/* Loss streak indicator colour */
+.loss-streak {
+    color: var(--rank-down-color);
 }
