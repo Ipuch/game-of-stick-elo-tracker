@@ -1,8 +1,10 @@
 # 🚀 Game of Stick Elo Tracker 🚀
 
-## A dynamic and feature-rich Elo rating tracker for the "Game of Stick," built with TypeScript and Vite.
+A dynamic and feature-rich Elo rating tracker for the "Game of Stick," built with TypeScript and Vite.
 
 This web application provides a comprehensive interface for tracking player Elo ratings, match history, and performance statistics in the Game of Stick. It's designed to be fast, responsive, and easy to use, with a focus on providing detailed insights into player performance.
+
+![Game of Stick Elo Tracker Screenshot](screenshot.png)
 
 ### ✨ Features
 
