@@ -137,8 +137,9 @@ function handleAddPlayer(event: SubmitEvent) {
     };
     players.push(newPlayer);
 
-    // Persist state; leaderboard will refresh when the user clicks "Update Leaderboard".
+    // Persist state and update UI immediately
     saveAppState({ players, matchHistory, kFactor, isRealtimeUpdate });
+    render(); // Update all UI components including profile stats
 
     if(DOMElements.newPlayerNameInput) DOMElements.newPlayerNameInput.value = '';
   }
@@ -880,11 +881,14 @@ function renderProfileStatsSection(players: Player[], matchHistory: Match[]) {
     select = document.createElement('select');
     select.id = 'profile-stats-select';
     section.insertBefore(select, section.querySelector('h2')?.nextSibling ?? section.firstChild);
-    if (select) {
-      select.addEventListener('change', () => {
-        renderProfileStatsContent(select!.value, players, matchHistory);
-      });
-    }
+  }
+  
+  // Always ensure the change event listener is attached
+  if (select) {
+    // Add the change event listener (it's safe to add multiple, they'll all work)
+    select.addEventListener('change', () => {
+      renderProfileStatsContent(select!.value, players, matchHistory);
+    });
   }
   // Populate options
   const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
@@ -898,7 +902,6 @@ function renderProfileStatsSection(players: Player[], matchHistory: Match[]) {
   
   // Guarantee valid selection - always reset to first player when repopulating
   if (sortedPlayers.length > 0) {
-    console.log('Setting profile stats dropdown to first player:', sortedPlayers[0].id);
     select.value = sortedPlayers[0].id;
     renderProfileStatsContent(sortedPlayers[0].id, players, matchHistory);
   } else {
@@ -911,13 +914,10 @@ function renderProfileStatsContent(playerId: string, players: Player[], matchHis
   const content = document.getElementById('profile-stats-content');
   if (!content) return;
   
-  // Debug logging
-  console.log('renderProfileStatsContent called with:', { playerId, playersCount: players.length });
-  console.log('Available player IDs:', players.map(p => p.id));
+
   
   const player = players.find(p => p.id === playerId);
   if (!player) {
-    console.warn('Player not found:', playerId);
     content.innerHTML = '<p>No player selected.</p>';
     return;
   }
