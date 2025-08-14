@@ -500,14 +500,8 @@ async function handleImportMatches(event: Event) {
         render(); // Re-render leaderboard, podium, and history, and save state
         alert(`Successfully imported ${importedMatches.length} matches.`);
 
-        // After render, set profile stats dropdown to first player and render their stats
-        setTimeout(() => {
-          const select = document.getElementById('profile-stats-select') as HTMLSelectElement | null;
-          if (select && players.length > 0) {
-            select.value = players[0].id;
-            renderProfileStatsContent(players[0].id, players, matchHistory);
-          }
-        }, 0);
+        // After render, the profile stats section will be automatically updated by render()
+        // No need to manually set the dropdown as renderProfileStatsSection handles this
     };
 
     reader.onerror = () => {
@@ -901,15 +895,12 @@ function renderProfileStatsSection(players: Player[], matchHistory: Match[]) {
     option.textContent = p.name;
     select.appendChild(option);
   });
-  // Guarantee valid selection
-  let selectedId = select.value;
-  if (!sortedPlayers.find(p => p.id === selectedId) && sortedPlayers.length > 0) {
-    select.value = sortedPlayers[0].id;
-    selectedId = sortedPlayers[0].id;
-  }
-  // Render content for selected player
+  
+  // Guarantee valid selection - always reset to first player when repopulating
   if (sortedPlayers.length > 0) {
-    renderProfileStatsContent(selectedId, players, matchHistory);
+    console.log('Setting profile stats dropdown to first player:', sortedPlayers[0].id);
+    select.value = sortedPlayers[0].id;
+    renderProfileStatsContent(sortedPlayers[0].id, players, matchHistory);
   } else {
     const content = document.getElementById('profile-stats-content');
     if (content) content.innerHTML = '<p>No players.</p>';
@@ -919,8 +910,14 @@ function renderProfileStatsSection(players: Player[], matchHistory: Match[]) {
 function renderProfileStatsContent(playerId: string, players: Player[], matchHistory: Match[]) {
   const content = document.getElementById('profile-stats-content');
   if (!content) return;
+  
+  // Debug logging
+  console.log('renderProfileStatsContent called with:', { playerId, playersCount: players.length });
+  console.log('Available player IDs:', players.map(p => p.id));
+  
   const player = players.find(p => p.id === playerId);
   if (!player) {
+    console.warn('Player not found:', playerId);
     content.innerHTML = '<p>No player selected.</p>';
     return;
   }
