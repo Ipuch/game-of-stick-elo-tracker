@@ -30,6 +30,11 @@
 
         <div class="new-session-container">
           <h2>New Operation</h2>
+          <div class="folder-option-container"
+            style="margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+            <button id="open-folder-btn" class="button-primary" style="width: 100%;">📂 Open Game Folder</button>
+            <p class="form-hint" style="text-align: center; margin-top: 0.5rem;">Select a folder to load/save data</p>
+          </div>
           <form id="new-session-form">
             <div class="form-group">
               <label for="new-session-name">Operation Name</label>
@@ -61,6 +66,7 @@
           <button class="nav-btn" data-view="view-roster">Add Players</button>
           <button class="nav-btn" data-view="view-stats">Stats</button>
           <button class="nav-btn" data-view="view-settings">Settings</button>
+          <button class="nav-btn" id="nav-save-btn">Save Game</button>
           <button class="nav-btn nav-exit" id="nav-exit-btn">Exit Game</button>
         </nav>
       </div>
@@ -177,20 +183,9 @@
         <div class="battle-history-header">
           <h2>Battle History</h2>
           <div class="battle-actions">
-            <button id="toggle-battle-history-btn" class="button-secondary">Toggle View</button>
-            <button id="export-matches-btn" class="button-secondary">Export (.csv)</button>
+            <div id="battle-history-list"></div>
           </div>
-        </div>
-        <div id="battle-history-container" class="battle-history-container">
-          <div id="battle-history-list"></div>
-        </div>
       </section>
-
-      <!-- Import Matches (hidden or moved to stats/settings) -->
-      <div class="import-group" style="margin-top: 1rem;">
-        <label for="import-matches-file" class="button-secondary">Import Matches (.csv)</label>
-        <input type="file" id="import-matches-file" accept=".csv" hidden>
-      </div>
     </div>
 
     <!-- VIEW: SETTINGS -->

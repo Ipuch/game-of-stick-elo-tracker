@@ -12,6 +12,7 @@ import { renderLeaderboard } from './renderers/leaderboard';
 import { renderPodium } from './renderers/podium';
 import { renderBattleHistory } from './renderers/battleHistory';
 import { renderCombatMatrix } from './renderers/combatMatrix';
+import { selectLibraryFolder, listGamesInLibrary, createGameInLibrary, loadGameFromSession, saveGameToSession } from './utils/fileSystemPersistence';
 
 // New Imports
 import { store } from './state/store';
@@ -21,7 +22,10 @@ import { generateUUID } from './utils/uuid';
 
 // --- PERSISTENCE HELPER ---
 function persist() {
-    if (store.currentSessionId) {
+    if (store.directoryHandle) {
+        store.hasUnsavedChanges = true;
+        updateSaveButton();
+    } else if (store.currentSessionId) {
         saveSession(store.currentSessionId, {
             players: store.players,
             matchHistory: store.matchHistory,
@@ -32,8 +36,6 @@ function persist() {
 
 import {
     handleExportPlayers,
-    handleExportMatches,
-    createImportMatchesHandler,
     createImportPlayersHandler
 } from './handlers/importExportHandlers';
 
@@ -70,15 +72,28 @@ function render() {
     renderRosterList();
 
     // Now that ranks are updated (including previousRank), save the state.
-    // persist() is called by the caller functions usually, but render() is sometimes called for refresh.
-    // However, saving state here might be redundant if we persist on mutation.
-    // Given legacy code, we keep it safe or remove it? Use persist() if needed.
-    saveAppState({
-        players: store.players,
-        matchHistory: store.matchHistory,
-        kFactor: store.kFactor,
-        isRealtimeUpdate: store.isRealtimeUpdate
-    });
+    persist();
+}
+
+function updateSaveButton() {
+    const btn = document.getElementById('nav-save-btn');
+    if (!btn) return;
+
+    btn.style.display = 'inline-block'; // Always visible now
+
+    if (store.directoryHandle) {
+        if (store.hasUnsavedChanges) {
+            btn.textContent = 'Save Game *';
+            btn.classList.add('unsaved');
+        } else {
+            btn.textContent = 'Save Game';
+            btn.classList.remove('unsaved');
+        }
+    } else {
+        // Legacy session
+        btn.textContent = 'Save to Library';
+        btn.classList.remove('unsaved');
+    }
 }
 
 function updateLeaderboardDiffs() {
@@ -97,6 +112,15 @@ function handleUpdateLeaderboardClick() {
 }
 
 // --- EVENT HANDLERS ---
+
+function handleKFactorChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const val = parseInt(input.value, 10);
+    if (!isNaN(val) && val > 0) {
+        store.kFactor = val;
+        persist();
+    }
+}
 
 function renderRosterList() {
     if (!DOMElements.rosterList) return;
@@ -293,19 +317,7 @@ function updateWinnerLabels() {
     winnerP2Label.textContent = `${p2Name} Wins`;
 }
 
-function handleKFactorChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const value = parseInt(target.value, 10);
-    if (!isNaN(value) && value > 0) {
-        store.kFactor = value;
-        saveAppState({
-            players: store.players,
-            matchHistory: store.matchHistory,
-            kFactor: store.kFactor,
-            isRealtimeUpdate: store.isRealtimeUpdate
-        });
-    }
-}
+persist();
 
 function handleClearMatchHistory() {
     if (confirm('Are you sure you want to clear all match history? This action cannot be undone.')) {
@@ -369,8 +381,9 @@ function showSuggestions(filteredPlayers: Player[], suggestionsContainer: HTMLEl
         item.dataset.name = player.name; // Store Name
         item.innerHTML = `<span>${player.name}</span> <small>${player.elo} ELO</small>`;
 
-        item.addEventListener('mousedown', (e) => { // Mousedown to fire before input blur
+        item.addEventListener('pointerdown', (e) => { // pointerdown covers mouse and touch, fires before click/blur
             e.preventDefault();
+            console.log('Suggestion ID selected:', player.id, player.name);
             textInput.value = player.name;
             idInput.value = player.id;
             hideSuggestions(suggestionsContainer);
@@ -417,7 +430,140 @@ function handleAutocompleteInput(event: Event) {
 // --- MENU & ROUTING ---
 
 
+
+// --- GAME LIBRARY LOGIC ---
+
+async function handleOpenLibrary() {
+    try {
+        const libraryHandle = await selectLibraryFolder();
+        if (libraryHandle) {
+            store.libraryHandle = libraryHandle;
+            renderGameLibrary(libraryHandle);
+        }
+    } catch (e) {
+        console.error(e);
+        showNotification('Failed to open library', 'error');
+    }
+}
+
+async function renderGameLibrary(libraryHandle: FileSystemDirectoryHandle) {
+    const games = await listGamesInLibrary(libraryHandle);
+
+    document.getElementById('game-menu')!.style.display = 'flex';
+    document.getElementById('app-main')!.style.display = 'none';
+
+    // Update Menu Header or Title to indicate Library Mode could be nice, but reusing current structure
+    const list = document.getElementById('session-list')!;
+    list.innerHTML = '';
+
+    // Header for Library
+    const libraryHeader = document.createElement('h3');
+    libraryHeader.textContent = `Library: ${libraryHandle.name}`;
+    libraryHeader.style.width = '100%';
+    libraryHeader.style.textAlign = 'center';
+    libraryHeader.style.color = 'var(--text-muted)';
+    list.appendChild(libraryHeader);
+
+    if (games.length === 0) {
+        const msg = document.createElement('div');
+        msg.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:1rem;">No games found in this folder. Create one below!</div>';
+        list.appendChild(msg);
+    } else {
+        games.forEach(g => {
+            const card = document.createElement('div');
+            card.className = 'session-item';
+            // We don't have metadata easily without reading every folder, so just show name
+            card.innerHTML = `
+                <div class="session-info">
+                    <h3>${g.name}</h3>
+                    <div class="session-meta">Folder Game</div>
+                </div>
+                <div class="session-arrow">➜</div>
+            `;
+            card.onclick = async () => {
+                await loadGameFromLibrary(g.handle, g.name);
+            };
+            list.appendChild(card);
+        });
+    }
+
+    // Hijack the "New Session" form for "New Game Folder"
+    const form = document.getElementById('new-session-form') as HTMLFormElement;
+
+    // Update labels to reflect we are creating a folder
+    const legend = form.querySelector('legend');
+    if (legend) legend.textContent = 'Create New Game in Library';
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById('new-session-name') as HTMLInputElement;
+        const kInput = document.getElementById('new-session-k') as HTMLInputElement;
+        const gameName = nameInput.value.trim();
+
+        if (gameName && store.libraryHandle) {
+            try {
+                const newGameDir = await createGameInLibrary(store.libraryHandle, gameName);
+
+                // Initialize with empty state and settings
+                const initialK = parseInt(kInput.value) || 60;
+                const initialState = {
+                    players: [],
+                    matchHistory: [],
+                    kFactor: initialK
+                };
+
+                await saveGameToSession(newGameDir, initialState);
+                await loadGameFromLibrary(newGameDir, gameName);
+
+            } catch (err) {
+                console.error(err);
+                showNotification('Failed to create game folder', 'error');
+            }
+        }
+    };
+}
+
+async function loadGameFromLibrary(dirHandle: FileSystemDirectoryHandle, folderName: string) {
+    try {
+        store.directoryHandle = dirHandle;
+        store.folderName = folderName;
+        store.currentSessionId = null; // Clear local storage session ID
+
+        // Load state
+        const state = await loadGameFromSession(dirHandle);
+        store.players = state.players;
+        store.matchHistory = state.matchHistory;
+        store.kFactor = state.kFactor;
+
+        // UI Switch
+        document.getElementById('game-menu')!.style.display = 'none';
+        document.getElementById('app-main')!.style.display = 'block';
+
+        updateKFactorInputState();
+        store.hasUnsavedChanges = false;
+        updateSaveButton();
+        render(); // Initial render
+
+        showNotification(`Loaded game: ${folderName}`);
+
+        // Setup listeners if not already done (similar to loadSessionFromHash logic)
+        setupEventListeners();
+
+    } catch (e) {
+        console.error(e);
+        showNotification('Failed to load game', 'error');
+    }
+}
+
+// --- MENU & ROUTING ---
+
 function renderGameMenu() {
+    // If we have a library loaded, render that instead
+    if (store.libraryHandle) {
+        renderGameLibrary(store.libraryHandle);
+        return;
+    }
+
     migrateLegacyDataIfNeeded();
     const sessions = getSessionList();
 
@@ -427,8 +573,30 @@ function renderGameMenu() {
     const list = document.getElementById('session-list')!;
     list.innerHTML = '';
 
+    // Button to switch to folder mode
+    const openFolderBtnContainer = document.createElement('div');
+    openFolderBtnContainer.style.width = '100%';
+    openFolderBtnContainer.style.textAlign = 'center';
+    openFolderBtnContainer.style.marginBottom = '20px';
+
+    const openFolderBtn = document.createElement('button');
+    openFolderBtn.id = 'open-library-btn'; // Updated ID
+    openFolderBtn.className = 'btn primary';
+    openFolderBtn.textContent = '📂 Open Game Library Folder';
+    openFolderBtn.onclick = handleOpenLibrary; // Use new handler
+
+    openFolderBtnContainer.appendChild(openFolderBtn);
+    list.appendChild(openFolderBtnContainer);
+
+    const divider = document.createElement('hr');
+    divider.style.width = '100%';
+    divider.style.margin = '1rem 0';
+    list.appendChild(divider);
+
     if (sessions.length === 0) {
-        list.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:1rem;">No previous operations found.</div>';
+        const msg = document.createElement('div');
+        msg.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:1rem;">Or create a browser-only session below.</div>';
+        list.appendChild(msg);
     } else {
         sessions.forEach(s => {
             const card = document.createElement('div');
@@ -450,6 +618,10 @@ function renderGameMenu() {
     }
 
     const form = document.getElementById('new-session-form') as HTMLFormElement;
+    // Reset legend
+    const legend = form.querySelector('legend');
+    if (legend) legend.textContent = 'Start New Session';
+
     form.onsubmit = (e) => {
         e.preventDefault();
         const nameInput = document.getElementById('new-session-name') as HTMLInputElement;
@@ -461,6 +633,80 @@ function renderGameMenu() {
             window.location.reload();
         }
     };
+}
+
+function setupEventListeners() {
+    // --- Event Listeners ---
+    // Ensure we don't duplicate listeners if called multiple times (simple check)
+    if (DOMElements.settingsForm?.hasAttribute('data-listening')) return;
+    DOMElements.settingsForm?.setAttribute('data-listening', 'true');
+
+    DOMElements.settingsForm?.addEventListener('submit', (e) => e.preventDefault());
+    DOMElements.addPlayerForm?.addEventListener('submit', handleAddPlayer);
+    DOMElements.recordMatchForm?.addEventListener('submit', handleRecordMatch);
+    DOMElements.kFactorInput?.addEventListener('input', handleKFactorChange);
+    DOMElements.updateLeaderboardBtn?.addEventListener('click', handleUpdateLeaderboardClick);
+
+    DOMElements.exportPlayersBtn?.addEventListener('click', handleExportPlayers);
+
+    if (DOMElements.importPlayersFile) {
+        const context = { render, updateKFactorInputState, DOMElements };
+        DOMElements.importPlayersFile.addEventListener('change', createImportPlayersHandler(context));
+    }
+
+    DOMElements.clearHistoryBtn?.addEventListener('click', handleClearMatchHistory);
+    DOMElements.clearPlayersBtn?.addEventListener('click', handleClearPlayers);
+
+    DOMElements.player1Input?.addEventListener('input', handleAutocompleteInput);
+    DOMElements.player2Input?.addEventListener('input', handleAutocompleteInput);
+
+    DOMElements.player1Input?.addEventListener('keydown', (e) => handleKeydown(e, 'p1'));
+    DOMElements.player2Input?.addEventListener('keydown', (e) => handleKeydown(e, 'p2'));
+
+    DOMElements.toggleBattleHistoryBtn?.addEventListener('click', () => {
+        if (!DOMElements.battleHistoryContainer) return;
+        const isOpen = !DOMElements.battleHistoryContainer.hasAttribute('hidden');
+        if (isOpen) {
+            DOMElements.battleHistoryContainer.setAttribute('hidden', 'true');
+            DOMElements.toggleBattleHistoryBtn!.setAttribute('aria-expanded', 'false');
+            DOMElements.toggleBattleHistoryBtn!.textContent = 'Show Battle History';
+        } else {
+            DOMElements.battleHistoryContainer.removeAttribute('hidden');
+            DOMElements.toggleBattleHistoryBtn!.setAttribute('aria-expanded', 'true');
+            DOMElements.toggleBattleHistoryBtn!.textContent = 'Hide Battle History';
+            renderBattleHistory(store.matchHistory, DOMElements);
+        }
+    });
+}
+
+function handleKeydown(event: KeyboardEvent, playerType: 'p1' | 'p2') {
+    if (event.key === 'Tab') {
+        const input = event.target as HTMLInputElement;
+        let suggestionsContainer: HTMLElement | null, idInput: HTMLInputElement | null;
+
+        if (playerType === 'p1') {
+            suggestionsContainer = DOMElements.player1Suggestions;
+            idInput = DOMElements.player1IdInput;
+        } else {
+            suggestionsContainer = DOMElements.player2Suggestions;
+            idInput = DOMElements.player2IdInput;
+        }
+
+        if (suggestionsContainer && suggestionsContainer.children.length > 0) {
+            const firstItem = suggestionsContainer.firstElementChild as HTMLElement;
+            if (firstItem && !firstItem.classList.contains('suggestion-item-none')) {
+                const name = firstItem.dataset.name;
+                const id = firstItem.dataset.id;
+
+                if (name && id && idInput) {
+                    input.value = name;
+                    idInput.value = id;
+                    hideSuggestions(suggestionsContainer);
+                    updateWinnerLabels();
+                }
+            }
+        }
+    }
 }
 
 function loadSessionFromHash() {
@@ -508,17 +754,91 @@ function switchView(viewId: string) {
 }
 
 function handleExit() {
+    if (store.hasUnsavedChanges) {
+        if (!confirm('You have unsaved changes. Are you sure you want to exit without saving?')) {
+            return;
+        }
+    }
     window.location.hash = '';
     window.location.reload();
 }
 
-// --- MAIN ---
-function main() {
-    DOMElements = queryDOMElements();
 
+
+async function handleSaveGame() {
+    // Case 1: Already a valid file system game
+    if (store.directoryHandle) {
+        try {
+            await saveGameToSession(store.directoryHandle, {
+                players: store.players,
+                matchHistory: store.matchHistory,
+                kFactor: store.kFactor
+            });
+            store.hasUnsavedChanges = false;
+            updateSaveButton();
+            showNotification('Game saved successfully');
+        } catch (e) {
+            console.error(e);
+            showNotification('Failed to save game', 'error');
+        }
+        return;
+    }
+
+    // Case 2: Legacy/Memory Session -> Export to Library
+    if (!confirm('This will save the current browser session to a new folder in your Game Library. Continue?')) {
+        return;
+    }
+
+    try {
+        // 1. Pick Library Folder
+        const libraryHandle = await selectLibraryFolder();
+        if (!libraryHandle) return; // Cancelled
+
+        // 2. Ask for new game name
+        const defaultName = `Game_${new Date().toISOString().split('T')[0]}`;
+        const gameName = prompt('Enter a name for the new game folder:', defaultName);
+        if (!gameName) return; // Cancelled
+
+        // 3. Create Game Folder
+        const newGameDir = await createGameInLibrary(libraryHandle, gameName);
+
+        // 4. Save Current State
+        await saveGameToSession(newGameDir, {
+            players: store.players,
+            matchHistory: store.matchHistory,
+            kFactor: store.kFactor
+        });
+
+        // 5. Switch Context
+        store.libraryHandle = libraryHandle;
+        store.directoryHandle = newGameDir;
+        store.folderName = gameName;
+        store.currentSessionId = null; // Clear legacy ID so we stay in file mode
+        store.hasUnsavedChanges = false;
+
+        updateSaveButton();
+        render(); // Refresh UI/Header
+
+        showNotification(`vSuccessfully exported to ${gameName}`);
+
+    } catch (e) {
+        console.error(e);
+        showNotification('Failed to export game', 'error');
+    }
+}
+
+// --- MAIN ---
+
+// --- INITIALIZATION HELPERS ---
+
+function setupGlobalListeners() {
     // Navigation Listeners
     document.querySelectorAll('.nav-btn').forEach(btn => {
         if (btn.classList.contains('nav-exit')) return;
+        // Avoid dual binding
+        if (btn.hasAttribute('data-bound')) return;
+        btn.setAttribute('data-bound', 'true');
+
         btn.addEventListener('click', () => {
             const view = btn.getAttribute('data-view');
             if (view) switchView(view);
@@ -526,88 +846,21 @@ function main() {
     });
 
     const exitBtn = document.getElementById('nav-exit-btn');
-    if (exitBtn) exitBtn.addEventListener('click', handleExit);
+    if (exitBtn && !exitBtn.hasAttribute('data-bound')) {
+        exitBtn.setAttribute('data-bound', 'true');
+        exitBtn.addEventListener('click', handleExit);
+    }
 
-    // Sync across tabs
-    window.addEventListener('storage', (e) => {
-        if (store.currentSessionId && e.key === `session_${store.currentSessionId}`) {
-            syncSession();
-        }
-        if (!store.currentSessionId && e.key === 'game-of-stick-sessions') {
-            renderGameMenu();
-        }
-    });
+    // Save Game Button Listener
+    const saveBtn = document.getElementById('nav-save-btn');
+    if (saveBtn && !saveBtn.hasAttribute('data-bound')) {
+        saveBtn.setAttribute('data-bound', 'true');
+        saveBtn.addEventListener('click', handleSaveGame);
+    }
 
-    if (loadSessionFromHash()) {
-        updateKFactorInputState();
-        // Extra safety: Always hide modal and clear content on load
-        if (DOMElements.playerCardModal) {
-            DOMElements.playerCardModal.setAttribute('hidden', 'true');
-            const contentDiv = document.getElementById('player-card-content');
-            if (contentDiv) contentDiv.innerHTML = '';
-        }
-
-        // --- Event Listeners ---
-        DOMElements.settingsForm?.addEventListener('submit', (e) => e.preventDefault());
-        DOMElements.addPlayerForm?.addEventListener('submit', handleAddPlayer);
-        DOMElements.recordMatchForm?.addEventListener('submit', handleRecordMatch);
-        DOMElements.kFactorInput?.addEventListener('input', handleKFactorChange);
-        DOMElements.updateLeaderboardBtn?.addEventListener('click', handleUpdateLeaderboardClick);
-
-        DOMElements.exportPlayersBtn?.addEventListener('click', handleExportPlayers);
-        DOMElements.exportMatchesBtn?.addEventListener('click', handleExportMatches);
-
-        if (DOMElements.importMatchesFile) {
-            const context = { render, updateKFactorInputState, DOMElements };
-            DOMElements.importMatchesFile.addEventListener('change', createImportMatchesHandler(context));
-        }
-
-        if (DOMElements.importPlayersFile) {
-            const context = { render, updateKFactorInputState, DOMElements };
-            DOMElements.importPlayersFile.addEventListener('change', createImportPlayersHandler(context));
-        }
-
-        DOMElements.clearHistoryBtn?.addEventListener('click', handleClearMatchHistory);
-        DOMElements.clearPlayersBtn?.addEventListener('click', handleClearPlayers);
-
-        DOMElements.player1Input?.addEventListener('input', handleAutocompleteInput);
-        DOMElements.player2Input?.addEventListener('input', handleAutocompleteInput);
-
-        const handleKeydown = (event: KeyboardEvent) => {
-            if (event.key === 'Tab') {
-                const input = event.target as HTMLInputElement;
-                let suggestionsContainer: HTMLElement | null, idInput: HTMLInputElement | null;
-
-                if (input.id === 'player1-input') {
-                    suggestionsContainer = DOMElements.player1Suggestions;
-                    idInput = DOMElements.player1IdInput;
-                } else if (input.id === 'player2-input') {
-                    suggestionsContainer = DOMElements.player2Suggestions;
-                    idInput = DOMElements.player2IdInput;
-                } else {
-                    return;
-                }
-
-                if (suggestionsContainer && suggestionsContainer.children.length > 0) {
-                    const firstItem = suggestionsContainer.firstElementChild as HTMLElement;
-                    if (firstItem && !firstItem.classList.contains('suggestion-item-none')) {
-                        const name = firstItem.dataset.name;
-                        const id = firstItem.dataset.id;
-
-                        if (name && id && idInput) {
-                            input.value = name;
-                            idInput.value = id;
-                            hideSuggestions(suggestionsContainer);
-                            updateWinnerLabels();
-                        }
-                    }
-                }
-            }
-        };
-
-        DOMElements.player1Input?.addEventListener('keydown', handleKeydown);
-        DOMElements.player2Input?.addEventListener('keydown', handleKeydown);
-
+    // Click outside for suggestions
+    if (!document.body.hasAttribute('data-global-click')) {
+        document.body.setAttribute('data-global-click', 'true');
         document.addEventListener('click', (event) => {
             const target = event.target as HTMLElement;
             // Handle clicking outside suggestions
@@ -621,22 +874,38 @@ function main() {
                 switchView('view-roster');
             }
         });
+    }
 
-        DOMElements.toggleBattleHistoryBtn?.addEventListener('click', () => {
-            if (!DOMElements.battleHistoryContainer) return;
-            const isOpen = !DOMElements.battleHistoryContainer.hasAttribute('hidden');
-            if (isOpen) {
-                DOMElements.battleHistoryContainer.setAttribute('hidden', 'true');
-                DOMElements.toggleBattleHistoryBtn!.setAttribute('aria-expanded', 'false');
-                DOMElements.toggleBattleHistoryBtn!.textContent = 'Show Battle History';
-            } else {
-                DOMElements.battleHistoryContainer.removeAttribute('hidden');
-                DOMElements.toggleBattleHistoryBtn!.setAttribute('aria-expanded', 'true');
-                DOMElements.toggleBattleHistoryBtn!.textContent = 'Hide Battle History';
-                renderBattleHistory(store.matchHistory, DOMElements);
+    // Sync across tabs
+    if (!window['__storageInit' as any]) {
+        // @ts-ignore
+        window['__storageInit'] = true;
+        window.addEventListener('storage', (e) => {
+            if (store.currentSessionId && e.key === `session_${store.currentSessionId}`) {
+                syncSession();
+            }
+            if (!store.currentSessionId && e.key === 'game-of-stick-sessions') {
+                renderGameMenu();
             }
         });
+    }
+}
 
+// --- MAIN ---
+function main() {
+    DOMElements = queryDOMElements();
+    setupGlobalListeners();
+
+    if (loadSessionFromHash()) {
+        updateKFactorInputState();
+        // Extra safety: Always hide modal and clear content on load
+        if (DOMElements.playerCardModal) {
+            DOMElements.playerCardModal.setAttribute('hidden', 'true');
+            const contentDiv = document.getElementById('player-card-content');
+            if (contentDiv) contentDiv.innerHTML = '';
+        }
+
+        setupEventListeners();
         render();
     } else {
         renderGameMenu();

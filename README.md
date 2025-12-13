@@ -64,3 +64,20 @@ To get a local copy up and running, follow these simple steps.
 3.  **Update Leaderboard:** Click the "Update Leaderboard" button to see the latest rankings.
 4.  **View Player Stats:** Select a player from the dropdown in the "Profile Stats" section to see their detailed statistics and match history.
 5.  **Import/Export Data:** Use the import/export buttons to manage your match data.
+
+
+# TODO
+
+- [ ] Fix the save and load mechanism
+     * Define the save game location
+    
+- [ ] Verify the leaderboard update mechanism
+     * Double window should work fine (one with the leaderboard updating and one with the match recording)
+     * Implement a "Minuteur" to run updates every XX minutes for more entertainment. Display the time remaining.
+     * "Minuteur" could be shortcut by the manual update button.
+
+- [ ] When recording a match, display the respective lists of players remaining to fought by the two players selected. 
+- [ ] Add the remaining opponent to be fought below the match recording form, In a dedicated card. 
+     *  Display a counter if this list of players is for playing against all remaining players, once, or twice, if all already fought once, or more than twice. Display this number next to each player's list.
+
+- [ ] Export game and player stats as a Nice PDF to be send like for Laser Tag

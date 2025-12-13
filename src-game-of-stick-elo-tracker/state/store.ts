@@ -8,6 +8,10 @@ export class AppStore {
     isRealtimeUpdate: boolean = true; // Kept for compatibility but always true
     lastLeaderboardElo: Record<string, number> = {};
     currentSessionId: string | null = null;
+    directoryHandle: FileSystemDirectoryHandle | null = null; // Used for "Library" mode
+    libraryHandle: FileSystemDirectoryHandle | null = null; // Add library handle
+    folderName: string | null = null;
+    hasUnsavedChanges: boolean = false;
 
     setPlayers(players: Player[]) {
         this.players = players;

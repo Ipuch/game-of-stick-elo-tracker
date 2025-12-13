@@ -21,11 +21,9 @@ export interface AppDOMElements {
     settingsForm: HTMLFormElement | null;
 
     exportPlayersBtn: HTMLButtonElement | null;
-    exportMatchesBtn: HTMLButtonElement | null;
     toggleBattleHistoryBtn: HTMLButtonElement | null;
     battleHistoryContainer: HTMLElement | null;
     battleHistoryList: HTMLElement | null;
-    importMatchesFile: HTMLInputElement | null;
     importPlayersFile: HTMLInputElement | null;
     clearHistoryBtn: HTMLButtonElement | null;
     clearPlayersBtn: HTMLButtonElement | null;
@@ -58,11 +56,9 @@ export function queryDOMElements(): AppDOMElements {
         settingsForm: document.getElementById('settings-form') as HTMLFormElement,
 
         exportPlayersBtn: document.getElementById('export-players-btn') as HTMLButtonElement,
-        exportMatchesBtn: document.getElementById('export-matches-btn') as HTMLButtonElement,
         toggleBattleHistoryBtn: document.getElementById('toggle-battle-history-btn') as HTMLButtonElement,
         battleHistoryContainer: document.getElementById('battle-history-container') as HTMLElement,
         battleHistoryList: document.getElementById('battle-history-list') as HTMLElement,
-        importMatchesFile: document.getElementById('import-matches-file') as HTMLInputElement,
         importPlayersFile: document.getElementById('import-players-file') as HTMLInputElement,
         clearHistoryBtn: document.getElementById('clear-history-btn') as HTMLButtonElement,
         clearPlayersBtn: document.getElementById('clear-players-btn') as HTMLButtonElement,

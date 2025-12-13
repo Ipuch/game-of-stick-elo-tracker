@@ -2,14 +2,7 @@ import { Player, Match } from '../types/appTypes';
 import { AppDOMElements } from '../utils/domElements';
 import { calculatePlayerStreaks } from '../utils/playerUtils';
 
-function calculateWinLossRatio(player: Player): string {
-    const totalGames = player.wins + player.losses;
-    if (totalGames === 0) {
-        return '0 W/L';
-    }
-    const ratio = (player.wins / totalGames) * 100;
-    return `${ratio.toFixed(1)}% W/L`;
-}
+
 
 function renderStreak(type: 'W' | 'L' | null, length: number): string {
     if (length < 3 || !type) return '';
@@ -26,23 +19,29 @@ function renderStreak(type: 'W' | 'L' | null, length: number): string {
 
 export function renderLeaderboard(
     players: Player[],
-    DOMElements: AppDOMElements,
+    _DOMElements: AppDOMElements,
     matchHistory: Match[],
     lastLeaderboardElo: Record<string, number>
 ) {
-    if (!DOMElements.leaderboardBody) return;
-
-    const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
-
-    console.log('Rendering Leaderboard with players:', sortedPlayers);
-
-    DOMElements.leaderboardBody.innerHTML = '';
-
-    if (players.length === 0) {
-        DOMElements.leaderboardBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2rem;"><a href="#" id="empty-leaderboard-link" style="color:var(--primary-color); text-decoration:underline;">No players yet. Add one here!</a></td></tr>`;
+    const tbody = document.getElementById('leaderboard-body');
+    console.log('renderLeaderboard executing', { players, tbody });
+    if (!tbody) {
+        console.error('Leaderboard body NOT found');
         return;
     }
 
+    const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
+
+
+
+    tbody.innerHTML = '';
+
+    if (players.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2rem;"><a href="#" id="empty-leaderboard-link" style="color:var(--primary-color); text-decoration:underline;">No players yet. Add one here!</a></td></tr>`;
+        return;
+    }
+
+    let rowsHtml = '';
     sortedPlayers.forEach((player, index) => {
         const newRank = index + 1;
         const oldRank = player.previousRank;
@@ -62,27 +61,27 @@ export function renderLeaderboard(
         // Calculate ELO diff since last leaderboard update
         const prevElo = lastLeaderboardElo[player.id] ?? player.elo;
         const eloDiff = player.elo - prevElo;
-        console.log(`Player: ${player.name}, ELO: ${player.elo}, prevElo: ${prevElo}, eloDiff: ${eloDiff}`);
         const eloDiffHtml = eloDiff !== 0
             ? `<span class="elo-change ${eloDiff > 0 ? 'elo-up' : 'elo-down'}">(${eloDiff > 0 ? '+' : ''}${eloDiff})</span>`
             : '';
 
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><div>${newRank} ${rankChangeIndicator}</div></td>
-            <td>${player.name} ${renderStreak(player.currentStreakType, player.currentStreakLength)}</td>
-            <td>
-                ${player.elo}
-                ${eloDiffHtml}
-            </td>
-            <td>${player.wins}</td>
-            <td>${player.losses}</td>
-            <td>${player.draws}</td>
-            <td>${player.wins + player.losses + player.draws}</td>
+        rowsHtml += `
+            <tr>
+                <td><div>${newRank} ${rankChangeIndicator}</div></td>
+                <td>${player.name} ${renderStreak(player.currentStreakType, player.currentStreakLength)}</td>
+                <td>
+                    ${player.elo}
+                    ${eloDiffHtml}
+                </td>
+                <td>${player.wins}</td>
+                <td>${player.losses}</td>
+                <td>${player.draws}</td>
+                <td>${player.wins + player.losses + player.draws}</td>
+            </tr>
         `;
-        DOMElements.leaderboardBody!.appendChild(row);
         player.previousElo = player.elo;
     });
+    tbody.innerHTML = rowsHtml;
 
     players.forEach(p => {
         const sortedIndex = sortedPlayers.findIndex(sp => sp.id === p.id);
