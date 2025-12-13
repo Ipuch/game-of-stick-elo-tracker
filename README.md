@@ -70,6 +70,8 @@ To get a local copy up and running, follow these simple steps.
 
 - [ ] Fix the save and load mechanism
      * Define the save game location
+
+- [] Add Scrolling on the menu page.
     
 - [ ] Verify the leaderboard update mechanism
      * Double window should work fine (one with the leaderboard updating and one with the match recording)
