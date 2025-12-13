@@ -305,6 +305,8 @@ function showSuggestions(filteredPlayers: Player[], suggestionsContainer: HTMLEl
     filteredPlayers.forEach(player => {
         const item = document.createElement('div');
         item.classList.add('suggestion-item');
+        item.dataset.id = player.id; // Store ID
+        item.dataset.name = player.name; // Store Name
         item.innerHTML = `<span>${player.name}</span> <small>${player.elo} ELO</small>`;
 
         item.addEventListener('mousedown', (e) => { // Mousedown to fire before input blur
@@ -403,6 +405,43 @@ function main() {
     // Autocomplete Listeners
     DOMElements.player1Input?.addEventListener('input', handleAutocompleteInput);
     DOMElements.player2Input?.addEventListener('input', handleAutocompleteInput);
+
+    const handleKeydown = (event: KeyboardEvent) => {
+        if (event.key === 'Tab') {
+            const input = event.target as HTMLInputElement;
+            let suggestionsContainer: HTMLElement | null, idInput: HTMLInputElement | null;
+
+            if (input.id === 'player1-input') {
+                suggestionsContainer = DOMElements.player1Suggestions;
+                idInput = DOMElements.player1IdInput;
+            } else if (input.id === 'player2-input') {
+                suggestionsContainer = DOMElements.player2Suggestions;
+                idInput = DOMElements.player2IdInput;
+            } else {
+                return;
+            }
+
+            if (suggestionsContainer && suggestionsContainer.children.length > 0) {
+                const firstItem = suggestionsContainer.firstElementChild as HTMLElement;
+                if (firstItem && !firstItem.classList.contains('suggestion-item-none')) {
+                    // Select the first item
+                    const name = firstItem.dataset.name;
+                    const id = firstItem.dataset.id;
+
+                    if (name && id && idInput) {
+                        input.value = name;
+                        idInput.value = id;
+                        hideSuggestions(suggestionsContainer);
+                        updateWinnerLabels();
+                        // Allow default Tab behavior to move focus
+                    }
+                }
+            }
+        }
+    };
+
+    DOMElements.player1Input?.addEventListener('keydown', handleKeydown);
+    DOMElements.player2Input?.addEventListener('keydown', handleKeydown);
 
     // Hide suggestions if user clicks away from the form
     document.addEventListener('click', (event) => {
