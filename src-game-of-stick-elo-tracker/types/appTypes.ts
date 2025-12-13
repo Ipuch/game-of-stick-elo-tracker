@@ -13,17 +13,26 @@ export interface Player {
 }
 
 export interface Match {
-    id: string;
-    timestamp: number;
-    player1Id: string;
-    player2Id: string;
-    player1Name: string;
-    player2Name: string;
-    player1EloBefore: number;
-    player2EloBefore: number;
-    player1EloAfter: number;
-    player2EloAfter: number;
-    outcome: 'p1' | 'p2' | 'draw';
-    player1EloChange?: number; // Optional: Stores ELO change for Player 1
-    player2EloChange?: number; // Optional: Stores ELO change for Player 2
-} 
+  id: string;
+  timestamp: number;
+  player1Id: string;
+  player2Id: string;
+  player1Name: string;
+  player2Name: string;
+  player1EloBefore: number;
+  player2EloBefore: number;
+  player1EloAfter: number;
+  player2EloAfter: number;
+  outcome: 'p1' | 'p2' | 'draw';
+  player1EloChange?: number; // Optional: Stores ELO change for Player 1
+  player2EloChange?: number; // Optional: Stores ELO change for Player 2
+}
+
+export interface GameSessionMetadata {
+  id: string;
+  name: string;
+  createdAt: number;
+  lastPlayed: number;
+  playerCount: number;
+  kFactor: number;
+}

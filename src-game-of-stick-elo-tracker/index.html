@@ -1,29 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Game of Stick - ELO Tracker</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="index.css" />
-    <script type="module" src="index.tsx"></script>
 
-  <body>
-    <main class="container">
-      <header>
-        <img src="Logo-west-coast-academy02.png" alt="West Coast Academy Logo" class="header-logo" />
-        <h1>Game of S.T.I.C.K.</h1>
-        <p>Parkour ELO Battle Tracker</p>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game of Stick - ELO Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Outfit:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="index.css" />
+  <script type="module" src="index.tsx"></script>
 
-      <section class="leaderboard-section" aria-labelledby="leaderboard-heading">
-        <div id="podium-container" class="podium-container" aria-label="Top 3 Players">
-            <!-- Podium spots will be dynamically inserted here -->
+<body>
+  <div id="game-menu" class="game-menu">
+    <div class="game-menu-content">
+      <img src="Logo-west-coast-academy02.png" alt="Logo" class="menu-logo" />
+      <h1 class="game-menu-title">Game of S.T.I.C.K.</h1>
+      <p class="game-menu-subtitle">System Linked // Select Data Fragment</p>
+
+      <div class="game-menu-grid">
+        <div class="session-list-container">
+          <h2>Previous Matches</h2>
+          <div id="session-list" class="session-list">
+            <!-- Sessions inserted here -->
+          </div>
         </div>
+
+        <div class="new-session-container">
+          <h2>New Operation</h2>
+          <form id="new-session-form">
+            <div class="form-group">
+              <label for="new-session-name">Operation Name</label>
+              <input type="text" id="new-session-name" required placeholder="e.g. Tournament 2025" />
+            </div>
+            <div class="form-group">
+              <label for="new-session-k">K-Factor</label>
+              <input type="number" id="new-session-k" value="60" min="1" required />
+            </div>
+            <button type="submit" class="button-primary">Initialize System</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <main class="container" id="app-main" style="display: none;">
+    <header class="app-header">
+      <div class="header-content">
+        <div class="logo-area">
+          <img src="Logo-west-coast-academy02.png" alt="Logo" class="header-logo" />
+          <div class="header-text">
+            <h1>Game of S.T.I.C.K.</h1>
+            <p>Parkour ELO Battle Tracker</p>
+          </div>
+        </div>
+        <nav class="app-nav">
+          <button class="nav-btn active" data-view="view-dashboard">Leaderboard</button>
+          <button class="nav-btn" data-view="view-arena">Arena</button>
+          <button class="nav-btn" data-view="view-roster">Add Players</button>
+          <button class="nav-btn" data-view="view-stats">Stats</button>
+          <button class="nav-btn" data-view="view-settings">Settings</button>
+          <button class="nav-btn nav-exit" id="nav-exit-btn">Exit Game</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- VIEW: DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <section class="leaderboard-section">
+        <div id="podium-container" class="podium-container"></div>
         <div id="update-leaderboard-container">
-            <button id="update-leaderboard-btn" class="button-primary">Update Leaderboard</button>
+          <button id="update-leaderboard-btn" class="button-primary">Update Leaderboard</button>
         </div>
         <div class="table-container">
           <table>
@@ -38,120 +86,139 @@
                 <th>Total Battles</th>
               </tr>
             </thead>
-            <tbody id="leaderboard-body">
-              <!-- Player rows will be dynamically inserted here -->
-            </tbody>
+            <tbody id="leaderboard-body"></tbody>
           </table>
         </div>
       </section>
+    </div>
 
-      <section id="profile-stats-section" class="panel">
-        <div id="profile-stats-content"></div>
-      </section>
-
-      <div class="battle-history-actions" style="margin-bottom:2rem;">
-        <button id="export-matches-btn" class="button-secondary">Export Matches (.csv)</button>
-        <div class="import-group">
-          <label for="import-matches-file" class="button-secondary">Import Matches (.csv)</label>
-          <input type="file" id="import-matches-file" accept=".csv" hidden>
-          <span class="help-icon" title="Required CSV format (from export): Timestamp,Player 1,Player 2,Outcome,P1 ELO Before,P1 ELO After,P2 ELO Before,P2 ELO After (Outcome: e.g., 'Player 1 Won', 'Player 2 Won', 'Draw')">?</span>
-        </div>
-      </div>
-
-      <section class="battle-history-section" aria-labelledby="battle-history-heading">
-        <button id="toggle-battle-history-btn" class="button-secondary" type="button" aria-expanded="false" aria-controls="battle-history-container">Show Battle History</button>
-        <div id="battle-history-container" class="battle-history-container" hidden>
-          <h2 id="battle-history-heading">Battle History</h2>
-          <div id="battle-history-list">
-            <!-- Battle history will be rendered here -->
-          </div>
-        </div>
-      </section>
-
-      <div class="panels">
+    <!-- VIEW: ARENA -->
+    <div id="view-arena" class="view">
+      <div class="panel-container-center">
         <section class="panel" aria-labelledby="match-heading">
           <h2 id="match-heading">Record Match</h2>
           <form id="record-match-form">
             <div class="form-group autocomplete-container">
-                <label for="player1-input">Player 1</label>
-                <input type="text" id="player1-input" name="player1Name" autocomplete="off" placeholder="Type to search..." required>
-                <input type="hidden" id="player1-id" name="player1">
-                <div class="suggestions-list" id="player1-suggestions"></div>
+              <label for="player1-input">Player 1</label>
+              <input type="text" id="player1-input" name="player1Name" autocomplete="off" placeholder="Search..."
+                required>
+              <input type="hidden" id="player1-id" name="player1">
+              <div class="suggestions-list" id="player1-suggestions"></div>
             </div>
             <div class="form-group autocomplete-container">
-                <label for="player2-input">Player 2</label>
-                <input type="text" id="player2-input" name="player2Name" autocomplete="off" placeholder="Type to search..." required>
-                <input type="hidden" id="player2-id" name="player2">
-                <div class="suggestions-list" id="player2-suggestions"></div>
+              <label for="player2-input">Player 2</label>
+              <input type="text" id="player2-input" name="player2Name" autocomplete="off" placeholder="Search..."
+                required>
+              <input type="hidden" id="player2-id" name="player2">
+              <div class="suggestions-list" id="player2-suggestions"></div>
             </div>
             <fieldset class="form-group">
-                <legend>Outcome</legend>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="winner-p1" name="winner" value="p1" required>
-                        <label for="winner-p1" id="winner-p1-label">Player 1 Wins</label>
-                    </div>
-                     <div class="radio-option">
-                        <input type="radio" id="winner-draw" name="winner" value="draw">
-                        <label for="winner-draw">Draw</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="winner-p2" name="winner" value="p2">
-                        <label for="winner-p2" id="winner-p2-label">Player 2 Wins</label>
-                    </div>
+              <legend>Outcome</legend>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="winner-p1" name="winner" value="p1" required>
+                  <label for="winner-p1" id="winner-p1-label">Player 1 Wins</label>
                 </div>
+                <div class="radio-option">
+                  <input type="radio" id="winner-draw" name="winner" value="draw">
+                  <label for="winner-draw">Draw</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="winner-p2" name="winner" value="p2">
+                  <label for="winner-p2" id="winner-p2-label">Player 2 Wins</label>
+                </div>
+              </div>
             </fieldset>
-             <p id="match-error" class="error-message" aria-live="polite"></p>
+            <p id="match-error" class="error-message"></p>
             <button type="submit" class="button-primary">Submit Result</button>
           </form>
         </section>
+      </div>
+    </div>
 
+    <!-- VIEW: ROSTER -->
+    <div id="view-roster" class="view">
+      <div class="panel-container-center">
         <section class="panel" aria-labelledby="player-heading">
           <h2 id="player-heading">Add New Player</h2>
           <form id="add-player-form">
             <div class="form-group">
               <label for="new-player-name">Player Name</label>
-              <input
-                type="text"
-                id="new-player-name"
-                name="playerName"
-                required
-                minlength="2"
-                placeholder="e.g., Flowmaster"
-              />
+              <input type="text" id="new-player-name" name="playerName" required minlength="2"
+                placeholder="e.g., Flowmaster" />
             </div>
-            <p id="add-player-error" class="error-message" aria-live="polite"></p>
+            <p id="add-player-error" class="error-message"></p>
             <button type="submit" class="button-primary">Add Player</button>
             <div class="player-actions">
-                <button id="export-players-btn" class="button-secondary">Export Players (.csv)</button>
-                <div class="import-group">
-                  <label for="import-players-file" class="button-secondary">Import Players (.csv)</label>
-                  <input type="file" id="import-players-file" accept=".csv" hidden>
-                  <span class="help-icon" title="Required CSV format: name,initial_elo (initial_elo is optional)">?</span>
-                </div>
+              <button id="export-players-btn" class="button-secondary">Export Players (.csv)</button>
+              <div class="import-group">
+                <label for="import-players-file" class="button-secondary">Import Players (.csv)</label>
+                <input type="file" id="import-players-file" accept=".csv" hidden>
+              </div>
             </div>
           </form>
-        </section>
-
-        <section class="panel" aria-labelledby="settings-heading">
-            <h2 id="settings-heading">Settings</h2>
-            <form id="settings-form">
-                <div class="form-group">
-                    <label for="k-factor-input">K-Factor</label>
-                    <input type="number" id="k-factor-input" name="kFactor" min="1" step="1" required>
-                    <p class="form-hint">Determines ELO change. Default: 60. Locked after first match.</p>
-                </div>
-
-            </form>
-            <div class="settings-actions">
-                <hr class="settings-divider">
-                <button id="clear-history-btn" class="button-danger">Clear Match History</button>
-                <button id="clear-players-btn" class="button-danger">Clear All Players</button>
+          <div id="roster-list-container" class="roster-list-container">
+            <h3>Current Roster</h3>
+            <div id="roster-list" class="roster-list">
+              <!-- Player chips will go here -->
             </div>
+          </div>
         </section>
       </div>
+    </div>
 
-    </main>
+    <!-- VIEW: STATS -->
+    <div id="view-stats" class="view">
+      <section id="profile-stats-section" class="panel">
+        <div id="profile-stats-content"></div>
+      </section>
+
+      <section class="battle-history-section">
+        <div class="battle-history-header">
+          <h2>Battle History</h2>
+          <div class="battle-actions">
+            <button id="toggle-battle-history-btn" class="button-secondary">Toggle View</button>
+            <button id="export-matches-btn" class="button-secondary">Export (.csv)</button>
+          </div>
+        </div>
+        <div id="battle-history-container" class="battle-history-container">
+          <div id="battle-history-list"></div>
+        </div>
+      </section>
+
+      <!-- Import Matches (hidden or moved to stats/settings) -->
+      <div class="import-group" style="margin-top: 1rem;">
+        <label for="import-matches-file" class="button-secondary">Import Matches (.csv)</label>
+        <input type="file" id="import-matches-file" accept=".csv" hidden>
+      </div>
+    </div>
+
+    <!-- VIEW: SETTINGS -->
+    <div id="view-settings" class="view">
+      <div class="panel-container-center">
+        <section class="panel" aria-labelledby="settings-heading">
+          <h2 id="settings-heading">System Configuration</h2>
+          <form id="settings-form">
+            <div class="form-group">
+              <label for="k-factor-input">K-Factor</label>
+              <input type="number" id="k-factor-input" name="kFactor" min="1" step="1" required>
+              <p class="form-hint">Determines ELO change. Default: 60.</p>
+            </div>
+          </form>
+          <div class="settings-actions">
+            <hr class="settings-divider">
+            <h3>Danger Zone</h3>
+            <button id="clear-history-btn" class="button-danger">Clear Match History</button>
+            <button id="clear-players-btn" class="button-danger">Clear All Data</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+
+  </main>
+  <div id="app-notification" class="notification-toast"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

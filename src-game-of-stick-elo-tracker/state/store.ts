@@ -5,8 +5,9 @@ export class AppStore {
     players: Player[] = [];
     matchHistory: Match[] = [];
     kFactor: number = DEFAULT_K_FACTOR;
-    isRealtimeUpdate: boolean = false;
+    isRealtimeUpdate: boolean = true; // Kept for compatibility but always true
     lastLeaderboardElo: Record<string, number> = {};
+    currentSessionId: string | null = null;
 
     setPlayers(players: Player[]) {
         this.players = players;

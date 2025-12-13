@@ -6,7 +6,7 @@
 import { calculateElo } from './utils/eloCalculator';
 import { Player, Match } from './types/appTypes';
 import { INITIAL_ELO, DEFAULT_K_FACTOR } from './constants/appConstants';
-import { saveAppState, loadAppState } from './utils/localStoragePersistence';
+import { getSessionList, createSession, loadSession, saveSession, migrateLegacyDataIfNeeded } from './utils/localStoragePersistence';
 import { AppDOMElements, queryDOMElements } from './utils/domElements';
 import { renderLeaderboard } from './renderers/leaderboard';
 import { renderPodium } from './renderers/podium';
@@ -18,11 +18,17 @@ import { store } from './state/store';
 import { renderProfileStatsSection } from './renderers/profileStats';
 import { calculatePlayerStreaks } from './utils/statsUtils';
 import { generateUUID } from './utils/uuid';
-import { deduceKFromFirstMatch } from './utils/importUtils'; // Used in deduceK logic inside handlers, but if we moved logic to handlers, maybe not needed here? 
-// actually deduceKFromFirstMatch IS needed if we use it here... checking... 
-// Ah, the original code had `deduceKFromFirstMatch` used in `handleImportMatches`. 
-// Since `handleImportMatches` is now in handlers, we don't need it here unless we use it for something else.
-// Checking original code: it was ONLY used in `handleImportMatches`. So I can remove it from here.
+
+// --- PERSISTENCE HELPER ---
+function persist() {
+    if (store.currentSessionId) {
+        saveSession(store.currentSessionId, {
+            players: store.players,
+            matchHistory: store.matchHistory,
+            kFactor: store.kFactor
+        });
+    }
+}
 
 import {
     handleExportPlayers,
@@ -61,8 +67,12 @@ function render() {
     renderBattleHistory(store.matchHistory, DOMElements);
     renderCombatMatrix(store.players, store.matchHistory, DOMElements);
     renderProfileStatsSection(store.players, store.matchHistory);
+    renderRosterList();
 
     // Now that ranks are updated (including previousRank), save the state.
+    // persist() is called by the caller functions usually, but render() is sometimes called for refresh.
+    // However, saving state here might be redundant if we persist on mutation.
+    // Given legacy code, we keep it safe or remove it? Use persist() if needed.
     saveAppState({
         players: store.players,
         matchHistory: store.matchHistory,
@@ -87,19 +97,37 @@ function handleUpdateLeaderboardClick() {
 }
 
 // --- EVENT HANDLERS ---
+
+function renderRosterList() {
+    if (!DOMElements.rosterList) return;
+    DOMElements.rosterList.innerHTML = '';
+
+    // Sort alphabetically
+    const sorted = [...store.players].sort((a, b) => a.name.localeCompare(b.name));
+
+    sorted.forEach(p => {
+        const chip = document.createElement('div');
+        chip.className = 'player-chip';
+        chip.innerHTML = `<span>${p.name}</span> <span class="elo">${p.elo}</span>`;
+        DOMElements.rosterList?.appendChild(chip);
+    });
+}
+
 function handleAddPlayer(event: SubmitEvent) {
     event.preventDefault();
-    const name = DOMElements.newPlayerNameInput?.value.trim();
+    const nameInput = DOMElements.newPlayerNameInput;
+    const name = nameInput?.value.trim();
 
     if (DOMElements.addPlayerError) DOMElements.addPlayerError.textContent = '';
 
     if (!name) {
-        if (DOMElements.addPlayerError) DOMElements.addPlayerError.textContent = 'Player name cannot be empty.';
+        showNotification('Player name cannot be empty', 'error');
         return;
     }
 
     if (store.players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-        if (DOMElements.addPlayerError) DOMElements.addPlayerError.textContent = 'A player with this name already exists.';
+        showNotification(`Player "${name}" already exists!`, 'error');
+        // Optional: clear input if duplicate? Keep it so user can edit.
     } else {
         const newPlayer: Player = {
             id: generateUUID(),
@@ -115,16 +143,37 @@ function handleAddPlayer(event: SubmitEvent) {
         store.players.push(newPlayer);
 
         // Persist state and update UI immediately
-        saveAppState({
-            players: store.players,
-            matchHistory: store.matchHistory,
-            kFactor: store.kFactor,
-            isRealtimeUpdate: store.isRealtimeUpdate
-        });
+        persist();
         render(); // Update all UI components including profile stats
 
-        if (DOMElements.newPlayerNameInput) DOMElements.newPlayerNameInput.value = '';
+        showNotification(`Player "${name}" added!`, 'success');
+
+        if (nameInput) nameInput.value = '';
     }
+}
+
+// --- NOTIFICATIONS ---
+function showNotification(message: string, type: 'success' | 'error' = 'success') {
+    const toast = document.getElementById('app-notification');
+    if (!toast) return;
+
+    // Reset classes and force reflow to restart animation if clicked rapidly
+    toast.className = 'notification-toast';
+    void toast.offsetWidth;
+
+    toast.textContent = message;
+    toast.classList.add('show', type);
+
+    // Wait 1.5s then start vanishing
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.classList.add('hiding');
+
+        // After hiding animation (1s), reset fully
+        setTimeout(() => {
+            toast.classList.remove('hiding', 'success', 'error');
+        }, 1000);
+    }, 1500);
 }
 
 function handleRecordMatch(event: SubmitEvent) {
@@ -206,17 +255,28 @@ function handleRecordMatch(event: SubmitEvent) {
 
     updateKFactorInputState();
 
-    // Persist state; user will update leaderboard manually.
-    saveAppState({
-        players: store.players,
-        matchHistory: store.matchHistory,
-        kFactor: store.kFactor,
-        isRealtimeUpdate: store.isRealtimeUpdate
-    });
+    persist();
 
+    // Prepare Notification Message
+    let msg = '';
+    if (winner === 'p1') {
+        msg = `${player1.name} won against ${player2.name}`;
+    } else if (winner === 'p2') {
+        msg = `${player2.name} won against ${player1.name}`;
+    } else {
+        msg = `Draw between ${player1.name} and ${player2.name}`;
+    }
+    showNotification(msg, 'success');
+
+    // Reset Form
     form.reset();
+
+    // Explicitly clear specific elements
     if (DOMElements.player1Input) DOMElements.player1Input.value = '';
     if (DOMElements.player2Input) DOMElements.player2Input.value = '';
+    if (DOMElements.player1IdInput) DOMElements.player1IdInput.value = '';
+    if (DOMElements.player2IdInput) DOMElements.player2IdInput.value = '';
+
     updateWinnerLabels();
     hideSuggestions(DOMElements.player1Suggestions);
     hideSuggestions(DOMElements.player2Suggestions);
@@ -354,120 +414,233 @@ function handleAutocompleteInput(event: Event) {
     showSuggestions(filteredPlayers, suggestionsContainer, input, idInput);
 }
 
-// --- INITIALIZATION ---
+// --- MENU & ROUTING ---
+
+
+function renderGameMenu() {
+    migrateLegacyDataIfNeeded();
+    const sessions = getSessionList();
+
+    document.getElementById('game-menu')!.style.display = 'flex';
+    document.getElementById('app-main')!.style.display = 'none';
+
+    const list = document.getElementById('session-list')!;
+    list.innerHTML = '';
+
+    if (sessions.length === 0) {
+        list.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:1rem;">No previous operations found.</div>';
+    } else {
+        sessions.forEach(s => {
+            const card = document.createElement('div');
+            card.className = 'session-item';
+            const date = new Date(s.lastPlayed).toLocaleDateString();
+            card.innerHTML = `
+                <div class="session-info">
+                    <h3>${s.name}</h3>
+                    <div class="session-meta">${s.playerCount} Players • Last Played: ${date}</div>
+                </div>
+                <div class="session-arrow">➜</div>
+            `;
+            card.onclick = () => {
+                window.location.hash = `game_${s.id}`;
+                window.location.reload();
+            };
+            list.appendChild(card);
+        });
+    }
+
+    const form = document.getElementById('new-session-form') as HTMLFormElement;
+    form.onsubmit = (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById('new-session-name') as HTMLInputElement;
+        const kInput = document.getElementById('new-session-k') as HTMLInputElement;
+
+        if (nameInput.value) {
+            const id = createSession(nameInput.value, parseInt(kInput.value) || 60);
+            window.location.hash = `game_${id}`;
+            window.location.reload();
+        }
+    };
+}
+
+function loadSessionFromHash() {
+    const hash = window.location.hash;
+    if (!hash.startsWith('#game_')) return false;
+
+    const id = hash.replace('#game_', '');
+    const state = loadSession(id);
+
+    if (state) {
+        store.currentSessionId = id;
+        store.players = state.players;
+        store.matchHistory = state.matchHistory;
+        store.kFactor = state.kFactor;
+
+        document.getElementById('game-menu')!.style.display = 'none';
+        document.getElementById('app-main')!.style.display = 'block';
+        return true;
+    }
+    return false;
+}
+
+function syncSession() {
+    if (!store.currentSessionId) return;
+    const state = loadSession(store.currentSessionId);
+    if (state) {
+        store.players = state.players;
+        store.matchHistory = state.matchHistory;
+        store.kFactor = state.kFactor;
+        updateKFactorInputState();
+        render();
+    }
+}
+
+// --- NAVIGATION ---
+function switchView(viewId: string) {
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+    const view = document.getElementById(viewId);
+    if (view) view.classList.add('active');
+
+    const btn = document.querySelector(`.nav-btn[data-view="${viewId}"]`);
+    if (btn) btn.classList.add('active');
+}
+
+function handleExit() {
+    window.location.hash = '';
+    window.location.reload();
+}
+
+// --- MAIN ---
 function main() {
-    DOMElements = queryDOMElements(); // Assign to global DOMElements
-    const { players: loadedPlayers, matchHistory: loadedMatchHistory, kFactor: loadedKFactor } = loadAppState();
+    DOMElements = queryDOMElements();
 
-    // Initialize store
-    store.players = loadedPlayers;
-    store.matchHistory = loadedMatchHistory;
-    store.kFactor = loadedKFactor;
-    store.isRealtimeUpdate = true; // Realtime feature removed – always update instantly
+    // Navigation Listeners
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.classList.contains('nav-exit')) return;
+        btn.addEventListener('click', () => {
+            const view = btn.getAttribute('data-view');
+            if (view) switchView(view);
+        });
+    });
 
-    updateKFactorInputState();
+    const exitBtn = document.getElementById('nav-exit-btn');
+    if (exitBtn) exitBtn.addEventListener('click', handleExit);
 
-    // Extra safety: Always hide modal and clear content on load
-    if (DOMElements.playerCardModal) {
-        DOMElements.playerCardModal.setAttribute('hidden', 'true');
-        const contentDiv = document.getElementById('player-card-content');
-        if (contentDiv) contentDiv.innerHTML = '';
-    }
+    // Sync across tabs
+    window.addEventListener('storage', (e) => {
+        if (store.currentSessionId && e.key === `session_${store.currentSessionId}`) {
+            syncSession();
+        }
+        if (!store.currentSessionId && e.key === 'game-of-stick-sessions') {
+            renderGameMenu();
+        }
+    });
 
-    // --- Event Listeners ---
-    DOMElements.settingsForm?.addEventListener('submit', (e) => e.preventDefault());
-    DOMElements.addPlayerForm?.addEventListener('submit', handleAddPlayer);
-    DOMElements.recordMatchForm?.addEventListener('submit', handleRecordMatch);
-    DOMElements.kFactorInput?.addEventListener('input', handleKFactorChange);
-    DOMElements.updateLeaderboardBtn?.addEventListener('click', handleUpdateLeaderboardClick);
-    // Realtime toggle & manual update button removed
+    if (loadSessionFromHash()) {
+        updateKFactorInputState();
+        // Extra safety: Always hide modal and clear content on load
+        if (DOMElements.playerCardModal) {
+            DOMElements.playerCardModal.setAttribute('hidden', 'true');
+            const contentDiv = document.getElementById('player-card-content');
+            if (contentDiv) contentDiv.innerHTML = '';
+        }
 
-    // Use new handlers
-    DOMElements.exportPlayersBtn?.addEventListener('click', handleExportPlayers);
-    DOMElements.exportMatchesBtn?.addEventListener('click', handleExportMatches);
+        // --- Event Listeners ---
+        DOMElements.settingsForm?.addEventListener('submit', (e) => e.preventDefault());
+        DOMElements.addPlayerForm?.addEventListener('submit', handleAddPlayer);
+        DOMElements.recordMatchForm?.addEventListener('submit', handleRecordMatch);
+        DOMElements.kFactorInput?.addEventListener('input', handleKFactorChange);
+        DOMElements.updateLeaderboardBtn?.addEventListener('click', handleUpdateLeaderboardClick);
 
-    // New: Import Matches Listener - using factory pattern
-    if (DOMElements.importMatchesFile) {
-        const context = { render, updateKFactorInputState, DOMElements };
-        DOMElements.importMatchesFile.addEventListener('change', createImportMatchesHandler(context));
-    }
+        DOMElements.exportPlayersBtn?.addEventListener('click', handleExportPlayers);
+        DOMElements.exportMatchesBtn?.addEventListener('click', handleExportMatches);
 
-    // New: Import Players Listener - using factory pattern
-    if (DOMElements.importPlayersFile) {
-        const context = { render, updateKFactorInputState, DOMElements };
-        DOMElements.importPlayersFile.addEventListener('change', createImportPlayersHandler(context));
-    }
+        if (DOMElements.importMatchesFile) {
+            const context = { render, updateKFactorInputState, DOMElements };
+            DOMElements.importMatchesFile.addEventListener('change', createImportMatchesHandler(context));
+        }
 
-    // New: Clear History and Clear Players Listeners
-    DOMElements.clearHistoryBtn?.addEventListener('click', handleClearMatchHistory);
-    DOMElements.clearPlayersBtn?.addEventListener('click', handleClearPlayers);
+        if (DOMElements.importPlayersFile) {
+            const context = { render, updateKFactorInputState, DOMElements };
+            DOMElements.importPlayersFile.addEventListener('change', createImportPlayersHandler(context));
+        }
 
-    // Autocomplete Listeners
-    DOMElements.player1Input?.addEventListener('input', handleAutocompleteInput);
-    DOMElements.player2Input?.addEventListener('input', handleAutocompleteInput);
+        DOMElements.clearHistoryBtn?.addEventListener('click', handleClearMatchHistory);
+        DOMElements.clearPlayersBtn?.addEventListener('click', handleClearPlayers);
 
-    const handleKeydown = (event: KeyboardEvent) => {
-        if (event.key === 'Tab') {
-            const input = event.target as HTMLInputElement;
-            let suggestionsContainer: HTMLElement | null, idInput: HTMLInputElement | null;
+        DOMElements.player1Input?.addEventListener('input', handleAutocompleteInput);
+        DOMElements.player2Input?.addEventListener('input', handleAutocompleteInput);
 
-            if (input.id === 'player1-input') {
-                suggestionsContainer = DOMElements.player1Suggestions;
-                idInput = DOMElements.player1IdInput;
-            } else if (input.id === 'player2-input') {
-                suggestionsContainer = DOMElements.player2Suggestions;
-                idInput = DOMElements.player2IdInput;
-            } else {
-                return;
-            }
+        const handleKeydown = (event: KeyboardEvent) => {
+            if (event.key === 'Tab') {
+                const input = event.target as HTMLInputElement;
+                let suggestionsContainer: HTMLElement | null, idInput: HTMLInputElement | null;
 
-            if (suggestionsContainer && suggestionsContainer.children.length > 0) {
-                const firstItem = suggestionsContainer.firstElementChild as HTMLElement;
-                if (firstItem && !firstItem.classList.contains('suggestion-item-none')) {
-                    // Select the first item
-                    const name = firstItem.dataset.name;
-                    const id = firstItem.dataset.id;
+                if (input.id === 'player1-input') {
+                    suggestionsContainer = DOMElements.player1Suggestions;
+                    idInput = DOMElements.player1IdInput;
+                } else if (input.id === 'player2-input') {
+                    suggestionsContainer = DOMElements.player2Suggestions;
+                    idInput = DOMElements.player2IdInput;
+                } else {
+                    return;
+                }
 
-                    if (name && id && idInput) {
-                        input.value = name;
-                        idInput.value = id;
-                        hideSuggestions(suggestionsContainer);
-                        updateWinnerLabels();
-                        // Allow default Tab behavior to move focus
+                if (suggestionsContainer && suggestionsContainer.children.length > 0) {
+                    const firstItem = suggestionsContainer.firstElementChild as HTMLElement;
+                    if (firstItem && !firstItem.classList.contains('suggestion-item-none')) {
+                        const name = firstItem.dataset.name;
+                        const id = firstItem.dataset.id;
+
+                        if (name && id && idInput) {
+                            input.value = name;
+                            idInput.value = id;
+                            hideSuggestions(suggestionsContainer);
+                            updateWinnerLabels();
+                        }
                     }
                 }
             }
-        }
-    };
+        };
 
-    DOMElements.player1Input?.addEventListener('keydown', handleKeydown);
-    DOMElements.player2Input?.addEventListener('keydown', handleKeydown);
+        DOMElements.player1Input?.addEventListener('keydown', handleKeydown);
+        DOMElements.player2Input?.addEventListener('keydown', handleKeydown);
 
-    // Hide suggestions if user clicks away from the form
-    document.addEventListener('click', (event) => {
-        if (DOMElements.recordMatchForm && !DOMElements.recordMatchForm.contains(event.target as Node)) {
-            hideSuggestions(DOMElements.player1Suggestions);
-            hideSuggestions(DOMElements.player2Suggestions);
-        }
-    });
+        document.addEventListener('click', (event) => {
+            const target = event.target as HTMLElement;
+            // Handle clicking outside suggestions
+            if (DOMElements.recordMatchForm && !DOMElements.recordMatchForm.contains(target)) {
+                hideSuggestions(DOMElements.player1Suggestions);
+                hideSuggestions(DOMElements.player2Suggestions);
+            }
+            // Handle Empty Leaderboard Link
+            if (target && target.id === 'empty-leaderboard-link') {
+                event.preventDefault();
+                switchView('view-roster');
+            }
+        });
 
-    // Battle history toggle
-    DOMElements.toggleBattleHistoryBtn?.addEventListener('click', () => {
-        if (!DOMElements.battleHistoryContainer) return;
-        const isOpen = !DOMElements.battleHistoryContainer.hasAttribute('hidden');
-        if (isOpen) {
-            DOMElements.battleHistoryContainer.setAttribute('hidden', 'true');
-            DOMElements.toggleBattleHistoryBtn!.setAttribute('aria-expanded', 'false');
-            DOMElements.toggleBattleHistoryBtn!.textContent = 'Show Battle History';
-        } else {
-            DOMElements.battleHistoryContainer.removeAttribute('hidden');
-            DOMElements.toggleBattleHistoryBtn!.setAttribute('aria-expanded', 'true');
-            DOMElements.toggleBattleHistoryBtn!.textContent = 'Hide Battle History';
-            renderBattleHistory(store.matchHistory, DOMElements);
-        }
-    });
+        DOMElements.toggleBattleHistoryBtn?.addEventListener('click', () => {
+            if (!DOMElements.battleHistoryContainer) return;
+            const isOpen = !DOMElements.battleHistoryContainer.hasAttribute('hidden');
+            if (isOpen) {
+                DOMElements.battleHistoryContainer.setAttribute('hidden', 'true');
+                DOMElements.toggleBattleHistoryBtn!.setAttribute('aria-expanded', 'false');
+                DOMElements.toggleBattleHistoryBtn!.textContent = 'Show Battle History';
+            } else {
+                DOMElements.battleHistoryContainer.removeAttribute('hidden');
+                DOMElements.toggleBattleHistoryBtn!.setAttribute('aria-expanded', 'true');
+                DOMElements.toggleBattleHistoryBtn!.textContent = 'Hide Battle History';
+                renderBattleHistory(store.matchHistory, DOMElements);
+            }
+        });
 
-    render();
+        render();
+    } else {
+        renderGameMenu();
+    }
 }
 
 // Wait for the DOM to be fully loaded before running the main script

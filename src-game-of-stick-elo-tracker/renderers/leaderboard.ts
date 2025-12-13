@@ -20,7 +20,7 @@ function renderStreak(type: 'W' | 'L' | null, length: number): string {
     } else {
         emoji = '🧊'.repeat(Math.floor(length / 3));
     }
-    
+
     return `<span class="streak-indicator">${emoji} ${type}${length}</span>`;
 }
 
@@ -31,15 +31,15 @@ export function renderLeaderboard(
     lastLeaderboardElo: Record<string, number>
 ) {
     if (!DOMElements.leaderboardBody) return;
-    
+
     const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
-    
+
     console.log('Rendering Leaderboard with players:', sortedPlayers);
 
     DOMElements.leaderboardBody.innerHTML = '';
 
     if (players.length === 0) {
-        DOMElements.leaderboardBody.innerHTML = `<tr><td colspan="7">No players yet. Add one below!</td></tr>`;
+        DOMElements.leaderboardBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2rem;"><a href="#" id="empty-leaderboard-link" style="color:var(--primary-color); text-decoration:underline;">No players yet. Add one here!</a></td></tr>`;
         return;
     }
 
@@ -63,7 +63,7 @@ export function renderLeaderboard(
         const prevElo = lastLeaderboardElo[player.id] ?? player.elo;
         const eloDiff = player.elo - prevElo;
         console.log(`Player: ${player.name}, ELO: ${player.elo}, prevElo: ${prevElo}, eloDiff: ${eloDiff}`);
-        const eloDiffHtml = eloDiff !== 0 
+        const eloDiffHtml = eloDiff !== 0
             ? `<span class="elo-change ${eloDiff > 0 ? 'elo-up' : 'elo-down'}">(${eloDiff > 0 ? '+' : ''}${eloDiff})</span>`
             : '';
 
@@ -83,10 +83,10 @@ export function renderLeaderboard(
         DOMElements.leaderboardBody!.appendChild(row);
         player.previousElo = player.elo;
     });
-    
+
     players.forEach(p => {
         const sortedIndex = sortedPlayers.findIndex(sp => sp.id === p.id);
-        if(sortedIndex !== -1) {
+        if (sortedIndex !== -1) {
             p.previousRank = sortedIndex + 1;
         }
     });

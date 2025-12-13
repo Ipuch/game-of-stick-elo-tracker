@@ -31,6 +31,7 @@ export interface AppDOMElements {
     clearPlayersBtn: HTMLButtonElement | null;
     playerCardModal: HTMLElement | null;
     closePlayerCardBtn: HTMLButtonElement | null;
+    rosterList: HTMLElement | null;
 }
 
 export function queryDOMElements(): AppDOMElements {
@@ -67,5 +68,6 @@ export function queryDOMElements(): AppDOMElements {
         clearPlayersBtn: document.getElementById('clear-players-btn') as HTMLButtonElement,
         playerCardModal: document.getElementById('player-card-modal') as HTMLElement,
         closePlayerCardBtn: document.getElementById('close-player-card-btn') as HTMLButtonElement,
+        rosterList: document.getElementById('roster-list') as HTMLElement,
     };
 } 
