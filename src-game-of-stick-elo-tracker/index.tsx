@@ -39,15 +39,6 @@ gameChannel.onmessage = async (event) => {
                 oldRanks[p.id] = p.previousRank;
             });
 
-            // Save current ELO baseline for showing ELO diffs
-            // If we don't have one yet, use current ELOs as baseline
-            const oldEloBaseline: Record<string, number> = { ...store.lastLeaderboardElo };
-            if (Object.keys(oldEloBaseline).length === 0) {
-                store.players.forEach(p => {
-                    oldEloBaseline[p.id] = p.elo;
-                });
-            }
-
             // Load new state from files
             const state = await loadGameFromSession(store.directoryHandle);
 
@@ -63,8 +54,7 @@ gameChannel.onmessage = async (event) => {
             store.kFactor = state.kFactor;
             store.hasUnsavedChanges = false;
 
-            // Restore ELO baseline so diffs show correctly
-            store.lastLeaderboardElo = oldEloBaseline;
+            // Keep local ELO baseline intact - shows cumulative diffs since this window's last Update
 
             // Recalculate streaks based on new match history
             calculatePlayerStreaks(store.players, store.matchHistory);
@@ -90,7 +80,10 @@ gameChannel.onmessage = async (event) => {
 // Notify other windows when game is saved
 function broadcastGameUpdate() {
     if (store.folderName) {
-        gameChannel.postMessage({ type: 'game-updated', folderName: store.folderName });
+        gameChannel.postMessage({
+            type: 'game-updated',
+            folderName: store.folderName
+        });
     }
 }
 
