@@ -21,6 +21,78 @@ import { renderProfileStatsSection } from './renderers/profileStats';
 import { calculatePlayerStreaks } from './utils/statsUtils';
 import { generateUUID } from './utils/uuid';
 
+// --- BROADCAST CHANNEL FOR CROSS-WINDOW SYNC ---
+const gameChannel = new BroadcastChannel('game-of-stick-sync');
+
+// Listen for updates from other windows
+gameChannel.onmessage = async (event) => {
+    const { type, folderName } = event.data;
+
+    // Only sync if we're viewing the same game
+    if (type === 'game-updated' && store.folderName === folderName && store.directoryHandle) {
+        console.log('Received sync message from another window, reloading...');
+        try {
+            // Save current previousRank values to show position changes
+            const oldRanks: Record<string, number> = {};
+            store.players.forEach(p => {
+                oldRanks[p.id] = p.previousRank;
+            });
+
+            // Save current ELO baseline for showing ELO diffs
+            // If we don't have one yet, use current ELOs as baseline
+            const oldEloBaseline: Record<string, number> = { ...store.lastLeaderboardElo };
+            if (Object.keys(oldEloBaseline).length === 0) {
+                store.players.forEach(p => {
+                    oldEloBaseline[p.id] = p.elo;
+                });
+            }
+
+            // Load new state from files
+            const state = await loadGameFromSession(store.directoryHandle);
+
+            // Merge: keep old previousRank for existing players to show deltas
+            state.players.forEach(p => {
+                if (oldRanks[p.id] !== undefined) {
+                    p.previousRank = oldRanks[p.id];
+                }
+            });
+
+            store.players = state.players;
+            store.matchHistory = state.matchHistory;
+            store.kFactor = state.kFactor;
+            store.hasUnsavedChanges = false;
+
+            // Restore ELO baseline so diffs show correctly
+            store.lastLeaderboardElo = oldEloBaseline;
+
+            // Recalculate streaks based on new match history
+            calculatePlayerStreaks(store.players, store.matchHistory);
+
+            updateKFactorInputState();
+            updateSaveButton();
+
+            // Render without saving (persist would mark as changed)
+            renderLeaderboard(store.players, DOMElements, store.matchHistory, store.lastLeaderboardElo);
+            renderPodium(store.players, DOMElements);
+            renderBattleHistory(store.matchHistory, DOMElements);
+            renderCombatMatrix(store.players, store.matchHistory, DOMElements);
+            renderProfileStatsSection(store.players, store.matchHistory);
+            renderRosterList();
+
+            showNotification('Game synced from another window');
+        } catch (e) {
+            console.error('Failed to sync from other window:', e);
+        }
+    }
+};
+
+// Notify other windows when game is saved
+function broadcastGameUpdate() {
+    if (store.folderName) {
+        gameChannel.postMessage({ type: 'game-updated', folderName: store.folderName });
+    }
+}
+
 // --- PERSISTENCE HELPER ---
 function persist() {
     if (store.directoryHandle) {
@@ -935,6 +1007,7 @@ async function handleSaveGame() {
             });
             store.hasUnsavedChanges = false;
             updateSaveButton();
+            broadcastGameUpdate(); // Notify other windows
             showNotification('Game saved successfully');
         } catch (e) {
             console.error(e);

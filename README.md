@@ -68,12 +68,12 @@ To get a local copy up and running, follow these simple steps.
 
 # TODO
 
-- [ ] Fix the save and load mechanism
-     * Define the save game location
+- [x] Fix the save and load mechanism
+      (x) Define the save game location
 
-- [] Add Scrolling on the menu page.
+- [x] Add Scrolling on the menu page.
     
-- [ ] Verify the leaderboard update mechanism
+- [TODO] Verify the leaderboard update mechanism
      * Double window should work fine (one with the leaderboard updating and one with the match recording)
      * Implement a "Minuteur" to run updates every XX minutes for more entertainment. Display the time remaining.
      * "Minuteur" could be shortcut by the manual update button.
