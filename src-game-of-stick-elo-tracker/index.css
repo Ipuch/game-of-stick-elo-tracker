@@ -424,10 +424,12 @@ tr:nth-child(3) .rank-number {
     background: radial-gradient(circle at center, #0f1c2e 0%, #03080c 100%);
     display: flex;
     justify-content: center;
-    align-items: center;
-    /* Center horizontally and vertically */
+    align-items: flex-start;
+    /* Align to top for scroll */
     z-index: 9999;
     padding: 2rem;
+    overflow-y: auto;
+    /* Enable vertical scroll */
 }
 
 .game-menu-content {
@@ -448,8 +450,8 @@ tr:nth-child(3) .rank-number {
     max-width: 600px;
     /* Reduced max-width for tighter center focus */
     width: 100%;
-    margin: 0 auto;
-    /* Ensure centering in flex container */
+    margin: 2rem auto;
+    /* Add margin for scroll spacing */
 }
 
 .menu-logo {
@@ -470,7 +472,8 @@ tr:nth-child(3) .rank-number {
     text-transform: uppercase;
     letter-spacing: 4px;
     width: 100%;
-    /* Ensure full width for centering */
+    white-space: nowrap;
+    /* Keep title on one line */
 }
 
 .game-menu-subtitle {
@@ -1075,4 +1078,34 @@ button {
     .first .podium-icon {
         font-size: 3.5rem;
     }
+}
+
+/* --- Status Bar --- */
+.app-status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10, 14, 23, 0.95);
+    border-top: 1px solid var(--surface-border);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-align: center;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.app-status-bar.saved {
+    color: var(--success-color);
+    border-top-color: var(--success-color);
+}
+
+.app-status-bar.error {
+    color: var(--error-color);
+    border-top-color: var(--error-color);
+}
+
+.app-status-bar strong {
+    color: var(--primary-color);
 }

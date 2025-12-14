@@ -30,11 +30,6 @@
 
         <div class="new-session-container">
           <h2>New Operation</h2>
-          <div class="folder-option-container"
-            style="margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
-            <button id="open-folder-btn" class="button-primary" style="width: 100%;">📂 Open Game Folder</button>
-            <p class="form-hint" style="text-align: center; margin-top: 0.5rem;">Select a folder to load/save data</p>
-          </div>
           <form id="new-session-form">
             <div class="form-group">
               <label for="new-session-name">Operation Name</label>
@@ -212,6 +207,9 @@
 
 
   </main>
+  <footer id="app-status-bar" class="app-status-bar" style="display: none;">
+    <span id="status-bar-text"></span>
+  </footer>
   <div id="app-notification" class="notification-toast"></div>
   <script type="module" src="/index.tsx"></script>
 </body>

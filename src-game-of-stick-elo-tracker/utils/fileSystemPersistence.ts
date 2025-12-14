@@ -109,8 +109,11 @@ export async function loadGameFromSession(dirHandle: FileSystemDirectoryHandle):
 // 5. SAVE GAME (To Subfolder, CSV based)
 export async function saveGameToSession(dirHandle: FileSystemDirectoryHandle, state: AppState): Promise<void> {
     try {
+        console.log('Starting saveGameToSession...');
+
         // Helper to write file
         const writeFile = async (filename: string, content: string) => {
+            console.log(`Writing ${filename} (${content.length} chars)...`);
             const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(content);
@@ -118,10 +121,14 @@ export async function saveGameToSession(dirHandle: FileSystemDirectoryHandle, st
         };
 
         // Write Players
-        await writeFile(PLAYERS_FILE_CSV, playersToCSV(state.players));
+        const playersCSV = playersToCSV(state.players);
+        console.log(`Players CSV preview: ${playersCSV.slice(0, 100)}...`);
+        await writeFile(PLAYERS_FILE_CSV, playersCSV);
 
         // Write Matches
-        await writeFile(MATCHES_FILE_CSV, matchesToCSV(state.matchHistory));
+        const matchesCSV = matchesToCSV(state.matchHistory);
+        console.log(`Matches CSV preview: ${matchesCSV.slice(0, 100)}...`);
+        await writeFile(MATCHES_FILE_CSV, matchesCSV);
 
         // Write Metadata
         const metadata = {
@@ -130,6 +137,8 @@ export async function saveGameToSession(dirHandle: FileSystemDirectoryHandle, st
             version: '2.0' // Bumped version for CSV support
         };
         await writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2));
+
+        console.log('saveGameToSession complete.');
 
     } catch (error) {
         console.error('Error saving game to folder:', error);

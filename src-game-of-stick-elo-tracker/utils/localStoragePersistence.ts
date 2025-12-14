@@ -1,5 +1,5 @@
 import { Player, Match, GameSessionMetadata } from '../types/appTypes';
-import { INITIAL_ELO, PLAYERS_STORAGE_KEY, MATCH_HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_K_FACTOR } from '../constants/appConstants';
+import { INITIAL_ELO, PLAYERS_STORAGE_KEY, MATCH_HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_K_FACTOR, LAST_LIBRARY_NAME_KEY } from '../constants/appConstants';
 import { generateUUID } from './uuid';
 
 const SESSION_LIST_KEY = 'game-of-stick-sessions';
@@ -164,4 +164,42 @@ export function loadAppState(): AppState {
   // This function shouldn't really be used directly anymore in the new architecture
   // identifying "current" session is done via URL hash in index.tsx
   return { players: [], matchHistory: [], kFactor: 60 };
+}
+
+// --- Library Directory Name Persistence ---
+
+/**
+ * Save the last used library directory name for UI hints on re-launch
+ */
+export function saveLastLibraryName(name: string): void {
+  localStorage.setItem(LAST_LIBRARY_NAME_KEY, name);
+}
+
+/**
+ * Get the last used library directory name (for hint on launch)
+ */
+export function getLastLibraryName(): string | null {
+  return localStorage.getItem(LAST_LIBRARY_NAME_KEY);
+}
+
+/**
+ * Clear all temporary localStorage data (sessions, settings, etc.)
+ * Called when saving to a folder to clean up temporary browser storage
+ */
+export function clearTemporaryData(): void {
+  // Remove all session data
+  const sessionList = getSessionList();
+  sessionList.forEach(session => {
+    localStorage.removeItem(`session_${session.id}`);
+  });
+
+  // Remove session list
+  localStorage.removeItem(SESSION_LIST_KEY);
+
+  // Remove legacy data
+  localStorage.removeItem(PLAYERS_STORAGE_KEY);
+  localStorage.removeItem(MATCH_HISTORY_STORAGE_KEY);
+  localStorage.removeItem(SETTINGS_STORAGE_KEY);
+
+  // Note: We keep LAST_LIBRARY_NAME_KEY for re-launch hint
 }

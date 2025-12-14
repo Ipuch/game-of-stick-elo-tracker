@@ -6,7 +6,8 @@
 import { calculateElo } from './utils/eloCalculator';
 import { Player, Match } from './types/appTypes';
 import { INITIAL_ELO, DEFAULT_K_FACTOR } from './constants/appConstants';
-import { getSessionList, createSession, loadSession, saveSession, migrateLegacyDataIfNeeded } from './utils/localStoragePersistence';
+import { loadSession, saveSession, getLastLibraryName, saveLastLibraryName, clearTemporaryData } from './utils/localStoragePersistence';
+import { getExampleGameState, EXAMPLE_GAME_NAME } from './utils/exampleGameData';
 import { AppDOMElements, queryDOMElements } from './utils/domElements';
 import { renderLeaderboard } from './renderers/leaderboard';
 import { renderPodium } from './renderers/podium';
@@ -90,9 +91,45 @@ function updateSaveButton() {
             btn.classList.remove('unsaved');
         }
     } else {
-        // Legacy session
-        btn.textContent = 'Save to Library';
+        // Not saved to folder yet
+        btn.textContent = 'Save to Folder';
         btn.classList.remove('unsaved');
+    }
+
+    updateStatusBar();
+}
+
+/**
+ * Update the persistent status bar at the bottom of the screen
+ */
+function updateStatusBar() {
+    const statusBar = document.getElementById('app-status-bar');
+    const statusText = document.getElementById('status-bar-text');
+    if (!statusBar || !statusText) return;
+
+    // Check if we have a temporary notification showing (hacky check: class list)
+    // Actually, simple approach: Just show the current state.
+    // Notifications will overwrite this text momentarily if called after.
+
+    if (store.directoryHandle && store.folderName) {
+        // Show persistent game context
+        statusBar.style.display = 'block';
+        if (store.hasUnsavedChanges) {
+            statusBar.classList.remove('saved');
+            statusBar.classList.add('error'); // Use helpful color for attention
+            statusText.innerHTML = `⚠ <strong>${store.folderName}</strong> has unsaved changes.`;
+        } else {
+            statusBar.classList.remove('saved', 'error');
+            // Neutral state
+            statusText.innerHTML = `📂 Current Game: <strong>${store.folderName}</strong>`;
+        }
+    } else if (store.folderName) {
+        // Memory only
+        statusBar.style.display = 'block';
+        statusBar.classList.remove('saved');
+        statusText.innerHTML = `⚠ <strong>${store.folderName}</strong> (Not saved to folder)`;
+    } else {
+        statusBar.style.display = 'none';
     }
 }
 
@@ -188,6 +225,9 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
     toast.textContent = message;
     toast.classList.add('show', type);
 
+    // Also update the persistent status bar with the message
+    updateStatusBarMessage(message, type);
+
     // Wait 1.5s then start vanishing
     setTimeout(() => {
         toast.classList.remove('show');
@@ -198,6 +238,27 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
             toast.classList.remove('hiding', 'success', 'error');
         }, 1000);
     }, 1500);
+}
+
+/**
+ * Update the status bar with a message (persistent log)
+ */
+function updateStatusBarMessage(message: string, type: 'success' | 'error' = 'success') {
+    const statusBar = document.getElementById('app-status-bar');
+    const statusText = document.getElementById('status-bar-text');
+    if (!statusBar || !statusText) return;
+
+    statusBar.style.display = 'block';
+
+    if (type === 'success') {
+        statusBar.classList.add('saved');
+        statusBar.classList.remove('error');
+    } else {
+        statusBar.classList.remove('saved');
+        statusBar.classList.add('error');
+    }
+
+    statusText.innerHTML = message;
 }
 
 function handleRecordMatch(event: SubmitEvent) {
@@ -535,6 +596,11 @@ async function loadGameFromLibrary(dirHandle: FileSystemDirectoryHandle, folderN
         store.matchHistory = state.matchHistory;
         store.kFactor = state.kFactor;
 
+        // Save library name for re-launch hint
+        if (store.libraryHandle) {
+            saveLastLibraryName(store.libraryHandle.name);
+        }
+
         // UI Switch
         document.getElementById('game-menu')!.style.display = 'none';
         document.getElementById('app-main')!.style.display = 'block';
@@ -549,9 +615,35 @@ async function loadGameFromLibrary(dirHandle: FileSystemDirectoryHandle, folderN
         // Setup listeners if not already done (similar to loadSessionFromHash logic)
         setupEventListeners();
 
+        // Ensure Save/Exit buttons are bound (they might not be if setupGlobalListeners ran too early)
+        bindSaveExitListeners();
+
     } catch (e) {
         console.error(e);
         showNotification('Failed to load game', 'error');
+    }
+}
+
+/**
+ * Explicitly bind Save and Exit button listeners.
+ * Uses onclick property to ensure handler is always set correctly.
+ */
+function bindSaveExitListeners() {
+    const saveBtn = document.getElementById('nav-save-btn') as HTMLButtonElement | null;
+    const exitBtn = document.getElementById('nav-exit-btn') as HTMLButtonElement | null;
+
+    if (saveBtn) {
+        console.log('bindSaveExitListeners: Setting Save onclick handler');
+        saveBtn.onclick = handleSaveGame;
+    } else {
+        console.error('bindSaveExitListeners: Save button NOT FOUND!');
+    }
+
+    if (exitBtn) {
+        console.log('bindSaveExitListeners: Setting Exit onclick handler');
+        exitBtn.onclick = handleExit;
+    } else {
+        console.error('bindSaveExitListeners: Exit button NOT FOUND!');
     }
 }
 
@@ -564,75 +656,129 @@ function renderGameMenu() {
         return;
     }
 
-    migrateLegacyDataIfNeeded();
-    const sessions = getSessionList();
-
     document.getElementById('game-menu')!.style.display = 'flex';
     document.getElementById('app-main')!.style.display = 'none';
 
     const list = document.getElementById('session-list')!;
     list.innerHTML = '';
 
-    // Button to switch to folder mode
+    // Get last used library name for hint
+    const lastLibraryName = getLastLibraryName();
+
+    // Single button to choose save location (load existing games)
     const openFolderBtnContainer = document.createElement('div');
     openFolderBtnContainer.style.width = '100%';
     openFolderBtnContainer.style.textAlign = 'center';
     openFolderBtnContainer.style.marginBottom = '20px';
 
     const openFolderBtn = document.createElement('button');
-    openFolderBtn.id = 'open-library-btn'; // Updated ID
-    openFolderBtn.className = 'btn primary';
-    openFolderBtn.textContent = '📂 Open Game Library Folder';
-    openFolderBtn.onclick = handleOpenLibrary; // Use new handler
+    openFolderBtn.id = 'open-library-btn';
+    openFolderBtn.className = 'button-primary';
+    openFolderBtn.style.width = '100%';
+    openFolderBtn.style.fontSize = '1.1rem';
+    openFolderBtn.style.padding = '1rem';
+    openFolderBtn.textContent = '📂 Load Saved Games';
+    openFolderBtn.onclick = handleOpenLibrary;
 
     openFolderBtnContainer.appendChild(openFolderBtn);
+
+    // Show hint if there's a last used library
+    if (lastLibraryName) {
+        const hint = document.createElement('p');
+        hint.className = 'form-hint';
+        hint.style.textAlign = 'center';
+        hint.style.marginTop = '0.5rem';
+        hint.innerHTML = `Last used: <strong>${lastLibraryName}</strong>`;
+        openFolderBtnContainer.appendChild(hint);
+    }
+
     list.appendChild(openFolderBtnContainer);
 
     const divider = document.createElement('hr');
     divider.style.width = '100%';
-    divider.style.margin = '1rem 0';
+    divider.style.margin = '1.5rem 0';
     list.appendChild(divider);
 
-    if (sessions.length === 0) {
-        const msg = document.createElement('div');
-        msg.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:1rem;">Or create a browser-only session below.</div>';
-        list.appendChild(msg);
-    } else {
-        sessions.forEach(s => {
-            const card = document.createElement('div');
-            card.className = 'session-item';
-            const date = new Date(s.lastPlayed).toLocaleDateString();
-            card.innerHTML = `
-                <div class="session-info">
-                    <h3>${s.name}</h3>
-                    <div class="session-meta">${s.playerCount} Players • Last Played: ${date}</div>
-                </div>
-                <div class="session-arrow">➜</div>
-            `;
-            card.onclick = () => {
-                window.location.hash = `game_${s.id}`;
-                window.location.reload();
-            };
-            list.appendChild(card);
-        });
-    }
+    // EXAMPLE GAME card
+    const exampleCard = document.createElement('div');
+    exampleCard.className = 'session-item';
+    exampleCard.innerHTML = `
+        <div class="session-info">
+            <h3>🎮 ${EXAMPLE_GAME_NAME}</h3>
+            <div class="session-meta">Demo with sample players & matches</div>
+        </div>
+        <div class="session-arrow">➜</div>
+    `;
+    exampleCard.onclick = loadExampleGame;
+    list.appendChild(exampleCard);
 
+    // Show and setup the new session form
     const form = document.getElementById('new-session-form') as HTMLFormElement;
-    // Reset legend
-    const legend = form.querySelector('legend');
-    if (legend) legend.textContent = 'Start New Session';
+    if (form) {
+        form.style.display = 'block';
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const nameInput = document.getElementById('new-session-name') as HTMLInputElement;
+            const kInput = document.getElementById('new-session-k') as HTMLInputElement;
 
-    form.onsubmit = (e) => {
-        e.preventDefault();
-        const nameInput = document.getElementById('new-session-name') as HTMLInputElement;
-        const kInput = document.getElementById('new-session-k') as HTMLInputElement;
+            if (nameInput.value) {
+                // Start a new game with empty state (no folder yet)
+                startNewGame(nameInput.value.trim(), parseInt(kInput.value) || 60);
+            }
+        };
+    }
+}
 
-        if (nameInput.value) {
-            const id = createSession(nameInput.value, parseInt(kInput.value) || 60);
-            window.location.hash = `game_${id}`;
-            window.location.reload();
-        }
-    };
+/**
+ * Start a new game with empty state
+ */
+function startNewGame(name: string, kFactor: number) {
+    store.players = [];
+    store.matchHistory = [];
+    store.kFactor = kFactor;
+    store.currentSessionId = null;
+    store.directoryHandle = null; // No folder yet - user must save to folder
+    store.folderName = name;
+    store.hasUnsavedChanges = true; // Mark as unsaved since it's not on disk
+
+    // UI Switch
+    document.getElementById('game-menu')!.style.display = 'none';
+    document.getElementById('app-main')!.style.display = 'block';
+
+    updateKFactorInputState();
+    updateSaveButton();
+    setupEventListeners();
+    bindSaveExitListeners();
+    render();
+
+    showNotification(`Created new game: ${name}`);
+}
+
+/**
+ * Load the example game with sample data for demonstration
+ */
+function loadExampleGame() {
+    const exampleState = getExampleGameState();
+
+    store.players = exampleState.players;
+    store.matchHistory = exampleState.matchHistory;
+    store.kFactor = exampleState.kFactor;
+    store.currentSessionId = null;
+    store.directoryHandle = null; // No folder yet - user must save to folder
+    store.folderName = EXAMPLE_GAME_NAME;
+    store.hasUnsavedChanges = true; // Mark as unsaved since it's not on disk
+
+    // UI Switch
+    document.getElementById('game-menu')!.style.display = 'none';
+    document.getElementById('app-main')!.style.display = 'block';
+
+    updateKFactorInputState();
+    updateSaveButton();
+    setupEventListeners();
+    bindSaveExitListeners();
+    render();
+
+    showNotification(`Loaded ${EXAMPLE_GAME_NAME} - Choose a save location to keep your data!`);
 }
 
 function setupEventListeners() {
@@ -759,13 +905,26 @@ function handleExit() {
             return;
         }
     }
-    window.location.hash = '';
-    window.location.reload();
+
+    // Clear game state but keep library handle
+    store.directoryHandle = null;
+    store.folderName = null;
+    store.currentSessionId = null;
+    store.players = [];
+    store.matchHistory = [];
+    store.hasUnsavedChanges = false;
+
+    // Switch back to menu (will show library if libraryHandle is set)
+    document.getElementById('app-main')!.style.display = 'none';
+    renderGameMenu();
 }
 
 
 
 async function handleSaveGame() {
+    console.log('handleSaveGame called');
+    // alert('Debug: Save button clicked!'); // Temporary debug
+
     // Case 1: Already a valid file system game
     if (store.directoryHandle) {
         try {
@@ -785,7 +944,7 @@ async function handleSaveGame() {
     }
 
     // Case 2: Legacy/Memory Session -> Export to Library
-    if (!confirm('This will save the current browser session to a new folder in your Game Library. Continue?')) {
+    if (!confirm('This will save the current game to a folder. Continue?')) {
         return;
     }
 
@@ -795,7 +954,7 @@ async function handleSaveGame() {
         if (!libraryHandle) return; // Cancelled
 
         // 2. Ask for new game name
-        const defaultName = `Game_${new Date().toISOString().split('T')[0]}`;
+        const defaultName = store.folderName || `Game_${new Date().toISOString().split('T')[0]}`;
         const gameName = prompt('Enter a name for the new game folder:', defaultName);
         if (!gameName) return; // Cancelled
 
@@ -809,21 +968,26 @@ async function handleSaveGame() {
             kFactor: store.kFactor
         });
 
-        // 5. Switch Context
+        // 5. Switch Context to file mode
         store.libraryHandle = libraryHandle;
         store.directoryHandle = newGameDir;
         store.folderName = gameName;
-        store.currentSessionId = null; // Clear legacy ID so we stay in file mode
+        store.currentSessionId = null;
         store.hasUnsavedChanges = false;
 
+        // 6. Save library name for re-launch hint and clear temp localStorage data
+        saveLastLibraryName(libraryHandle.name);
+        clearTemporaryData();
+
         updateSaveButton();
-        render(); // Refresh UI/Header
+        render();
 
-        showNotification(`vSuccessfully exported to ${gameName}`);
+        showNotification(`Successfully saved to ${gameName}`);
 
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
-        showNotification('Failed to export game', 'error');
+        const msg = e.message || 'Unknown error occurred';
+        showNotification(`Failed to save: ${msg}`, 'error');
     }
 }
 
@@ -853,9 +1017,16 @@ function setupGlobalListeners() {
 
     // Save Game Button Listener
     const saveBtn = document.getElementById('nav-save-btn');
-    if (saveBtn && !saveBtn.hasAttribute('data-bound')) {
-        saveBtn.setAttribute('data-bound', 'true');
-        saveBtn.addEventListener('click', handleSaveGame);
+    if (saveBtn) {
+        if (!saveBtn.hasAttribute('data-bound')) {
+            console.log('Attaching click listener to Save Button');
+            saveBtn.setAttribute('data-bound', 'true');
+            saveBtn.addEventListener('click', handleSaveGame);
+        } else {
+            console.log('Save Button already bound');
+        }
+    } else {
+        console.error('CRITICAL: Save Button (nav-save-btn) NOT FOUND in DOM!');
     }
 
     // Click outside for suggestions
@@ -895,6 +1066,12 @@ function setupGlobalListeners() {
 function main() {
     DOMElements = queryDOMElements();
     setupGlobalListeners();
+
+    // Check compatibility
+    if (!('showDirectoryPicker' in window)) {
+        showNotification('⚠️ Your browser doesn\'t support saving to folders. Please use Chrome, Edge, or Opera.', 'error');
+        updateStatusBarMessage('Browser not supported for folder access', 'error');
+    }
 
     if (loadSessionFromHash()) {
         updateKFactorInputState();
