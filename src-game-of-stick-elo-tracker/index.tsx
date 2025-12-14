@@ -21,6 +21,7 @@ import { renderProfileStatsSection } from './renderers/profileStats';
 import { calculatePlayerStreaks } from './utils/statsUtils';
 import { generateUUID } from './utils/uuid';
 import { getRemainingOpponents } from './utils/opponentTracker';
+import { generateGamePDF } from './utils/pdfExport';
 
 // --- BROADCAST CHANNEL FOR CROSS-WINDOW SYNC ---
 const gameChannel = new BroadcastChannel('game-of-stick-sync');
@@ -1183,6 +1184,17 @@ function setupGlobalListeners() {
                 event.preventDefault();
                 switchView('view-roster');
             }
+        });
+    }
+
+    // Export PDF Button
+    const exportPdfBtn = document.getElementById('export-pdf-btn');
+    if (exportPdfBtn && !exportPdfBtn.hasAttribute('data-bound')) {
+        exportPdfBtn.setAttribute('data-bound', 'true');
+        exportPdfBtn.addEventListener('click', () => {
+            const gameName = store.folderName || 'Game of Stick';
+            generateGamePDF(store.players, store.matchHistory, gameName);
+            showNotification('PDF exported successfully!');
         });
     }
 
