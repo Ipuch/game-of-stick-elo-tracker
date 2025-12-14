@@ -1,85 +1,141 @@
-# 🚀 Game of Stick Elo Tracker 🚀
+# 🎮 Game of S.T.I.C.K. — ELO Tracker
 
-A dynamic and feature-rich Elo rating tracker for the "Game of Stick," built with TypeScript and Vite.
-
-This web application provides a comprehensive interface for tracking player Elo ratings, match history, and performance statistics in the Game of Stick. It's designed to be fast, responsive, and easy to use, with a focus on providing detailed insights into player performance.
+> **Track player rankings, match history, and performance stats for Parkour "Stick" battles.**
 
 ![Game of Stick Elo Tracker Screenshot](screenshot.png)
 
-### ✨ Features
+---
 
-- **Elo Rating System:** Automatically calculates and updates player Elo ratings after each match.
-- **Detailed Player Profiles:** View individual player stats, including Elo, win/loss/draw record, and win streaks.
-- **Dynamic Leaderboard:** See player rankings in a clear and concise leaderboard, with visual cues for rank changes.
-- **Match History:** Browse a complete history of all recorded matches.
-- **Combat Matrix:** Visualize head-to-head results between players in a color-coded matrix.
-- **Podium Display:** Celebrate the top players with a podium view.
-- **Data Import/Export:** Easily import and export match data from/to CSV files.
-- **Manual & Real-time Updates:** Choose between manual leaderboard updates or real-time updates as matches are recorded.
+## ✨ Key Features
 
-### 🛠️ Tech Stack
+| Feature | Description |
+|---------|-------------|
+| **ELO Ratings** | Auto-calculated ratings with configurable K-factor |
+| **Live Leaderboard** | Position changes (▲▼) and ELO diffs (+/-) |
+| **Win/Loss Streaks** | 🔥 Win streaks, 🧊 Loss streaks with visual indicators |
+| **Podium Display** | Top 3 players with medals 🥇🥈🥉 |
+| **Combat Matrix** | Head-to-head stats visualized in a heatmap |
+| **Player Profiles** | Detailed per-player stats and match history |
+| **Multi-Window Sync** | Real-time sync between browser tabs |
+| **File-Based Save** | Save games to local folders as CSV files |
 
-- **Frontend:** HTML5, CSS3, TypeScript
-- **Build Tool:** Vite
-- **Dependencies:** No external libraries, just pure TypeScript and modern web APIs.
+---
 
-### 🏁 Getting Started
+## 🚀 Quick Start
 
-To get a local copy up and running, follow these simple steps.
+### Prerequisites
+- Node.js 18+ and npm
 
-#### Prerequisites
+### Installation
 
-- Node.js and npm installed on your machine.
+```bash
+# Clone the repository
+git clone https://github.com/your_username/game-of-stick-elo-tracker.git
 
-#### Installation
+# Navigate to the app directory
+cd game-of-stick-elo-tracker/src-game-of-stick-elo-tracker
 
-1.  **Clone the repo:**
-    ```sh
-    git clone https://github.com/your_username/game-of-stick-elo-tracker.git
-    ```
-2.  **Navigate to the project directory:**
-    ```sh
-    cd game-of-stick-elo-tracker/src-game-of-stick-elo-tracker
-    ```
-3.  **Install NPM packages:**
-    ```sh
-    npm install
-    ```
+# Install dependencies
+npm install
 
-#### Running the Application
+# Start development server
+npm run dev
+```
 
-- **Start the development server:**
-  ```sh
-  npm run dev
-  ```
-- **Build for production:**
-  ```sh
-  npm run build
-  ```
+Open `http://localhost:5173` in your browser.
 
-### 🎮 How to Use
+---
 
-1.  **Add Players:** Use the "Add Player" form to add new players to the tracker.
-2.  **Record Matches:** Select players and the outcome from the "Record a Match" section.
-3.  **Update Leaderboard:** Click the "Update Leaderboard" button to see the latest rankings.
-4.  **View Player Stats:** Select a player from the dropdown in the "Profile Stats" section to see their detailed statistics and match history.
-5.  **Import/Export Data:** Use the import/export buttons to manage your match data.
+## 📖 Step-by-Step Tutorial
 
+### 1️⃣ Create or Load a Game
 
-# TODO
+| Action | How |
+|--------|-----|
+| **Try Example Game** | Click "EXAMPLE GAME" to explore with sample data |
+| **Create New Game** | Enter a name and K-factor, click "Initialize System" |
+| **Load Saved Games** | Click "📂 Load Saved Games" → Select your folder |
 
-- [x] Fix the save and load mechanism
-      (x) Define the save game location
+### 2️⃣ Add Players
 
-- [x] Add Scrolling on the menu page.
-    
-- [TODO] Verify the leaderboard update mechanism
-     * Double window should work fine (one with the leaderboard updating and one with the match recording)
-     * Implement a "Minuteur" to run updates every XX minutes for more entertainment. Display the time remaining.
-     * "Minuteur" could be shortcut by the manual update button.
+1. Go to **ADD PLAYERS** tab
+2. Enter player name
+3. Click **Add Player**
 
-- [ ] When recording a match, display the respective lists of players remaining to fought by the two players selected. 
-- [ ] Add the remaining opponent to be fought below the match recording form, In a dedicated card. 
-     *  Display a counter if this list of players is for playing against all remaining players, once, or twice, if all already fought once, or more than twice. Display this number next to each player's list.
+### 3️⃣ Record Matches
 
-- [ ] Export game and player stats as a Nice PDF to be send like for Laser Tag
+1. Go to **ARENA** tab
+2. Select **Player 1** and **Player 2** from autocomplete
+3. Choose winner: **P1 Wins**, **P2 Wins**, or **Draw**
+4. Click **Record Result**
+
+### 4️⃣ Update the Leaderboard
+
+- Click **UPDATE LEADERBOARD** to see:
+  - Position changes (▲▼ arrows)
+  - ELO differences (+30, -15)
+  - Current streaks (🔥 W3, 🧊 L2)
+
+### 5️⃣ Save Your Game
+
+1. Click **SAVE GAME** button
+2. First time: Select a folder location
+3. Data is saved as CSV files (`players.csv`, `matches.csv`)
+
+### 6️⃣ Exit and Return
+
+- Click **EXIT GAME** to return to the menu
+- Your library folder stays selected for quick access
+
+---
+
+## 🔄 Multi-Window Sync
+
+**Perfect for events!** Use two screens:
+- **Screen 1**: Record matches (Arena view)
+- **Screen 2**: Display leaderboard (Projector view)
+
+### How It Works
+
+1. Open the app in **two browser tabs/windows**
+2. Load the **same game** in both
+3. When you **Save** in one window, the other auto-updates
+4. The display window shows:
+   - Position changes since last save
+   - ELO changes since last save
+   - Updated streaks
+
+> ⚡ Sync happens automatically via BroadcastChannel API — no server needed!
+
+---
+
+## 🛠️ Tech Stack
+
+- **TypeScript** — Type-safe code
+- **Vite** — Fast development and builds
+- **File System Access API** — Local file persistence
+- **BroadcastChannel API** — Cross-tab synchronization
+- **Pure CSS** — No framework dependencies
+
+---
+
+## 📁 Project Structure
+
+```
+src-game-of-stick-elo-tracker/
+├── index.html          # Main HTML
+├── index.tsx           # App entry point
+├── index.css           # Styles
+├── types/              # TypeScript interfaces
+├── state/              # Global store
+├── renderers/          # UI rendering functions
+├── handlers/           # Event handlers
+├── utils/              # Utilities (ELO calc, CSV, persistence)
+└── constants/          # App constants
+```
+
+---
+
+## 📜 License
+
+Apache 2.0 — See [LICENSE](LICENSE) for details.
