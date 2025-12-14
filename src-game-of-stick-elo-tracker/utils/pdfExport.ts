@@ -4,6 +4,56 @@
  */
 
 import { Player, Match } from '../types/appTypes';
+import { INITIAL_ELO } from '../constants/appConstants';
+
+/**
+ * Generate SVG graph for ELO evolution
+ */
+function generateEloGraph(player: Player, matchHistory: Match[]): string {
+    const playerMatches = matchHistory
+        .filter(m => m.player1Id === player.id || m.player2Id === player.id)
+        .sort((a, b) => a.timestamp - b.timestamp);
+
+    let currentElo = INITIAL_ELO;
+    const eloHistory = [currentElo];
+
+    playerMatches.forEach(match => {
+        const isP1 = match.player1Id === player.id;
+        currentElo = isP1 ? match.player1EloAfter : match.player2EloAfter;
+        eloHistory.push(currentElo);
+    });
+
+    const svgWidth = 180;
+    const svgHeight = 50;
+    const padding = 5;
+    const graphWidth = svgWidth - 2 * padding;
+    const graphHeight = svgHeight - 2 * padding;
+
+    if (eloHistory.length <= 1) {
+        return `<svg width="${svgWidth}" height="${svgHeight}" style="background:#f8f8f8;border-radius:4px;">
+            <line x1="${padding}" y1="${svgHeight / 2}" x2="${svgWidth - padding}" y2="${svgHeight / 2}" stroke="#ccc" stroke-width="1"/>
+        </svg>`;
+    }
+
+    const minElo = Math.min(...eloHistory);
+    const maxElo = Math.max(...eloHistory);
+    const eloRange = maxElo - minElo || 1;
+
+    const points = eloHistory.map((elo, index) => {
+        const x = padding + (index / (eloHistory.length - 1)) * graphWidth;
+        const y = padding + graphHeight - ((elo - minElo) / eloRange) * graphHeight;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+
+    const pathD = `M ${points.join(' L ')}`;
+    const strokeColor = eloHistory[eloHistory.length - 1] >= eloHistory[0] ? '#4caf50' : '#f44336';
+
+    return `<svg width="${svgWidth}" height="${svgHeight}" style="background:#f8f8f8;border-radius:4px;">
+        <path d="${pathD}" stroke="${strokeColor}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="${padding}" y="${svgHeight - 2}" font-size="8" fill="#999">${minElo}</text>
+        <text x="${svgWidth - padding}" y="${padding + 6}" font-size="8" fill="#999" text-anchor="end">${maxElo}</text>
+    </svg>`;
+}
 
 /**
  * Generate and trigger print dialog for game stats
@@ -170,12 +220,16 @@ export function generateGamePDF(
         const winRate = player.wins + player.losses > 0
             ? Math.round((player.wins / (player.wins + player.losses)) * 100)
             : 0;
+        const eloGraph = generateEloGraph(player, matchHistory);
 
         html += `
             <div class="player-card">
                 <div class="player-header">
-                    <span class="player-name">${player.name} ${streakStr}</span>
-                    <span class="player-rank">#${rank}</span>
+                    <div>
+                        <span class="player-name">${player.name} ${streakStr}</span>
+                        <span class="player-rank">#${rank}</span>
+                    </div>
+                    <div class="elo-graph">${eloGraph}</div>
                 </div>
                 <div class="player-stats">
                     ELO: <strong>${player.elo}</strong> — 
