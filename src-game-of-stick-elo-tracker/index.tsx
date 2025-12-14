@@ -20,6 +20,7 @@ import { store } from './state/store';
 import { renderProfileStatsSection } from './renderers/profileStats';
 import { calculatePlayerStreaks } from './utils/statsUtils';
 import { generateUUID } from './utils/uuid';
+import { getRemainingOpponents } from './utils/opponentTracker';
 
 // --- BROADCAST CHANNEL FOR CROSS-WINDOW SYNC ---
 const gameChannel = new BroadcastChannel('game-of-stick-sync');
@@ -448,6 +449,78 @@ function updateWinnerLabels() {
 
     winnerP1Label.textContent = `${p1Name} Wins`;
     winnerP2Label.textContent = `${p2Name} Wins`;
+
+    // Update remaining opponents display
+    renderRemainingOpponents();
+}
+
+/**
+ * Render the remaining opponents card for the selected players
+ */
+function renderRemainingOpponents() {
+    const card = document.getElementById('remaining-opponents-card');
+    const p1Col = document.getElementById('p1-opponents-col');
+    const p2Col = document.getElementById('p2-opponents-col');
+    const p1Header = document.getElementById('p1-opponents-header');
+    const p2Header = document.getElementById('p2-opponents-header');
+    const p1List = document.getElementById('p1-opponents-list');
+    const p2List = document.getElementById('p2-opponents-list');
+
+    if (!card || !p1Col || !p2Col || !p1Header || !p2Header || !p1List || !p2List) return;
+
+    const p1Id = DOMElements.player1IdInput?.value;
+    const p2Id = DOMElements.player2IdInput?.value;
+
+    // Hide card if no players selected
+    if (!p1Id && !p2Id) {
+        card.setAttribute('hidden', 'true');
+        return;
+    }
+
+    card.removeAttribute('hidden');
+
+    // Render Player 1 opponents
+    if (p1Id) {
+        const p1 = store.players.find(p => p.id === p1Id);
+        p1Header.textContent = `${p1?.name || 'Player 1'} (Round ${getRemainingOpponents(p1Id, store.players, store.matchHistory).round})`;
+        renderOpponentList(p1Id, p1List, p2Id);
+        p1Col.style.display = 'block';
+    } else {
+        p1Col.style.display = 'none';
+    }
+
+    // Render Player 2 opponents
+    if (p2Id) {
+        const p2 = store.players.find(p => p.id === p2Id);
+        p2Header.textContent = `${p2?.name || 'Player 2'} (Round ${getRemainingOpponents(p2Id, store.players, store.matchHistory).round})`;
+        renderOpponentList(p2Id, p2List, p1Id);
+        p2Col.style.display = 'block';
+    } else {
+        p2Col.style.display = 'none';
+    }
+}
+
+/**
+ * Render the opponent list for a single player
+ */
+function renderOpponentList(playerId: string, container: HTMLElement, otherId?: string) {
+    const result = getRemainingOpponents(playerId, store.players, store.matchHistory);
+
+    if (result.allFought) {
+        container.innerHTML = '<div class="round-complete">✓ All fought this round!</div>';
+        return;
+    }
+
+    container.innerHTML = result.opponents.map(opp => {
+        const isOtherPlayer = opp.playerId === otherId;
+        const countClass = opp.timesFought === 0 ? 'count never-fought' : 'count';
+        return `
+            <div class="opponent-item${isOtherPlayer ? ' selected-opponent' : ''}" data-id="${opp.playerId}">
+                <span class="name">${opp.playerName}</span>
+                <span class="${countClass}">${opp.timesFought}</span>
+            </div>
+        `;
+    }).join('');
 }
 
 persist();
