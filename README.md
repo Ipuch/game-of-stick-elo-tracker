@@ -2,6 +2,8 @@
 
 > **Track player rankings, match history, and performance stats for Parkour "Stick" battles.**
 
+**Created by Pierre Puchaud** • [puchaud.pierre@gmail.com](mailto:puchaud.pierre@gmail.com)
+
 ![Game of Stick Elo Tracker Screenshot](screenshot.png)
 
 ---
@@ -12,10 +14,12 @@
 |---------|-------------|
 | **ELO Ratings** | Auto-calculated ratings with configurable K-factor |
 | **Live Leaderboard** | Position changes (▲▼) and ELO diffs (+/-) |
+| **ELO Evolution Chart** | 📈 Beautiful animated chart showing all players' rating progression |
 | **Win/Loss Streaks** | 🔥 Win streaks, 🧊 Loss streaks with visual indicators |
 | **Podium Display** | Top 3 players with medals 🥇🥈🥉 |
 | **Combat Matrix** | Head-to-head stats visualized in a heatmap |
 | **Player Profiles** | Detailed per-player stats and match history |
+| **PDF Export** | 📄 Export full tournament stats as printable PDF |
 | **Multi-Window Sync** | Real-time sync between browser tabs |
 | **File-Based Save** | Save games to local folders as CSV files |
 
@@ -30,7 +34,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/your_username/game-of-stick-elo-tracker.git
+git clone https://github.com/Ipuch/game-of-stick-elo-tracker.git
 
 # Navigate to the app directory
 cd game-of-stick-elo-tracker/src-game-of-stick-elo-tracker
@@ -43,6 +47,13 @@ npm run dev
 ```
 
 Open `http://localhost:5173` in your browser.
+
+### Running Tests
+
+```bash
+npm test          # Run tests once
+npm run test:watch  # Watch mode
+```
 
 ---
 
@@ -76,13 +87,20 @@ Open `http://localhost:5173` in your browser.
   - ELO differences (+30, -15)
   - Current streaks (🔥 W3, 🧊 L2)
 
-### 5️⃣ Save Your Game
+### 5️⃣ View Stats & Export PDF
+
+- Go to **STATS** tab to see:
+  - 📈 ELO Evolution chart (all players over time)
+  - Player profiles with match history
+  - Click **📄 Export PDF Stats** for printable report
+
+### 6️⃣ Save Your Game
 
 1. Click **SAVE GAME** button
 2. First time: Select a folder location
 3. Data is saved as CSV files (`players.csv`, `matches.csv`)
 
-### 6️⃣ Exit and Return
+### 7️⃣ Exit and Return
 
 - Click **EXIT GAME** to return to the menu
 - Your library folder stays selected for quick access
@@ -113,9 +131,11 @@ Open `http://localhost:5173` in your browser.
 
 - **TypeScript** — Type-safe code
 - **Vite** — Fast development and builds
+- **Vitest** — Unit testing framework
 - **File System Access API** — Local file persistence
 - **BroadcastChannel API** — Cross-tab synchronization
 - **Pure CSS** — No framework dependencies
+- **SVG Charts** — Beautiful animated visualizations
 
 ---
 
@@ -128,14 +148,31 @@ src-game-of-stick-elo-tracker/
 ├── index.css           # Styles
 ├── types/              # TypeScript interfaces
 ├── state/              # Global store
+├── scoring/            # Scoring system (ELO) - extensible
+│   ├── scoringTypes.ts # Interfaces for scoring systems
+│   ├── eloScoring.ts   # ELO implementation
+│   └── index.ts        # Exports and factory
 ├── renderers/          # UI rendering functions
+│   ├── leaderboard.ts
+│   ├── podium.ts
+│   ├── battleHistory.ts
+│   ├── combatMatrix.ts
+│   ├── profileStats.ts
+│   └── eloEvolutionChart.ts  # Animated ELO chart
 ├── handlers/           # Event handlers
-├── utils/              # Utilities (ELO calc, CSV, persistence)
-└── constants/          # App constants
+├── utils/              # Utilities (CSV, persistence, PDF export)
+├── constants/          # App constants
+└── tests/              # Unit tests
+    └── scoring/        # Scoring system tests
 ```
 
 ---
 
 ## 📜 License
 
-Apache 2.0 — See [LICENSE](LICENSE) for details.
+**Non-Commercial Use Only** — Commercial use requires written permission.
+
+See [LICENSE.md](LICENSE.md) for full details.
+
+© 2024 Pierre Puchaud. All rights reserved.
+
