@@ -20,6 +20,7 @@ import { selectLibraryFolder, listGamesInLibrary, createGameInLibrary, loadGameF
 // New Imports
 import { store } from './state/store';
 import { renderProfileStatsSection } from './renderers/profileStats';
+import { renderEloEvolutionChart } from './renderers/eloEvolutionChart';
 import { calculatePlayerStreaks } from './utils/statsUtils';
 import { generateUUID } from './utils/uuid';
 import { getRemainingOpponents } from './utils/opponentTracker';
@@ -71,6 +72,7 @@ gameChannel.onmessage = async (event) => {
             renderBattleHistory(store.matchHistory, DOMElements);
             renderCombatMatrix(store.players, store.matchHistory, DOMElements);
             renderProfileStatsSection(store.players, store.matchHistory);
+            renderEloEvolutionChart(store.players, store.matchHistory);
             renderRosterList();
 
             showNotification('Game synced from another window');
@@ -139,6 +141,7 @@ function render() {
     renderBattleHistory(store.matchHistory, DOMElements);
     renderCombatMatrix(store.players, store.matchHistory, DOMElements);
     renderProfileStatsSection(store.players, store.matchHistory);
+    renderEloEvolutionChart(store.players, store.matchHistory);
     renderRosterList();
 
     // Now that ranks are updated (including previousRank), save the state.

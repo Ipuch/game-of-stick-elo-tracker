@@ -192,13 +192,21 @@
 
     <!-- VIEW: STATS -->
     <div id="view-stats" class="view">
+      <!-- PDF Export at top -->
+      <div class="stats-actions" style="margin-bottom: 20px;">
+        <button id="export-pdf-btn" class="button-secondary">📄 Export PDF Stats</button>
+      </div>
+
+      <!-- ELO Evolution Chart -->
+      <section id="elo-evolution-section" class="panel">
+        <h2>📈 ELO Evolution</h2>
+        <div id="elo-evolution-chart"></div>
+      </section>
+
+      <!-- Player Profile Stats -->
       <section id="profile-stats-section" class="panel">
         <div id="profile-stats-content"></div>
       </section>
-
-      <div class="stats-actions">
-        <button id="export-pdf-btn" class="button-secondary">📄 Export PDF Stats</button>
-      </div>
 
       <section class="battle-history-section">
         <div class="battle-history-header">
