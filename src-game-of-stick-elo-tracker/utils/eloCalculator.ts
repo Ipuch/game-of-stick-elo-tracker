@@ -2,32 +2,26 @@
  * Game of S.T.I.C.K. - ELO Tracker
  * @author Pierre Puchaud
  * @copyright 2024 Pierre Puchaud
+ * 
+ * @deprecated This file is deprecated. Import from '../scoring' instead.
+ * This file exists only for backward compatibility.
  */
 
+import { eloScoring } from '../scoring';
+import { MatchOutcome } from '../scoring';
+
+/**
+ * @deprecated Use eloScoring.calculateNewRatings() from '../scoring' instead
+ */
 export function calculateElo(
   p1Elo: number,
   p2Elo: number,
-  winner: 'p1' | 'p2' | 'draw',
+  winner: MatchOutcome,
   kFactor: number
 ): { newP1Elo: number; newP2Elo: number } {
-  const expectedScoreP1 = 1 / (1 + 10 ** ((p2Elo - p1Elo) / 400));
-  const expectedScoreP2 = 1 / (1 + 10 ** ((p1Elo - p2Elo) / 400));
-
-  let actualScoreP1: number, actualScoreP2: number;
-
-  if (winner === 'p1') {
-    actualScoreP1 = 1;
-    actualScoreP2 = 0;
-  } else if (winner === 'p2') {
-    actualScoreP1 = 0;
-    actualScoreP2 = 1;
-  } else { // Draw
-    actualScoreP1 = 0.5;
-    actualScoreP2 = 0.5;
-  }
-
-  const newP1Elo = Math.round(p1Elo + kFactor * (actualScoreP1 - expectedScoreP1));
-  const newP2Elo = Math.round(p2Elo + kFactor * (actualScoreP2 - expectedScoreP2));
-
-  return { newP1Elo, newP2Elo };
+  const result = eloScoring.calculateNewRatings(p1Elo, p2Elo, winner, kFactor);
+  return {
+    newP1Elo: result.newP1Rating,
+    newP2Elo: result.newP2Rating
+  };
 } 

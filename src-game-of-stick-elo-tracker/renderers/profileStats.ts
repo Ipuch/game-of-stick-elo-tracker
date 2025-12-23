@@ -5,7 +5,7 @@
  */
 
 import { Player, Match } from '../types/appTypes';
-import { INITIAL_ELO } from '../constants/appConstants';
+import { eloScoring } from '../scoring';
 
 function renderStreak(type: 'W' | 'L' | null, length: number): string {
     if (length < 3 || !type) return '';
@@ -103,7 +103,7 @@ function renderProfileStatsContent(playerId: string, players: Player[], matchHis
         .filter(m => m.player1Id === player.id || m.player2Id === player.id)
         .sort((a, b) => a.timestamp - b.timestamp);
 
-    let currentElo = INITIAL_ELO;
+    let currentElo = eloScoring.getInitialRating();
     const eloHistory = [currentElo];
 
     playerMatches.forEach(match => {
@@ -183,10 +183,8 @@ function renderProfileStatsContent(playerId: string, players: Player[], matchHis
                 (isP1 && match.outcome === 'p1') || (!isP1 && match.outcome === 'p2') ? 'Win' : 'Loss';
             const eloChange = isP1 ? match.player1EloChange : match.player2EloChange;
             const eloStr = (eloChange && eloChange > 0 ? '+' : '') + (eloChange || 0);
-            // Odds calculation
-            const p1EloBefore = match.player1EloBefore;
-            const p2EloBefore = match.player2EloBefore;
-            const expectedScore = 1 / (1 + Math.pow(10, ((p2EloBefore - p1EloBefore) / 400)));
+            // Odds calculation using centralized scoring
+            const expectedScore = eloScoring.getExpectedScore(match.player1EloBefore, match.player2EloBefore);
             const odds = isP1 ? expectedScore : 1 - expectedScore;
             const oddsPercent = Math.round(odds * 100);
             // Odds comment

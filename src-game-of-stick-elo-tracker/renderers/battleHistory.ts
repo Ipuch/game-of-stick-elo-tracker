@@ -4,8 +4,9 @@
  * @copyright 2024 Pierre Puchaud
  */
 
-import { Match, Player } from '../types/appTypes';
+import { Match } from '../types/appTypes';
 import { AppDOMElements } from '../utils/domElements';
+import { eloScoring } from '../scoring';
 
 export function renderBattleHistory(
     matchHistory: Match[],
@@ -19,8 +20,7 @@ export function renderBattleHistory(
     const matches = [...matchHistory].sort((a, b) => b.timestamp - a.timestamp);
     DOMElements.battleHistoryList.innerHTML = '';
     matches.forEach(match => {
-        const expectedScoreP1 = 1 / (1 + 10 ** ((match.player2EloBefore - match.player1EloBefore) / 400));
-        const expectedScoreP2 = 1 - expectedScoreP1;
+        const expectedScoreP1 = eloScoring.getExpectedScore(match.player1EloBefore, match.player2EloBefore);
         const p1Prob = Math.round(expectedScoreP1 * 100);
         const p2Prob = 100 - p1Prob;
         let outcomeText = '';

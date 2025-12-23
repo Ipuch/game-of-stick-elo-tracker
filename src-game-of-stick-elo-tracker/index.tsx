@@ -5,9 +5,9 @@
  * @license Apache-2.0
  */
 
-import { calculateElo } from './utils/eloCalculator';
+import { eloScoring } from './scoring';
 import { Player, Match } from './types/appTypes';
-import { INITIAL_ELO, DEFAULT_K_FACTOR } from './constants/appConstants';
+import { DEFAULT_K_FACTOR } from './constants/appConstants';
 import { loadSession, saveSession, getLastLibraryName, saveLastLibraryName, clearTemporaryData } from './utils/localStoragePersistence';
 import { getExampleGameState, EXAMPLE_GAME_NAME } from './utils/exampleGameData';
 import { AppDOMElements, queryDOMElements } from './utils/domElements';
@@ -262,7 +262,7 @@ function handleAddPlayer(event: SubmitEvent) {
         const newPlayer: Player = {
             id: generateUUID(),
             name: name,
-            elo: INITIAL_ELO,
+            elo: eloScoring.getInitialRating(),
             wins: 0,
             losses: 0,
             draws: 0,
@@ -365,7 +365,9 @@ function handleRecordMatch(event: SubmitEvent) {
         return;
     }
 
-    const { newP1Elo, newP2Elo } = calculateElo(player1.elo, player2.elo, winner, store.kFactor);
+    const result = eloScoring.calculateNewRatings(player1.elo, player2.elo, winner, store.kFactor);
+    const newP1Elo = result.newP1Rating;
+    const newP2Elo = result.newP2Rating;
 
     const newMatch: Match = {
         id: generateUUID(),
@@ -526,7 +528,7 @@ function handleClearMatchHistory() {
         store.matchHistory = [];
         // Reset all player stats and ELOs to initial state
         store.players.forEach(player => {
-            player.elo = INITIAL_ELO;
+            player.elo = eloScoring.getInitialRating();
             player.wins = 0;
             player.losses = 0;
             player.draws = 0;
