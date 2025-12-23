@@ -1,10 +1,16 @@
+/**
+ * Game of S.T.I.C.K. - ELO Tracker
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
+ */
+
 import { Player, Match } from '../types/appTypes';
 
 export function calculatePlayerStreaks(players: Player[], matchHistory: Match[]) {
     players.forEach(player => {
         let streakType: 'W' | 'L' | null = null;
         let streakLength = 0;
-        
+
         // Filter matches involving the current player, and sort by timestamp descending
         const playerMatches = matchHistory
             .filter(m => m.player1Id === player.id || m.player2Id === player.id)

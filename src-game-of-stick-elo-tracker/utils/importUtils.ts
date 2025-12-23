@@ -1,3 +1,9 @@
+/**
+ * Game of S.T.I.C.K. - ELO Tracker
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
+ */
+
 export function deduceKFromFirstMatch(parts: string[]): number | null {
     // parts: [Timestamp, Player 1, Player 2, Outcome, P1 ELO Before, P1 ELO After, P2 ELO Before, P2 ELO After]
     const p1EloBefore = parseFloat(parts[4]);

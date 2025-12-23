@@ -1,5 +1,7 @@
 /**
  * Opponent tracking utilities for the remaining opponents feature
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
  */
 
 import { Player, Match } from '../types/appTypes';

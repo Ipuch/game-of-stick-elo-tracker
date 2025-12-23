@@ -1,3 +1,9 @@
+/**
+ * Game of S.T.I.C.K. - ELO Tracker
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
+ */
+
 import { Player } from '../types/appTypes';
 import { AppDOMElements } from '../utils/domElements';
 
@@ -17,7 +23,7 @@ export function renderPodium(
     if (!DOMElements.podiumContainer) return;
 
     const topThree = [...players].sort((a, b) => b.elo - a.elo).slice(0, 3);
-    
+
     DOMElements.podiumContainer.innerHTML = '';
     DOMElements.podiumContainer.style.display = topThree.length > 0 ? 'flex' : 'none';
     if (topThree.length === 0) return; // Hide podium if no players

@@ -106,19 +106,6 @@ where npm >nul 2>nul || (
     exit /b 1
 )
 
-REM Check Node.js version (requires 18+)
-for /f "tokens=1 delims=v." %%V in ('node -v 2^>nul') do set "NODE_MAJOR=%%V"
-for /f "tokens=2 delims=v." %%V in ('node -v 2^>nul') do set "NODE_MAJOR=%%V"
-if !NODE_MAJOR! LSS 18 (
-    echo ERROR: Node.js 18+ is required. You have: 
-    node -v
-    echo Download the latest LTS from: https://nodejs.org/
-    pause
-    popd
-    exit /b 1
-)
-echo Node.js version OK:
-
 REM Install dependencies if needed
 if not exist node_modules (
     echo Installing npm dependencies...

@@ -1,3 +1,9 @@
+/**
+ * Game of S.T.I.C.K. - ELO Tracker
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
+ */
+
 import { Match, Player } from '../types/appTypes';
 import { AppDOMElements } from '../utils/domElements';
 
@@ -28,9 +34,9 @@ export function renderBattleHistory(
         entry.innerHTML = `
             <div class="battle-history-header">
                 <span class="battle-history-players">
-                    ${match.player1Name} <span style="color:#888;font-size:0.95em">(${match.player1EloBefore} ELO ${match.player1EloChange ? (match.player1EloChange > 0 ? '<span class="elo-up">+' : '<span class="elo-down">' ) + match.player1EloChange + '</span>' : ''})</span>
+                    ${match.player1Name} <span style="color:#888;font-size:0.95em">(${match.player1EloBefore} ELO ${match.player1EloChange ? (match.player1EloChange > 0 ? '<span class="elo-up">+' : '<span class="elo-down">') + match.player1EloChange + '</span>' : ''})</span>
                     vs.
-                    ${match.player2Name} <span style="color:#888;font-size:0.95em">(${match.player2EloBefore} ELO ${match.player2EloChange ? (match.player2EloChange > 0 ? '<span class="elo-up">+' : '<span class="elo-down">' ) + match.player2EloChange + '</span>' : ''})</span>
+                    ${match.player2Name} <span style="color:#888;font-size:0.95em">(${match.player2EloBefore} ELO ${match.player2EloChange ? (match.player2EloChange > 0 ? '<span class="elo-up">+' : '<span class="elo-down">') + match.player2EloChange + '</span>' : ''})</span>
                 </span>
                 <span class="battle-history-timestamp">${timestampStr}</span>
             </div>

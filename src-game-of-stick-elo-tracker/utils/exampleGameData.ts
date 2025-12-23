@@ -1,6 +1,8 @@
 /**
  * Example game data for demonstration purposes
  * This provides sample players and matches when the app first launches
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
  */
 
 import { Player, Match } from '../types/appTypes';

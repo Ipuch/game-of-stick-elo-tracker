@@ -1,3 +1,9 @@
+/**
+ * Game of S.T.I.C.K. - ELO Tracker
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
+ */
+
 export function generateUUID() {
     if (self.crypto && self.crypto.randomUUID) {
         return self.crypto.randomUUID();

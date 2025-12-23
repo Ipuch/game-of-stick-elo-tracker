@@ -1,3 +1,9 @@
+/**
+ * Game of S.T.I.C.K. - ELO Tracker
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
+ */
+
 export interface AppDOMElements {
     leaderboardBody: HTMLTableSectionElement | null;
     leaderboardSection: HTMLElement | null;

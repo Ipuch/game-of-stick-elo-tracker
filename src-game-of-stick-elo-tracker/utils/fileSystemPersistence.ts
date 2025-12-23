@@ -1,3 +1,8 @@
+/**
+ * Game of S.T.I.C.K. - ELO Tracker
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
+ */
 
 import { AppState } from './localStoragePersistence';
 import { Player, Match } from '../types/appTypes';

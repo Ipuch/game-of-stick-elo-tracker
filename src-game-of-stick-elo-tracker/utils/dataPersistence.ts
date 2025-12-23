@@ -1,3 +1,9 @@
+/**
+ * Game of S.T.I.C.K. - ELO Tracker
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
+ */
+
 import { Player, Match } from '../types/appTypes';
 import { INITIAL_ELO, PLAYERS_STORAGE_KEY, MATCH_HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_K_FACTOR } from '../constants/appConstants';
 
@@ -23,20 +29,20 @@ export function loadState(): {
   if (storedPlayers) {
     const parsedPlayers: Player[] = JSON.parse(storedPlayers);
     players = parsedPlayers.map(p => ({
-        ...p,
-        wins: p.wins || 0,
-        losses: p.losses || 0,
-        draws: p.draws || 0,
-        previousRank: p.previousRank || 0,
-        currentStreakType: p.currentStreakType || null,
-        currentStreakLength: p.currentStreakLength || 0,
+      ...p,
+      wins: p.wins || 0,
+      losses: p.losses || 0,
+      draws: p.draws || 0,
+      previousRank: p.previousRank || 0,
+      currentStreakType: p.currentStreakType || null,
+      currentStreakLength: p.currentStreakLength || 0,
     }));
   }
 
   const storedMatchHistory = localStorage.getItem(MATCH_HISTORY_STORAGE_KEY);
   let matchHistory: Match[] = [];
-  if(storedMatchHistory) {
-      matchHistory = JSON.parse(storedMatchHistory);
+  if (storedMatchHistory) {
+    matchHistory = JSON.parse(storedMatchHistory);
   }
 
   const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -47,6 +53,6 @@ export function loadState(): {
     kFactor = settings.kFactor || DEFAULT_K_FACTOR;
     isRealtimeUpdate = settings.isRealtimeUpdate ?? true;
   }
-  
+
   return { players, matchHistory, kFactor, isRealtimeUpdate };
 } 

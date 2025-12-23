@@ -1,3 +1,9 @@
+/**
+ * Game of S.T.I.C.K. - ELO Tracker Styles
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
+ */
+
 :root {
     /* Core Colors */
     --background-bg: #0a0e17;
@@ -1189,4 +1195,33 @@ button {
     color: var(--success-color);
     font-weight: 500;
     padding: 0.5rem;
+}
+
+/* --- Developer Credit Footer --- */
+.dev-credit {
+    position: fixed;
+    bottom: 8px;
+    right: 12px;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    opacity: 0.5;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.5px;
+    z-index: 100;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.dev-credit:hover {
+    opacity: 0.8;
+}
+
+/* Developer credit inside game menu */
+.game-menu .dev-credit-menu {
+    margin-top: 2rem;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    opacity: 0.5;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.5px;
 }

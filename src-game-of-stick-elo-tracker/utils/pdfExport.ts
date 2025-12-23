@@ -1,6 +1,8 @@
 /**
  * PDF Export utility for Game of S.T.I.C.K.
  * Uses print-to-PDF approach for proper Unicode/emoji support
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
  */
 
 import { Player, Match } from '../types/appTypes';
