@@ -114,11 +114,15 @@ export function generateGamePDF(
         th { background: #f5f5f5; font-weight: 600; }
         
         .player-card { 
-            page-break-inside: avoid; 
+            page-break-inside: avoid;
+            page-break-before: always;
             border: 1px solid #ddd; 
             border-radius: 8px; 
             padding: 15px; 
             margin-bottom: 15px;
+        }
+        .player-card:first-of-type {
+            page-break-before: auto;
         }
         .player-header { 
             display: flex; 
@@ -242,14 +246,13 @@ export function generateGamePDF(
                 </div>
         `;
 
-        // Last battles
+        // All battles for this player
         const playerMatches = matchHistory
             .filter(m => m.player1Id === player.id || m.player2Id === player.id)
-            .sort((a, b) => b.timestamp - a.timestamp)
-            .slice(0, 8);
+            .sort((a, b) => b.timestamp - a.timestamp);
 
         if (playerMatches.length > 0) {
-            html += '<div class="battles"><h4>Last Battles</h4>';
+            html += '<div class="battles"><h4>All Battles</h4>';
 
             playerMatches.forEach(match => {
                 const isP1 = match.player1Id === player.id;
