@@ -7,6 +7,11 @@
 
 import { Player, Match } from '../types/appTypes';
 import { eloScoring } from '../scoring';
+import { showFullscreenChart } from './eloEvolutionChartEcharts';
+
+// Store data for fullscreen button callback
+let cachedPlayers: Player[] = [];
+let cachedMatchHistory: Match[] = [];
 
 /**
  * Beautiful color palette for player curves (distinct, vibrant colors)
@@ -32,6 +37,10 @@ const PLAYER_COLORS = [
 export function renderEloEvolutionChart(players: Player[], matchHistory: Match[]) {
     const container = document.getElementById('elo-evolution-chart');
     if (!container) return;
+
+    // Cache data for fullscreen button
+    cachedPlayers = players;
+    cachedMatchHistory = matchHistory;
 
     if (matchHistory.length === 0 || players.length === 0) {
         container.innerHTML = '<p style="color: #888; text-align: center; padding: 40px;">No match data available. Record some matches to see the evolution chart!</p>';
@@ -123,10 +132,6 @@ export function renderEloEvolutionChart(players: Player[], matchHistory: Match[]
 
         <!-- Background with shadow -->
         <rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" fill="url(#bgGradientWeb)" rx="16" filter="url(#dropShadow)"/>
-
-        <!-- Title -->
-        <text x="${svgWidth / 2}" y="32" text-anchor="middle" font-size="20" font-weight="bold" fill="#fff">📈 ELO RATING EVOLUTION</text>
-        <text x="${svgWidth / 2}" y="48" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.5)">Track rating changes across all matches</text>
 `;
 
     // Draw horizontal grid lines
@@ -207,5 +212,48 @@ export function renderEloEvolutionChart(players: Player[], matchHistory: Match[]
 
     svg += `    </svg>`;
 
-    container.innerHTML = svg;
+    // Create wrapper with button
+    container.innerHTML = '';
+
+    // Add wrapper div
+    const wrapper = document.createElement('div');
+    wrapper.className = 'elo-chart-wrapper';
+    wrapper.style.position = 'relative';
+    wrapper.innerHTML = svg;
+
+    // Add fullscreen button
+    const fullscreenBtn = document.createElement('button');
+    fullscreenBtn.id = 'elo-fullscreen-btn';
+    fullscreenBtn.className = 'elo-fullscreen-btn';
+    fullscreenBtn.title = 'Open interactive fullscreen chart';
+    fullscreenBtn.innerHTML = '⛶ Set Full Screen';
+    fullscreenBtn.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 8px 14px;
+        background: rgba(0, 243, 255, 0.15);
+        border: 1px solid rgba(0, 243, 255, 0.4);
+        color: #00f3ff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+        z-index: 10;
+    `;
+    fullscreenBtn.onmouseenter = () => {
+        fullscreenBtn.style.background = 'rgba(0, 243, 255, 0.25)';
+        fullscreenBtn.style.borderColor = '#00f3ff';
+        fullscreenBtn.style.boxShadow = '0 0 15px rgba(0, 243, 255, 0.3)';
+    };
+    fullscreenBtn.onmouseleave = () => {
+        fullscreenBtn.style.background = 'rgba(0, 243, 255, 0.15)';
+        fullscreenBtn.style.borderColor = 'rgba(0, 243, 255, 0.4)';
+        fullscreenBtn.style.boxShadow = 'none';
+    };
+    fullscreenBtn.onclick = () => showFullscreenChart(cachedPlayers, cachedMatchHistory);
+
+    wrapper.appendChild(fullscreenBtn);
+    container.appendChild(wrapper);
 }
