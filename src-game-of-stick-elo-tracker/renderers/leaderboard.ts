@@ -7,7 +7,7 @@
 import { Player, Match } from '../types/appTypes';
 import { AppDOMElements } from '../utils/domElements';
 import { calculatePlayerStreaks } from '../utils/playerUtils';
-import { INITIAL_ELO } from '../constants/appConstants';
+import { DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 
 
 
@@ -67,7 +67,7 @@ export function renderLeaderboard(
 
         // Calculate ELO diff since last leaderboard update
         // For new players not in baseline, use INITIAL_ELO as starting point
-        const prevElo = lastLeaderboardElo[player.id] ?? INITIAL_ELO;
+        const prevElo = lastLeaderboardElo[player.id] ?? DEFAULT_ELO_CONFIG.initialRating;
         const eloDiff = player.elo - prevElo;
         const eloDiffHtml = eloDiff !== 0
             ? `<span class="elo-change ${eloDiff > 0 ? 'elo-up' : 'elo-down'}">(${eloDiff > 0 ? '+' : ''}${eloDiff})</span>`

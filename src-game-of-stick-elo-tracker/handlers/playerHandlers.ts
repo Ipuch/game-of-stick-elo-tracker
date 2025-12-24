@@ -7,11 +7,10 @@
 
 import { Player } from '../types/appTypes';
 import { generateUUID } from '../utils/uuid';
-import { eloScoring } from '../scoring';
+import { eloScoring, DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 import { AppDOMElements } from '../utils/domElements';
 import { store } from '../state/store';
 import { showNotification } from '../ui/notificationSystem';
-import { DEFAULT_K_FACTOR } from '../constants/appConstants';
 
 export type PlayerHandlerContext = {
     render: () => void;
@@ -63,7 +62,7 @@ export function handleClearPlayers(context: PlayerHandlerContext) {
     if (confirm('Are you sure you want to clear ALL players and match history? This action cannot be undone.')) {
         store.players = [];
         store.matchHistory = [];
-        store.kFactor = DEFAULT_K_FACTOR;
+        store.kFactor = DEFAULT_ELO_CONFIG.parameters.kFactor;
         if (context.DOMElements.kFactorInput) {
             context.DOMElements.kFactorInput.value = store.kFactor.toString();
         }

@@ -6,7 +6,7 @@
  */
 
 import { Player, Match } from '../types/appTypes';
-import { DEFAULT_K_FACTOR } from '../constants/appConstants';
+import { DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 import { generateUUID } from './uuid';
 import { AppState } from './localStoragePersistence';
 
@@ -52,7 +52,7 @@ export function getExampleGameState(): AppState {
     return {
         players,
         matchHistory,
-        kFactor: DEFAULT_K_FACTOR
+        kFactor: DEFAULT_ELO_CONFIG.parameters.kFactor
     };
 }
 

@@ -5,7 +5,8 @@
  */
 
 import { Player, Match, GameSessionMetadata } from '../types/appTypes';
-import { PLAYERS_STORAGE_KEY, MATCH_HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_K_FACTOR, LAST_LIBRARY_NAME_KEY } from '../constants/appConstants';
+import { PLAYERS_STORAGE_KEY, MATCH_HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, LAST_LIBRARY_NAME_KEY } from '../constants/appConstants';
+import { DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 import { generateUUID } from './uuid';
 
 const SESSION_LIST_KEY = 'game-of-stick-sessions';
@@ -33,7 +34,7 @@ function saveSessionList(list: GameSessionMetadata[]) {
   localStorage.setItem(SESSION_LIST_KEY, JSON.stringify(list));
 }
 
-export function createSession(name: string, kFactor: number = DEFAULT_K_FACTOR): string {
+export function createSession(name: string, kFactor: number = DEFAULT_ELO_CONFIG.parameters.kFactor): string {
   const id = generateUUID();
   const now = Date.now();
   const metadata: GameSessionMetadata = {
@@ -72,7 +73,7 @@ export function migrateLegacyDataIfNeeded(): string | null {
   // Load Legacy Data safely
   let players: Player[] = [];
   let matchHistory: Match[] = [];
-  let kFactor = DEFAULT_K_FACTOR;
+  let kFactor = DEFAULT_ELO_CONFIG.parameters.kFactor;
 
   try {
     players = JSON.parse(legacyPlayers);
@@ -157,7 +158,7 @@ export function loadSession(id: string): AppState | null {
     return {
       players,
       matchHistory: data.matchHistory || [],
-      kFactor: data.kFactor || DEFAULT_K_FACTOR
+      kFactor: data.kFactor || DEFAULT_ELO_CONFIG.parameters.kFactor
     };
   } catch (e) {
     console.error(`Failed to load session ${id}`, e);

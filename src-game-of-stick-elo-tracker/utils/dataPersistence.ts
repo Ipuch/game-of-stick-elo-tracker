@@ -5,7 +5,8 @@
  */
 
 import { Player, Match } from '../types/appTypes';
-import { PLAYERS_STORAGE_KEY, MATCH_HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_K_FACTOR } from '../constants/appConstants';
+import { PLAYERS_STORAGE_KEY, MATCH_HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY } from '../constants/appConstants';
+import { DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 
 export function saveState(
   players: Player[],
@@ -46,11 +47,11 @@ export function loadState(): {
   }
 
   const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-  let kFactor: number = DEFAULT_K_FACTOR;
+  let kFactor: number = DEFAULT_ELO_CONFIG.parameters.kFactor;
   let isRealtimeUpdate: boolean = true;
   if (storedSettings) {
     const settings = JSON.parse(storedSettings);
-    kFactor = settings.kFactor || DEFAULT_K_FACTOR;
+    kFactor = settings.kFactor || DEFAULT_ELO_CONFIG.parameters.kFactor;
     isRealtimeUpdate = settings.isRealtimeUpdate ?? true;
   }
 

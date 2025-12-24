@@ -5,12 +5,12 @@
  */
 
 import { Player, Match } from '../types/appTypes';
-import { DEFAULT_K_FACTOR } from '../constants/appConstants';
+import { DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 
 export class AppStore {
     players: Player[] = [];
     matchHistory: Match[] = [];
-    kFactor: number = DEFAULT_K_FACTOR;
+    kFactor: number = DEFAULT_ELO_CONFIG.parameters.kFactor;
     isRealtimeUpdate: boolean = true; // Kept for compatibility but always true
     lastLeaderboardElo: Record<string, number> = {};
     currentSessionId: string | null = null;

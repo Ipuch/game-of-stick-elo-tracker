@@ -4,8 +4,7 @@
  * @copyright 2024 Pierre Puchaud
  */
 
-export const INITIAL_ELO = 1200;
-export const DEFAULT_K_FACTOR = 60;
+
 
 export const PLAYERS_STORAGE_KEY = 'game-of-stick-players';
 export const MATCH_HISTORY_STORAGE_KEY = 'game-of-stick-match-history';

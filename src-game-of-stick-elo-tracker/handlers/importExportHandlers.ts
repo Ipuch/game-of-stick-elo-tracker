@@ -6,7 +6,7 @@
 
 import { store } from '../state/store';
 import { Player } from '../types/appTypes';
-import { INITIAL_ELO } from '../constants/appConstants';
+import { DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 import { escapeCsvValue, downloadFile } from '../utils/csvUtils';
 import { calculatePlayerStreaks } from '../utils/statsUtils';
 import { generateUUID } from '../utils/uuid'; // Assuming we export this or need to move it too. ORIGINAL index.tsx has it. 
@@ -35,7 +35,7 @@ export function handleExportPlayers() {
     players.forEach(player => {
         const row = [
             escapeCsvValue(player.name),
-            INITIAL_ELO
+            DEFAULT_ELO_CONFIG.initialRating
         ].join(',');
         csvRows.push(row);
     });
@@ -86,7 +86,7 @@ export function createImportPlayersHandler(context: StrictHandlerContext) {
                 const parts = line.split(',');
                 const playerName = parts[0].trim();
                 const initialEloString = parts[1] ? parts[1].trim() : '';
-                const initialElo = initialEloString ? parseInt(initialEloString, 10) : INITIAL_ELO;
+                const initialElo = initialEloString ? parseInt(initialEloString, 10) : DEFAULT_ELO_CONFIG.initialRating;
 
                 if (!playerName) {
                     console.warn(`Skipping row with empty player name: ${line}`);

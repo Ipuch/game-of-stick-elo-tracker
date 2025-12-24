@@ -6,7 +6,7 @@
 
 import { AppState } from './localStoragePersistence';
 import { Player, Match } from '../types/appTypes';
-import { DEFAULT_K_FACTOR } from '../constants/appConstants';
+import { DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 import { playersToCSV, matchesToCSV, csvToPlayers, csvToMatches } from './csvUtils';
 
 // Extending Window interface for File System Access API
@@ -63,7 +63,7 @@ export async function createGameInLibrary(libraryHandle: FileSystemDirectoryHand
 export async function loadGameFromSession(dirHandle: FileSystemDirectoryHandle): Promise<AppState> {
     let players: Player[] = [];
     let matchHistory: Match[] = [];
-    let kFactor = DEFAULT_K_FACTOR;
+    let kFactor = DEFAULT_ELO_CONFIG.parameters.kFactor;
 
     try {
         // Load Players (CSV)
