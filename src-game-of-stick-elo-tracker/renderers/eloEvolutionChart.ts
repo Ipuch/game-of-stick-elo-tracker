@@ -221,38 +221,53 @@ export function renderEloEvolutionChart(players: Player[], matchHistory: Match[]
     wrapper.style.position = 'relative';
     wrapper.innerHTML = svg;
 
-    // Add fullscreen button
-    const fullscreenBtn = document.createElement('button');
+    // Add fullscreen button (Icon only)
+    const fullscreenBtn = document.createElement('div'); // Using div for better control, or button
     fullscreenBtn.id = 'elo-fullscreen-btn';
     fullscreenBtn.className = 'elo-fullscreen-btn';
     fullscreenBtn.title = 'Open interactive fullscreen chart';
-    fullscreenBtn.innerHTML = '⛶ Set Full Screen';
+    fullscreenBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 3H21V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 21H3V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M21 3L14 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 21L10 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
     fullscreenBtn.style.cssText = `
         position: absolute;
-        top: 10px;
-        right: 10px;
-        padding: 8px 14px;
-        background: rgba(0, 243, 255, 0.15);
-        border: 1px solid rgba(0, 243, 255, 0.4);
-        color: #00f3ff;
-        border-radius: 6px;
+        top: 15px;
+        right: 15px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        border-radius: 50%;
         cursor: pointer;
-        font-size: 13px;
-        font-weight: 500;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
         z-index: 10;
+        backdrop-filter: blur(4px);
     `;
     fullscreenBtn.onmouseenter = () => {
-        fullscreenBtn.style.background = 'rgba(0, 243, 255, 0.25)';
-        fullscreenBtn.style.borderColor = '#00f3ff';
+        fullscreenBtn.style.background = 'rgba(0, 243, 255, 0.15)';
+        fullscreenBtn.style.borderColor = 'rgba(0, 243, 255, 0.5)';
+        fullscreenBtn.style.color = '#00f3ff';
+        fullscreenBtn.style.transform = 'scale(1.1)';
         fullscreenBtn.style.boxShadow = '0 0 15px rgba(0, 243, 255, 0.3)';
     };
     fullscreenBtn.onmouseleave = () => {
-        fullscreenBtn.style.background = 'rgba(0, 243, 255, 0.15)';
-        fullscreenBtn.style.borderColor = 'rgba(0, 243, 255, 0.4)';
+        fullscreenBtn.style.background = 'rgba(0, 0, 0, 0.2)';
+        fullscreenBtn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+        fullscreenBtn.style.color = 'rgba(255, 255, 255, 0.7)';
+        fullscreenBtn.style.transform = 'scale(1)';
         fullscreenBtn.style.boxShadow = 'none';
     };
-    fullscreenBtn.onclick = () => showFullscreenChart(cachedPlayers, cachedMatchHistory);
+    fullscreenBtn.onclick = (e) => {
+        e.stopPropagation(); // Prevent bubbling just in case
+        showFullscreenChart(cachedPlayers, cachedMatchHistory);
+    };
 
     wrapper.appendChild(fullscreenBtn);
     container.appendChild(wrapper);
