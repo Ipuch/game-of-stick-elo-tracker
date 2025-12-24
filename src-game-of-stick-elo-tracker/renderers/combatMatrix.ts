@@ -47,7 +47,7 @@ function ensureCombatMatrixTooltip() {
   }
 }
 
-export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOMElements: AppDOMElements) {
+export function renderCombatMatrix(players: Player[], matchHistory: Match[], _DOMElements: AppDOMElements) {
   ensureCombatMatrixTooltip();
 
   // Sort players alphabetically by name
@@ -58,13 +58,15 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
     container = document.createElement('section');
     container.id = 'combat-matrix-section';
     container.className = 'combat-matrix-section panel';
+
     // Toggle button (top right)
-    let toggleBtn = document.createElement('button');
+    const toggleBtn = document.createElement('button');
     toggleBtn.id = 'toggle-combat-matrix-btn';
     toggleBtn.className = 'button-secondary';
     toggleBtn.style.float = 'right';
     toggleBtn.style.margin = '0 0 1em 1em';
     toggleBtn.textContent = 'Hide Combat Matrix';
+
     container.appendChild(toggleBtn);
     const h2 = document.createElement('h2');
     h2.textContent = 'Combat Matrix';
@@ -73,6 +75,7 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
     legend.innerHTML = '<span style="color:#dc3545;font-weight:bold;">Red</span> = never faced, <span style="color:#28a745;font-weight:bold;">Green</span> = maximum duels between two players';
     legend.style.marginBottom = '1em';
     container.appendChild(legend);
+
     // Place section right after battle history
     const battleHistorySection = document.querySelector('.battle-history-section');
     if (battleHistorySection && battleHistorySection.parentElement) {
@@ -84,7 +87,9 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
     } else {
       document.querySelector('main')?.appendChild(container);
     }
+
     toggleBtn.addEventListener('click', () => {
+      if (!container) return;
       const contentNodes = Array.from(container.children).filter(child => child !== toggleBtn);
       const isHidden = container.hasAttribute('data-matrix-hidden');
       if (isHidden) {
@@ -108,7 +113,9 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
       toggleBtn.style.margin = '0 0 1em 1em';
       toggleBtn.textContent = 'Hide Combat Matrix';
       container.insertBefore(toggleBtn, container.firstChild);
+
       toggleBtn.addEventListener('click', () => {
+        if (!container) return;
         const contentNodes = Array.from(container.children).filter(child => child !== toggleBtn);
         const isHidden = container.hasAttribute('data-matrix-hidden');
         if (isHidden) {
@@ -122,6 +129,20 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
         }
       });
     }
+
+    // Clear content but keep header/toggle
+    // Actually, easier to clear all expcept toggle/header?
+    // Current logic re-appends, let's just clear non-static.
+    // For simplicity, following original logic of re-appending:
+    while (container.childNodes.length > 1) { // Keep toggle button
+      if (container.lastChild !== toggleBtn) {
+        container.removeChild(container.lastChild!);
+      } else {
+        break;
+      }
+    }
+    // Re-add header/legend if missing (simplified approach: just clear all and rebuild is cleaner but we want to verify toggle state?)
+    // Reverting to: clear all and re-add is safer for redraw
     container.innerHTML = '';
     container.appendChild(toggleBtn);
     const h2 = document.createElement('h2');
@@ -132,11 +153,12 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
     legend.style.marginBottom = '1em';
     container.appendChild(legend);
   }
-  if (!container) return; // linter safety: do not proceed if still null
+
   if (sortedPlayers.length === 0) {
     container.innerHTML += '<p>No players.</p>';
     return;
   }
+
   const matrix = getCombatMatrix(sortedPlayers, matchHistory);
   let max = 0;
   for (let i = 0; i < sortedPlayers.length; i++) {
@@ -144,8 +166,10 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
       if (i !== j && matrix[i][j] > max) max = matrix[i][j];
     }
   }
+
   const table = document.createElement('table');
   table.className = 'combat-matrix-table';
+
   // Header
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
@@ -158,6 +182,7 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
   });
   thead.appendChild(headRow);
   table.appendChild(thead);
+
   // Body
   const tbody = document.createElement('tbody');
   sortedPlayers.forEach((p, i) => {
@@ -165,7 +190,7 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
     const th = document.createElement('th');
     th.textContent = p.name;
     row.appendChild(th);
-    sortedPlayers.forEach((q, j) => {
+    sortedPlayers.forEach((_q, j) => {
       const td = document.createElement('td');
       if (i === j) {
         td.style.background = '#232323';
@@ -175,11 +200,13 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
         td.style.background = getColor(matrix[i][j], max);
         td.style.color = '#fff';
         td.style.fontWeight = 'bold';
-        td.addEventListener('mouseenter', (e) => {
+
+        td.addEventListener('mouseenter', () => {
           if (!combatMatrixTooltip) return;
           combatMatrixTooltip.innerHTML = `<strong>${sortedPlayers[i].name}</strong> vs <strong>${sortedPlayers[j].name}</strong><br>${matrix[i][j]} match${matrix[i][j] === 1 ? '' : 'es'}`;
           combatMatrixTooltip.style.display = 'block';
         });
+
         td.addEventListener('mousemove', (e) => {
           if (!combatMatrixTooltip) return;
           const mouseEvent = e as MouseEvent;
@@ -193,6 +220,7 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
           combatMatrixTooltip.style.left = left + 'px';
           combatMatrixTooltip.style.top = top + 'px';
         });
+
         td.addEventListener('mouseleave', () => {
           if (combatMatrixTooltip) combatMatrixTooltip.style.display = 'none';
         });
@@ -206,4 +234,14 @@ export function renderCombatMatrix(players: Player[], matchHistory: Match[], DOM
   });
   table.appendChild(tbody);
   container.appendChild(table);
+
+  // Restore hidden state if needed
+  if (container.hasAttribute('data-matrix-hidden')) {
+    // Logic to ensure content is hidden? 
+    // Simplified: Just ensure data attribute is respected by CSS or manual hide
+    // Since we rebuilt the table, it is visible. We need to hide it if data-matrix-hidden is true.
+    // But for now, let's assume toggle handles click.
+    const contentNodes = Array.from(container.children).filter(child => child.id !== 'toggle-combat-matrix-btn');
+    contentNodes.forEach(node => (node as HTMLElement).style.display = 'none');
+  }
 } 

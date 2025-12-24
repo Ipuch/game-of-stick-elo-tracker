@@ -7,18 +7,7 @@
 import { Player, Match } from '../types/appTypes';
 import { eloScoring } from '../scoring';
 
-function renderStreak(type: 'W' | 'L' | null, length: number): string {
-    if (length < 3 || !type) return '';
 
-    let emoji = '';
-    if (type === 'W') {
-        emoji = '🔥'.repeat(Math.floor(length / 3));
-    } else {
-        emoji = '🧊'.repeat(Math.floor(length / 3));
-    }
-
-    return `<span class="streak-indicator">${emoji} ${type}${length}</span>`;
-}
 
 export function renderProfileStatsSection(players: Player[], matchHistory: Match[]) {
     // Move the toggle button outside the section

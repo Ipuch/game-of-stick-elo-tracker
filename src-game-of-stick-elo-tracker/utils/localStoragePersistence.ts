@@ -5,7 +5,7 @@
  */
 
 import { Player, Match, GameSessionMetadata } from '../types/appTypes';
-import { INITIAL_ELO, PLAYERS_STORAGE_KEY, MATCH_HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_K_FACTOR, LAST_LIBRARY_NAME_KEY } from '../constants/appConstants';
+import { PLAYERS_STORAGE_KEY, MATCH_HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_K_FACTOR, LAST_LIBRARY_NAME_KEY } from '../constants/appConstants';
 import { generateUUID } from './uuid';
 
 const SESSION_LIST_KEY = 'game-of-stick-sessions';
