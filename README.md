@@ -22,6 +22,24 @@
 | **PDF Export** | 📄 Export full tournament stats as printable PDF |
 | **Multi-Window Sync** | Real-time sync between browser tabs |
 | **File-Based Save** | Save games to local folders as CSV files |
+| **🛡️ Crash Recovery** | Auto-backup protects against browser crashes and data loss |
+
+---
+
+## 🛡️ Crash Recovery & Backup
+
+Never lose your game data again! The app automatically protects you from browser crashes and accidental tab closures.
+
+### How It Works
+
+1. **Auto-Backup**: When you record a match or add a player, a backup file is automatically saved to `saved_games/.temp/`.
+2. **Crash Detection**: If something goes wrong (crash, power outage, accidental close), the backup file remains safe.
+3. **Recovery**: Next time you load your game:
+   - A prompt appears: `⚠️ Unsaved crash recovery file found. Do you want to restore it?`
+   - Click **OK** to restore your lost progress.
+4. **Auto-Cleanup**: When you manually **Save Game** or **Exit** (and confirm), the backup is deleted automatically.
+
+> ⚠️ **Note:** The `.temp` folder is hidden from the game library list, but you can view it in your file explorer if needed.
 
 ---
 
