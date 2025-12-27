@@ -1225,3 +1225,523 @@ button {
     font-family: 'Outfit', sans-serif;
     letter-spacing: 0.5px;
 }
+
+/* --- Aggregated Dashboard --- */
+.aggregated-dashboard {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at center, #0f1c2e 0%, #03080c 100%);
+    z-index: 9998;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.aggregated-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.aggregated-header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #fff 0%, var(--primary-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.aggregated-header .agg-subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.agg-back-btn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: auto;
+    padding: 0.5rem 1rem;
+}
+
+.agg-filters {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--surface-border);
+    color: var(--text-muted);
+    padding: 0.6rem 1.2rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    width: auto;
+}
+
+.filter-btn:hover {
+    background: rgba(0, 243, 255, 0.1);
+    border-color: rgba(0, 243, 255, 0.3);
+    color: #fff;
+}
+
+.filter-btn.active {
+    background: rgba(0, 243, 255, 0.15);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+}
+
+.agg-date-range {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.agg-leaderboard-container {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    background: var(--surface-color);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    backdrop-filter: blur(12px);
+}
+
+.agg-leaderboard {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.agg-leaderboard th {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.8rem;
+    font-size: 0.75rem;
+    border-bottom: 1px solid var(--surface-border);
+    text-align: center;
+}
+
+.agg-leaderboard th:nth-child(2) {
+    text-align: left;
+}
+
+.agg-leaderboard td {
+    padding: 0.8rem;
+    border-bottom: 1px solid var(--surface-border);
+    text-align: center;
+    transition: background 0.2s;
+}
+
+.agg-leaderboard td.player-name {
+    text-align: left;
+    font-weight: 500;
+}
+
+.agg-leaderboard td.rank {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+}
+
+.agg-leaderboard td.elo strong {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.agg-leaderboard td.wins {
+    color: var(--success-color);
+}
+
+.agg-leaderboard td.losses {
+    color: var(--error-color);
+}
+
+.agg-leaderboard tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.agg-leaderboard tr.top-1 td {
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.agg-leaderboard tr.top-2 td {
+    background: rgba(224, 224, 224, 0.03);
+}
+
+.agg-leaderboard tr.top-3 td {
+    background: rgba(205, 127, 50, 0.03);
+}
+
+.agg-game-list {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    text-align: center;
+}
+
+.agg-game-list h3 {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.game-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.game-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--surface-border);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.agg-empty {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.agg-empty p {
+    margin-bottom: 0.5rem;
+}
+
+.agg-empty .text-muted {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.aggregated-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 50vh;
+    color: var(--text-muted);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--surface-border);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.aggregated-error {
+    text-align: center;
+    padding: 3rem;
+}
+
+.aggregated-error h2 {
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.aggregated-error h2::before {
+    display: none;
+}
+
+.aggregated-error p {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+/* Aggregated Dashboard Actions */
+.agg-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.agg-actions button {
+    width: auto;
+    padding: 0.6rem 1.5rem;
+}
+
+/* Collapsible Sections */
+.agg-sections {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.agg-section {
+    background: var(--surface-color);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.agg-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.02);
+    transition: background 0.2s;
+}
+
+.agg-section-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.agg-section-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.agg-section-header h2::before {
+    display: none;
+}
+
+.toggle-icon {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.agg-section-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.agg-section.expanded .agg-section-content {
+    max-height: 2000px;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--surface-border);
+}
+
+/* Player Profiles */
+.agg-profiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.agg-profile-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.profile-rank {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.profile-name {
+    font-weight: 600;
+    flex: 1;
+}
+
+.profile-elo {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.profile-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.profile-stats .stat {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.profile-stats .stat.win {
+    color: var(--success-color);
+}
+
+.profile-stats .stat.loss {
+    color: var(--error-color);
+}
+
+.profile-stats .stat.draw {
+    color: var(--warning-color);
+}
+
+.profile-stats .stat.winrate {
+    color: var(--primary-color);
+}
+
+.profile-stats .stat.games {
+    color: var(--text-muted);
+}
+
+.profile-recent {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.profile-recent strong {
+    margin-right: 0.5rem;
+}
+
+.recent-match {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    border-radius: 4px;
+    margin-right: 3px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.recent-match.win {
+    background: rgba(0, 255, 157, 0.2);
+    color: var(--success-color);
+}
+
+.recent-match.loss {
+    background: rgba(255, 51, 102, 0.2);
+    color: var(--error-color);
+}
+
+.recent-match.draw {
+    background: rgba(255, 204, 0, 0.2);
+    color: var(--warning-color);
+}
+
+/* Match History */
+.agg-history {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--surface-border);
+    font-size: 0.9rem;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-date {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    width: 70px;
+    flex-shrink: 0;
+}
+
+.history-game {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.history-players {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.history-result {
+    font-weight: 500;
+    min-width: 120px;
+    text-align: right;
+}
+
+.history-result.win {
+    color: var(--success-color);
+}
+
+.history-result.draw {
+    color: var(--warning-color);
+}
+
+/* Scrollbar for history */
+.agg-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+.agg-history::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+/* Fullscreen button for ELO chart */
+.agg-fullscreen-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+}
+
+.agg-fullscreen-btn:hover {
+    background: rgba(0, 243, 255, 0.15);
+    border-color: rgba(0, 243, 255, 0.5);
+    color: var(--primary-color);
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+}

@@ -31,6 +31,7 @@ import { renderRosterList } from './renderers/rosterRenderer';
 import { renderRemainingOpponents } from './renderers/opponentsRenderer';
 import { renderGameLibrary } from './renderers/libraryRenderer';
 import { renderGameMenu } from './renderers/menuRenderer';
+import { renderAggregatedDashboard, hideAggregatedDashboard } from './renderers/aggregatedDashboard';
 
 // Handlers
 import { handleRecordMatch, updateWinnerLabels, handleClearMatchHistory } from './handlers/matchHandlers';
@@ -161,7 +162,8 @@ const getSessionContext = () => ({
         onStartNewGame: startNewGame,
         renderLibrary: () => renderGameLibrary(store.libraryHandle!, {
             onLoadGame: loadGameFromLibrary,
-            onCreateGame: createNewGameInLibrary
+            onCreateGame: createNewGameInLibrary,
+            onViewAggregatedStats: handleViewAggregatedStats
         })
     })
 });
@@ -178,13 +180,31 @@ async function handleOpenLibrary() {
             store.libraryHandle = libraryHandle;
             renderGameLibrary(libraryHandle, {
                 onLoadGame: loadGameFromLibrary,
-                onCreateGame: createNewGameInLibrary
+                onCreateGame: createNewGameInLibrary,
+                onViewAggregatedStats: handleViewAggregatedStats
             });
         }
     } catch (e) {
         console.error(e);
         showNotification('Failed to open library', 'error');
     }
+}
+
+function handleViewAggregatedStats() {
+    if (!store.libraryHandle) {
+        showNotification('No library loaded', 'error');
+        return;
+    }
+    renderAggregatedDashboard(store.libraryHandle, {
+        onBack: () => {
+            hideAggregatedDashboard();
+            renderGameLibrary(store.libraryHandle!, {
+                onLoadGame: loadGameFromLibrary,
+                onCreateGame: createNewGameInLibrary,
+                onViewAggregatedStats: handleViewAggregatedStats
+            });
+        }
+    });
 }
 
 async function createNewGameInLibrary(name: string, kFactor: number) {
@@ -462,7 +482,8 @@ function setupGlobalListeners() {
                     onStartNewGame: startNewGame,
                     renderLibrary: () => renderGameLibrary(store.libraryHandle!, {
                         onLoadGame: loadGameFromLibrary,
-                        onCreateGame: createNewGameInLibrary
+                        onCreateGame: createNewGameInLibrary,
+                        onViewAggregatedStats: handleViewAggregatedStats
                     })
                 });
             }
@@ -508,7 +529,8 @@ function main() {
         onStartNewGame: startNewGame,
         renderLibrary: () => renderGameLibrary(store.libraryHandle!, {
             onLoadGame: loadGameFromLibrary,
-            onCreateGame: createNewGameInLibrary
+            onCreateGame: createNewGameInLibrary,
+            onViewAggregatedStats: handleViewAggregatedStats
         })
     });
 }

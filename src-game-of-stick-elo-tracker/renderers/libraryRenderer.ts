@@ -10,6 +10,7 @@ import { listGamesInLibrary } from '../utils/fileSystemPersistence';
 export type LibraryCallbacks = {
     onLoadGame: (handle: FileSystemDirectoryHandle, name: string) => Promise<void>;
     onCreateGame: (name: string, kFactor: number) => Promise<void>;
+    onViewAggregatedStats: () => void;
 };
 
 export async function renderGameLibrary(
@@ -32,6 +33,30 @@ export async function renderGameLibrary(
     libraryHeader.style.textAlign = 'center';
     libraryHeader.style.color = 'var(--text-muted)';
     list.appendChild(libraryHeader);
+
+    // Aggregated Stats Button
+    if (games.length > 0) {
+        const aggBtnContainer = document.createElement('div');
+        aggBtnContainer.className = 'agg-stats-btn-container';
+        aggBtnContainer.style.width = '100%';
+        aggBtnContainer.style.textAlign = 'center';
+        aggBtnContainer.style.marginBottom = '1rem';
+
+        const aggBtn = document.createElement('button');
+        aggBtn.className = 'button-secondary agg-stats-btn';
+        aggBtn.innerHTML = '📊 View Aggregated Stats';
+        aggBtn.style.width = '100%';
+        aggBtn.style.padding = '0.75rem';
+        aggBtn.onclick = () => callbacks.onViewAggregatedStats();
+        aggBtnContainer.appendChild(aggBtn);
+        list.appendChild(aggBtnContainer);
+
+        const divider = document.createElement('hr');
+        divider.style.width = '100%';
+        divider.style.margin = '0.5rem 0 1rem 0';
+        divider.style.opacity = '0.3';
+        list.appendChild(divider);
+    }
 
     if (games.length === 0) {
         const msg = document.createElement('div');

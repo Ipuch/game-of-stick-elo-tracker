@@ -1,0 +1,642 @@
+/**
+ * Game of S.T.I.C.K. - ELO Tracker
+ * Aggregated Dashboard Renderer
+ * @author Pierre Puchaud
+ * @copyright 2024 Pierre Puchaud
+ */
+
+import { Match } from '../types/appTypes';
+import { AggregatedStats, AggregatedPlayer, TimeFilter, getAggregatedStats } from '../utils/aggregationUtils';
+import { showNotification } from '../ui/notificationSystem';
+import { ChartData, buildChartData, getPlayerColor } from '../utils/chartUtils';
+import { showFullscreenEloChart, hideFullscreenEloChart } from './fullscreenChartModal';
+
+export type AggregatedDashboardCallbacks = {
+    onBack: () => void;
+};
+
+let currentFilter: TimeFilter = 'month';
+let currentStats: AggregatedStats | null = null;
+let expandedSections: Set<string> = new Set(['leaderboard']); // Start with leaderboard expanded
+
+// Cached chart data for fullscreen
+let cachedChartData: ChartData | null = null;
+
+/**
+ * Render the aggregated dashboard view
+ */
+export async function renderAggregatedDashboard(
+    libraryHandle: FileSystemDirectoryHandle,
+    callbacks: AggregatedDashboardCallbacks
+) {
+    const container = document.getElementById('aggregated-dashboard');
+    if (!container) {
+        console.error('Aggregated dashboard container not found');
+        return;
+    }
+
+    // Show loading state
+    container.innerHTML = `
+        <div class="aggregated-loading">
+            <div class="loading-spinner"></div>
+            <p>Loading stats from all games...</p>
+        </div>
+    `;
+    container.style.display = 'block';
+
+    // Hide other views
+    document.getElementById('game-menu')!.style.display = 'none';
+    document.getElementById('app-main')!.style.display = 'none';
+
+    try {
+        currentStats = await getAggregatedStats(libraryHandle, currentFilter);
+        renderDashboardContent(container, libraryHandle, callbacks);
+    } catch (e) {
+        console.error('Failed to load aggregated stats:', e);
+        showNotification('Failed to load aggregated stats', 'error');
+        container.innerHTML = `
+            <div class="aggregated-error">
+                <h2>❌ Error Loading Stats</h2>
+                <p>Could not load stats from games.</p>
+                <button class="button-secondary" id="agg-back-btn">← Back to Library</button>
+            </div>
+        `;
+        document.getElementById('agg-back-btn')?.addEventListener('click', callbacks.onBack);
+    }
+}
+
+function renderDashboardContent(
+    container: HTMLElement,
+    libraryHandle: FileSystemDirectoryHandle,
+    callbacks: AggregatedDashboardCallbacks
+) {
+    if (!currentStats) return;
+
+    const { players, matches, totalMatches, totalGames, dateRange } = currentStats;
+
+    const formatDate = (d: Date) => d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+
+    container.innerHTML = `
+        <div class="aggregated-header">
+            <button class="button-secondary agg-back-btn" id="agg-back-btn">← Back to Library</button>
+            <h1>📊 Aggregated Stats</h1>
+            <div class="agg-subtitle">
+                ${totalGames} game${totalGames !== 1 ? 's' : ''} • ${totalMatches} match${totalMatches !== 1 ? 'es' : ''} • ${players.length} player${players.length !== 1 ? 's' : ''}
+            </div>
+        </div>
+
+        <div class="agg-filters">
+            <button class="filter-btn ${currentFilter === 'month' ? 'active' : ''}" data-filter="month">Last Month</button>
+            <button class="filter-btn ${currentFilter === '3months' ? 'active' : ''}" data-filter="3months">Last 3 Months</button>
+            <button class="filter-btn ${currentFilter === 'year' ? 'active' : ''}" data-filter="year">Last Year</button>
+            <button class="filter-btn ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">All Time</button>
+        </div>
+
+        ${totalMatches > 0 ? `
+            <div class="agg-date-range">
+                📅 ${formatDate(dateRange.start)} — ${formatDate(dateRange.end)}
+            </div>
+        ` : ''}
+
+        <div class="agg-actions">
+            <button class="button-secondary" id="agg-export-pdf">📄 Export PDF</button>
+        </div>
+
+        ${players.length === 0 ? `
+            <div class="agg-empty">
+                <p>No matches found in this time range.</p>
+                <p class="text-muted">Try selecting a longer time period.</p>
+            </div>
+        ` : `
+            <!-- Collapsible Sections -->
+            <div class="agg-sections">
+                <!-- Leaderboard Section -->
+                <div class="agg-section ${expandedSections.has('leaderboard') ? 'expanded' : ''}" data-section="leaderboard">
+                    <div class="agg-section-header">
+                        <h2>🏆 Leaderboard</h2>
+                        <span class="toggle-icon">${expandedSections.has('leaderboard') ? '▼' : '▶'}</span>
+                    </div>
+                    <div class="agg-section-content">
+                        ${renderLeaderboardTable(players)}
+                    </div>
+                </div>
+
+                <!-- ELO Evolution Chart Section -->
+                <div class="agg-section ${expandedSections.has('chart') ? 'expanded' : ''}" data-section="chart">
+                    <div class="agg-section-header">
+                        <h2>📈 ELO Evolution</h2>
+                        <span class="toggle-icon">${expandedSections.has('chart') ? '▼' : '▶'}</span>
+                    </div>
+                    <div class="agg-section-content">
+                        <div id="agg-elo-chart-wrapper" style="position: relative;">
+                            ${renderEloEvolutionChart(players, matches)}
+                            <div id="agg-fullscreen-btn" class="agg-fullscreen-btn" title="Open interactive fullscreen chart">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M15 3H21V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M9 21H3V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M21 3L14 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M3 21L10 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Player Profiles Section -->
+                <div class="agg-section ${expandedSections.has('profiles') ? 'expanded' : ''}" data-section="profiles">
+                    <div class="agg-section-header">
+                        <h2>👤 Player Profiles</h2>
+                        <span class="toggle-icon">${expandedSections.has('profiles') ? '▼' : '▶'}</span>
+                    </div>
+                    <div class="agg-section-content">
+                        ${renderPlayerProfiles(players, matches)}
+                    </div>
+                </div>
+
+                <!-- Match History Section -->
+                <div class="agg-section ${expandedSections.has('history') ? 'expanded' : ''}" data-section="history">
+                    <div class="agg-section-header">
+                        <h2>⚔️ Match History</h2>
+                        <span class="toggle-icon">${expandedSections.has('history') ? '▼' : '▶'}</span>
+                    </div>
+                    <div class="agg-section-content">
+                        ${renderMatchHistory(matches)}
+                    </div>
+                </div>
+            </div>
+
+            <div class="agg-game-list">
+                <h3>Games Included</h3>
+                <div class="game-chips">
+                    ${currentStats.gameNames.map(name => `
+                        <span class="game-chip">${escapeHtml(name)}</span>
+                    `).join('')}
+                </div>
+            </div>
+        `}
+    `;
+
+    // Bind event listeners
+    document.getElementById('agg-back-btn')?.addEventListener('click', callbacks.onBack);
+
+    // Filter buttons
+    container.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const filter = btn.getAttribute('data-filter') as TimeFilter;
+            if (filter && filter !== currentFilter) {
+                currentFilter = filter;
+                await renderAggregatedDashboard(libraryHandle, callbacks);
+            }
+        });
+    });
+
+    // Fullscreen chart button
+    cachedChartData = buildChartDataFromAggregated(players, matches);
+    document.getElementById('agg-fullscreen-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (cachedChartData) {
+            showFullscreenEloChart(cachedChartData, 'Aggregated ELO Evolution');
+        }
+    });
+
+    // Section toggles
+    container.querySelectorAll('.agg-section-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const section = header.closest('.agg-section');
+            const sectionName = section?.getAttribute('data-section');
+            if (sectionName) {
+                if (expandedSections.has(sectionName)) {
+                    expandedSections.delete(sectionName);
+                    section?.classList.remove('expanded');
+                } else {
+                    expandedSections.add(sectionName);
+                    section?.classList.add('expanded');
+                }
+                // Update toggle icon
+                const icon = header.querySelector('.toggle-icon');
+                if (icon) {
+                    icon.textContent = expandedSections.has(sectionName) ? '▼' : '▶';
+                }
+            }
+        });
+    });
+
+    // PDF Export
+    document.getElementById('agg-export-pdf')?.addEventListener('click', () => {
+        if (currentStats) {
+            generateAggregatedPDF(currentStats, currentFilter);
+        }
+    });
+}
+
+function renderLeaderboardTable(players: AggregatedPlayer[]): string {
+    return `
+        <div class="agg-leaderboard-container">
+            <table class="agg-leaderboard">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>ELO</th>
+                        <th>W</th>
+                        <th>L</th>
+                        <th>D</th>
+                        <th>Matches</th>
+                        <th>Games</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${players.map((p, i) => `
+                        <tr class="${i < 3 ? 'top-' + (i + 1) : ''}">
+                            <td class="rank">${getRankBadge(i + 1)}</td>
+                            <td class="player-name">${escapeHtml(p.name)}</td>
+                            <td class="elo"><strong>${p.elo}</strong></td>
+                            <td class="wins">${p.wins}</td>
+                            <td class="losses">${p.losses}</td>
+                            <td class="draws">${p.draws}</td>
+                            <td class="matches">${p.matchCount}</td>
+                            <td class="games">${p.gamesParticipated.length}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+/**
+ * Build ELO history for all players with flat lines until their first match
+ * and extending to the end of all matches
+ */
+function buildAggregatedEloHistory(players: AggregatedPlayer[], matches: Match[]) {
+    const initialElo = 1200; // DEFAULT_ELO_CONFIG.initialRating
+
+    // Build a full-length ELO array for each player
+    // Each player's ELO stays flat at 1200 until their first match,
+    // then tracks their actual ELO, then stays flat until the end
+    const playerFullHistories: Map<string, number[]> = new Map();
+
+    // Initialize all players with initial ELO for the start point
+    players.forEach(p => {
+        playerFullHistories.set(p.normalizedName, [initialElo]);
+    });
+
+    // Current ELO tracking (starts at initial)
+    const currentElos: Map<string, number> = new Map();
+    players.forEach(p => currentElos.set(p.normalizedName, initialElo));
+
+    // Process each match in order
+    matches.forEach(m => {
+        const p1Name = m.player1Name.toLowerCase().trim();
+        const p2Name = m.player2Name.toLowerCase().trim();
+
+        // Find player data for these names
+        const p1 = players.find(p => p.normalizedName === p1Name);
+        const p2 = players.find(p => p.normalizedName === p2Name);
+
+        // Get ELO changes from the original match data if available
+        // Otherwise the aggregation already computed cumulative ELO
+        if (p1) {
+            const history = p1.eloHistory;
+            // Find the ELO at this point in time
+            const matchTime = m.timestamp;
+            const eloPoint = history.find(h => h.timestamp === matchTime);
+            if (eloPoint) {
+                currentElos.set(p1Name, eloPoint.elo);
+            }
+        }
+        if (p2) {
+            const history = p2.eloHistory;
+            const matchTime = m.timestamp;
+            const eloPoint = history.find(h => h.timestamp === matchTime);
+            if (eloPoint) {
+                currentElos.set(p2Name, eloPoint.elo);
+            }
+        }
+
+        // For each player, add their current ELO to history
+        players.forEach(p => {
+            const history = playerFullHistories.get(p.normalizedName)!;
+            history.push(currentElos.get(p.normalizedName) || initialElo);
+        });
+    });
+
+    return playerFullHistories;
+}
+
+function renderEloEvolutionChart(players: AggregatedPlayer[], matches: Match[]): string {
+    if (matches.length === 0 || players.length === 0) {
+        return '<p style="color: #888; text-align: center; padding: 40px;">No match data available.</p>';
+    }
+
+    const svgWidth = 800;
+    const svgHeight = 400;
+    const padding = { top: 40, right: 150, bottom: 50, left: 60 };
+    const graphWidth = svgWidth - padding.left - padding.right;
+    const graphHeight = svgHeight - padding.top - padding.bottom;
+
+    // Build full ELO histories (flat until first match, extending to end)
+    const fullHistories = buildAggregatedEloHistory(players, matches);
+    const numPoints = matches.length + 1; // +1 for start point
+
+    // Get all ELO points from all players for min/max
+    let minElo = 1200, maxElo = 1200;
+    fullHistories.forEach(history => {
+        history.forEach(elo => {
+            minElo = Math.min(minElo, elo);
+            maxElo = Math.max(maxElo, elo);
+        });
+    });
+    const eloMargin = Math.max(50, (maxElo - minElo) * 0.1);
+    minElo = Math.floor((minElo - eloMargin) / 50) * 50;
+    maxElo = Math.ceil((maxElo + eloMargin) / 50) * 50;
+    const eloRange = maxElo - minElo || 100;
+
+    const xScale = (index: number) => padding.left + (index / Math.max(numPoints - 1, 1)) * graphWidth;
+    const yScale = (elo: number) => padding.top + graphHeight - ((elo - minElo) / eloRange) * graphHeight;
+
+    let svg = `
+    <svg width="100%" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Segoe UI', Arial, sans-serif; border-radius: 12px;">
+        <defs>
+            <linearGradient id="aggBgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#16213e;stop-opacity:1" />
+            </linearGradient>
+            <filter id="aggGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+        <rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" fill="url(#aggBgGradient)" rx="12"/>
+    `;
+
+    // Grid lines
+    for (let i = 0; i <= 5; i++) {
+        const elo = minElo + (eloRange / 5) * i;
+        const y = yScale(elo);
+        svg += `<line x1="${padding.left}" y1="${y}" x2="${padding.left + graphWidth}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
+        svg += `<text x="${padding.left - 8}" y="${y + 4}" text-anchor="end" font-size="10" fill="rgba(255,255,255,0.5)">${Math.round(elo)}</text>`;
+    }
+
+    // Axis labels
+    svg += `<text x="${padding.left + graphWidth / 2}" y="${svgHeight - 10}" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.6)">Matches (${matches.length} total across all games)</text>`;
+
+    // Draw player curves (sorted by final ELO)
+    const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
+    sortedPlayers.forEach((player, idx) => {
+        const color = getPlayerColor(idx);
+        const history = fullHistories.get(player.normalizedName) || [1200];
+        const points = history.map((elo, i) => `${xScale(i).toFixed(1)},${yScale(elo).toFixed(1)}`).join(' L ');
+
+        // Area under curve
+        const lastX = xScale(history.length - 1);
+        const firstX = xScale(0);
+        const areaPath = `M ${xScale(0)},${yScale(history[0])} L ${points} L ${lastX},${yScale(minElo)} L ${firstX},${yScale(minElo)} Z`;
+        svg += `<path d="${areaPath}" fill="${color}" fill-opacity="0.1"/>`;
+
+        // Line
+        svg += `<path d="M ${points}" stroke="${color}" stroke-width="2.5" fill="none" stroke-linecap="round" filter="url(#aggGlow)"/>`;
+
+        // Endpoint
+        const lastElo = history[history.length - 1];
+        svg += `<circle cx="${lastX}" cy="${yScale(lastElo)}" r="5" fill="${color}" stroke="#fff" stroke-width="1.5"/>`;
+    });
+
+    // Legend (top 10)
+    sortedPlayers.slice(0, 10).forEach((player, i) => {
+        const color = getPlayerColor(i);
+        const yPos = padding.top + 15 + i * 22;
+        const truncName = player.name.length > 10 ? player.name.substring(0, 10) + '…' : player.name;
+        svg += `<rect x="${padding.left + graphWidth + 15}" y="${yPos - 8}" width="12" height="12" rx="2" fill="${color}"/>`;
+        svg += `<text x="${padding.left + graphWidth + 32}" y="${yPos + 2}" font-size="11" fill="#fff">${truncName}</text>`;
+        svg += `<text x="${padding.left + graphWidth + 120}" y="${yPos + 2}" font-size="10" fill="rgba(255,255,255,0.6)">${player.elo}</text>`;
+    });
+
+    svg += '</svg>';
+    return svg;
+}
+
+function renderPlayerProfiles(players: AggregatedPlayer[], matches: Match[]): string {
+    return `
+        <div class="agg-profiles">
+            ${players.map((player, idx) => {
+        const winRate = player.wins + player.losses > 0
+            ? Math.round((player.wins / (player.wins + player.losses)) * 100)
+            : 0;
+        const color = getPlayerColor(idx);
+
+        // Get player matches
+        const playerMatches = matches.filter(m =>
+            m.player1Name.toLowerCase() === player.normalizedName ||
+            m.player2Name.toLowerCase() === player.normalizedName
+        ).slice(-5).reverse(); // Last 5 matches
+
+        return `
+                    <div class="agg-profile-card" style="border-left: 4px solid ${color}">
+                        <div class="profile-header">
+                            <span class="profile-rank">#${idx + 1}</span>
+                            <span class="profile-name">${escapeHtml(player.name)}</span>
+                            <span class="profile-elo">${player.elo} ELO</span>
+                        </div>
+                        <div class="profile-stats">
+                            <span class="stat win">${player.wins}W</span>
+                            <span class="stat loss">${player.losses}L</span>
+                            <span class="stat draw">${player.draws}D</span>
+                            <span class="stat winrate">${winRate}% WR</span>
+                            <span class="stat games">${player.gamesParticipated.length} game${player.gamesParticipated.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        ${playerMatches.length > 0 ? `
+                            <div class="profile-recent">
+                                <strong>Recent:</strong>
+                                ${playerMatches.map(m => {
+            const isP1 = m.player1Name.toLowerCase() === player.normalizedName;
+            const result = m.outcome === 'draw' ? 'D' :
+                (isP1 && m.outcome === 'p1') || (!isP1 && m.outcome === 'p2') ? 'W' : 'L';
+            const opponent = isP1 ? m.player2Name : m.player1Name;
+            const resultClass = result === 'W' ? 'win' : result === 'L' ? 'loss' : 'draw';
+            return `<span class="recent-match ${resultClass}" title="vs ${opponent}">${result}</span>`;
+        }).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+    }).join('')}
+        </div>
+    `;
+}
+
+function renderMatchHistory(matches: Match[]): string {
+    const recentMatches = [...matches].reverse().slice(0, 50); // Last 50 matches
+
+    if (recentMatches.length === 0) {
+        return '<p style="color: #888; text-align: center; padding: 20px;">No matches found.</p>';
+    }
+
+    return `
+        <div class="agg-history">
+            ${recentMatches.map(m => {
+        const date = new Date(m.timestamp);
+        const dateStr = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        const gameName = (m as any).gameName || 'Unknown';
+        const resultStr = m.outcome === 'draw' ? 'Draw' :
+            m.outcome === 'p1' ? `${m.player1Name} won` : `${m.player2Name} won`;
+        const resultClass = m.outcome === 'draw' ? 'draw' : 'win';
+
+        return `
+                    <div class="history-item">
+                        <span class="history-date">${dateStr}</span>
+                        <span class="history-game">${escapeHtml(gameName)}</span>
+                        <span class="history-players">${escapeHtml(m.player1Name)} vs ${escapeHtml(m.player2Name)}</span>
+                        <span class="history-result ${resultClass}">${resultStr}</span>
+                    </div>
+                `;
+    }).join('')}
+        </div>
+    `;
+}
+
+function generateAggregatedPDF(stats: AggregatedStats, filter: TimeFilter) {
+    const { players, matches, totalMatches, totalGames, dateRange } = stats;
+    const filterLabel = filter === 'month' ? 'Last Month' : filter === '3months' ? 'Last 3 Months' : filter === 'year' ? 'Last Year' : 'All Time';
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const rangeStr = totalMatches > 0 ? `${dateRange.start.toLocaleDateString('en-GB')} — ${dateRange.end.toLocaleDateString('en-GB')}` : '';
+
+    let html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Aggregated Stats - ${filterLabel}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; }
+        .header { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #00f3ff; }
+        .header h1 { font-size: 28px; margin-bottom: 5px; }
+        .header .subtitle { color: #666; font-size: 14px; }
+        .header .date-range { color: #999; font-size: 12px; margin-top: 5px; }
+        .stats-row { display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
+        .stat-box { text-align: center; padding: 10px 20px; background: #f5f5f5; border-radius: 8px; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #00f3ff; }
+        .stat-label { font-size: 12px; color: #666; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f5f5f5; font-weight: 600; }
+        .section { margin-bottom: 25px; }
+        .section h2 { font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; }
+        @media print { body { padding: 10px; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 AGGREGATED STATS</h1>
+        <div class="subtitle">${filterLabel} — ${dateStr}</div>
+        ${rangeStr ? `<div class="date-range">📅 Data range: ${rangeStr}</div>` : ''}
+    </div>
+    
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="stat-value">${totalGames}</div>
+            <div class="stat-label">Games</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">${totalMatches}</div>
+            <div class="stat-label">Matches</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">${players.length}</div>
+            <div class="stat-label">Players</div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>🏆 LEADERBOARD</h2>
+        <table>
+            <tr><th>#</th><th>Player</th><th>ELO</th><th>W</th><th>L</th><th>D</th><th>Matches</th><th>Win%</th></tr>
+            ${players.map((p, i) => {
+        const winRate = p.wins + p.losses > 0 ? Math.round((p.wins / (p.wins + p.losses)) * 100) : 0;
+        return `<tr><td>${i + 1}</td><td>${p.name}</td><td>${p.elo}</td><td>${p.wins}</td><td>${p.losses}</td><td>${p.draws}</td><td>${p.matchCount}</td><td>${winRate}%</td></tr>`;
+    }).join('')}
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2>📅 Match History (Last 20)</h2>
+        <table>
+            <tr><th>Date</th><th>Game</th><th>Player 1</th><th>Player 2</th><th>Result</th></tr>
+            ${[...matches].reverse().slice(0, 20).map(m => {
+        const date = new Date(m.timestamp);
+        const dateStr = `${date.getDate()}/${date.getMonth() + 1}`;
+        const gameName = (m as any).gameName || 'Unknown';
+        const result = m.outcome === 'draw' ? 'Draw' : m.outcome === 'p1' ? 'P1 Win' : 'P2 Win';
+        return `<tr><td>${dateStr}</td><td>${gameName}</td><td>${m.player1Name}</td><td>${m.player2Name}</td><td>${result}</td></tr>`;
+    }).join('')}
+        </table>
+    </div>
+</body>
+</html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => printWindow.print(), 250);
+    }
+}
+
+function getRankBadge(rank: number): string {
+    if (rank === 1) return '🥇';
+    if (rank === 2) return '🥈';
+    if (rank === 3) return '🥉';
+    return `${rank}`;
+}
+
+function escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Convert aggregated player/match data to shared ChartData format
+ */
+function buildChartDataFromAggregated(players: AggregatedPlayer[], matches: Match[]): ChartData {
+    // Build chartPlayers from aggregated players
+    const chartPlayers = players.map(p => ({
+        key: p.normalizedName,
+        name: p.name,
+        currentElo: p.elo
+    }));
+
+    // Build chartMatches from matches
+    const chartMatches = matches.map(m => ({
+        timestamp: m.timestamp,
+        player1Key: m.player1Name.toLowerCase().trim(),
+        player2Key: m.player2Name.toLowerCase().trim(),
+        player1EloAfter: m.player1EloAfter,
+        player2EloAfter: m.player2EloAfter
+    }));
+
+    return buildChartData(chartPlayers, chartMatches);
+}
+
+
+/**
+ * Hide the aggregated dashboard
+ */
+export function hideAggregatedDashboard() {
+    const container = document.getElementById('aggregated-dashboard');
+    if (container) {
+        container.style.display = 'none';
+    }
+    hideFullscreenEloChart();
+}
+
