@@ -44,6 +44,9 @@ export async function listGamesInLibrary(libraryHandle: FileSystemDirectoryHandl
     // @ts-ignore - async iterator TS support might be missing in older lib targets
     for await (const entry of libraryHandle.values()) {
         if (entry.kind === 'directory') {
+            // Filter out hidden folders (like .temp)
+            if (entry.name.startsWith('.')) continue;
+
             games.push({
                 name: entry.name,
                 handle: entry as FileSystemDirectoryHandle
