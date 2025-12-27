@@ -294,8 +294,8 @@ export function generateSvgChart(
     <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Segoe UI', Arial, sans-serif; border-radius: 12px;">
         <defs>
             <linearGradient id="chartBgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#16213e;stop-opacity:1" />
+                <stop offset="0%" style="stop-color:#0a0e17;stop-opacity:0.6" />
+                <stop offset="100%" style="stop-color:#111520;stop-opacity:0.8" />
             </linearGradient>
             <filter id="chartGlow" x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur stdDeviation="2" result="coloredBlur"/>

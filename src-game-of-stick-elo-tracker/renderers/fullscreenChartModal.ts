@@ -156,10 +156,11 @@ function injectStyles() {
             position: relative;
             width: 95vw;
             height: 90vh;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: rgba(10, 14, 23, 0.95); /* Matches app header/bg */
+            backdrop-filter: blur(10px);
             border-radius: 16px;
-            border: 1px solid rgba(0, 243, 255, 0.3);
-            box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
+            border: 1px solid var(--surface-border);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -169,13 +170,17 @@ function injectStyles() {
             justify-content: space-between;
             align-items: center;
             padding: 15px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--surface-border);
+            background: rgba(0, 0, 0, 0.2);
         }
         #shared-echarts-modal .echarts-modal-header h2 {
-            color: #fff;
+            color: var(--text-main);
             font-family: 'Orbitron', sans-serif;
             font-size: 1.5rem;
             margin: 0;
+            background: linear-gradient(90deg, #fff, var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         #shared-echarts-modal .echarts-modal-header h2::before {
             display: none;
@@ -186,24 +191,29 @@ function injectStyles() {
         }
         #shared-echarts-modal .echarts-btn {
             padding: 8px 16px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
+            border: 1px solid var(--surface-border);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.2s;
             width: auto;
+            font-family: 'Outfit', sans-serif;
         }
         #shared-echarts-modal .echarts-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.3);
         }
         #shared-echarts-modal .echarts-btn-close {
-            background: rgba(255, 0, 85, 0.2);
-            border-color: rgba(255, 0, 85, 0.4);
+            background: rgba(255, 0, 85, 0.1);
+            border-color: rgba(255, 0, 85, 0.3);
+            color: var(--accent-color);
         }
         #shared-echarts-modal .echarts-btn-close:hover {
-            background: rgba(255, 0, 85, 0.4);
+            background: var(--accent-color);
+            color: #fff;
         }
         #shared-echarts-container {
             flex: 1;
@@ -212,10 +222,11 @@ function injectStyles() {
         #shared-echarts-modal .echarts-modal-footer {
             padding: 10px 20px;
             text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid var(--surface-border);
+            background: rgba(0, 0, 0, 0.2);
         }
         #shared-echarts-modal .echarts-modal-footer p {
-            color: rgba(255, 255, 255, 0.5);
+            color: var(--text-muted);
             font-size: 12px;
             margin: 0;
         }

@@ -1325,7 +1325,7 @@ button {
 }
 
 .agg-leaderboard th {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.3);
     color: var(--text-muted);
     font-weight: 600;
     text-transform: uppercase;
@@ -1508,7 +1508,7 @@ button {
     align-items: center;
     padding: 1rem 1.5rem;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(0, 0, 0, 0.2);
     transition: background 0.2s;
 }
 
@@ -1550,7 +1550,7 @@ button {
 }
 
 .agg-profile-card {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--surface-border);
     border-radius: var(--radius-sm);
     padding: 1rem;
