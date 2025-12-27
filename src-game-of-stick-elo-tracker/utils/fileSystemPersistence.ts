@@ -151,7 +151,94 @@ export async function saveGameToSession(dirHandle: FileSystemDirectoryHandle, st
     }
 }
 
+// --- CRASH RECOVERY / TEMP BACKUP SYSTEM ---
+
+const TEMP_FOLDER_NAME = '.temp';
+
+/**
+ * Ensures the .temp folder exists within the library root or game folder.
+ * NOTE: We ideally want this in the LIBRARY root to separate it from specific game folders if possible,
+ * but for simplicity/safety we might put it inside the game folder to ensure we have write access.
+ * 
+ * However, the requirement is "saved_games/.temp/name_of_the_game".
+ * This implies the .temp folder is a sibling of game folders, inside the library root.
+ */
+async function getTempFolder(libraryHandle: FileSystemDirectoryHandle): Promise<FileSystemDirectoryHandle> {
+    return await libraryHandle.getDirectoryHandle(TEMP_FOLDER_NAME, { create: true });
+}
+
+/**
+ * Saves a backup of the current game state to saved_games/.temp/backup_<GameName>.json
+ * This is called automatically on changes.
+ */
+export async function saveTempBackup(libraryHandle: FileSystemDirectoryHandle, gameName: string, state: AppState): Promise<void> {
+    try {
+        const tempDir = await getTempFolder(libraryHandle);
+        const timestamp = Date.now();
+        const backupFilename = `backup_${gameName}.json`;
+
+        // We save as JSON for the backup because it's a single atomic write, 
+        // unlike the CSV spread which requires 3 files. Atomicity is better for crash protection.
+        const backupData = {
+            timestamp,
+            gameName,
+            state
+        };
+
+        const fileHandle = await tempDir.getFileHandle(backupFilename, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(backupData));
+        await writable.close();
+        console.log(`Backup saved to .temp/${backupFilename}`);
+
+    } catch (e) {
+        // Silently fail or log warning - backup failure shouldn't crash the game
+        console.warn('Failed to save temp backup:', e);
+    }
+}
+
+/**
+ * Checks if a backup exists for this game.
+ * Returns the backup data if it exists.
+ */
+export async function loadTempBackup(libraryHandle: FileSystemDirectoryHandle, gameName: string): Promise<{ timestamp: number, state: AppState } | null> {
+    try {
+        const tempDir = await libraryHandle.getDirectoryHandle(TEMP_FOLDER_NAME, { create: false });
+        const backupFilename = `backup_${gameName}.json`;
+
+        const fileHandle = await tempDir.getFileHandle(backupFilename);
+        const file = await fileHandle.getFile();
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        return {
+            timestamp: data.timestamp,
+            state: data.state
+        };
+
+    } catch (e) {
+        // No backup found or invalid
+        return null;
+    }
+}
+
+/**
+ * Deletes the backup file for a specific game.
+ * Called after a successful manual save.
+ */
+export async function deleteTempBackup(libraryHandle: FileSystemDirectoryHandle, gameName: string): Promise<void> {
+    try {
+        const tempDir = await libraryHandle.getDirectoryHandle(TEMP_FOLDER_NAME, { create: false });
+        const backupFilename = `backup_${gameName}.json`;
+        await tempDir.removeEntry(backupFilename);
+        console.log(`Backup deleted: .temp/${backupFilename}`);
+    } catch (e) {
+        // Ignore if file doesn't exist
+    }
+}
+
 // Deprecated single-folder helpers maintained for compatibility if needed, but we essentially replace usage
 export const selectGameFolder = selectLibraryFolder;
 export const loadGameFromFolder = loadGameFromSession;
 export const saveGameToFolder = saveGameToSession;
+

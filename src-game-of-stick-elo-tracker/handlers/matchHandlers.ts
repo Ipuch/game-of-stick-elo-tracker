@@ -142,6 +142,9 @@ export function handleRecordMatch(event: SubmitEvent, context: MatchHandlerConte
     updateWinnerLabels(DOMElements);
     hideSuggestions(DOMElements.player1Suggestions);
     hideSuggestions(DOMElements.player2Suggestions);
+
+    // Ensure UI updates to reflect new match/rankings
+    context.render();
 }
 
 export function handleClearMatchHistory(context: MatchHandlerContext) {
@@ -159,7 +162,8 @@ export function handleClearMatchHistory(context: MatchHandlerContext) {
             player.lastEloChange = 0;
         });
         context.updateKFactorInputState();
-        context.render(); // This will also save the state
+        context.persist(); // Save connection state
+        context.render();
         alert('Match history cleared and player stats reset.');
     }
 }

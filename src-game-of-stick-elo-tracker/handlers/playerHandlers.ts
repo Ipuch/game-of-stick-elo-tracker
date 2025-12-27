@@ -67,7 +67,9 @@ export function handleClearPlayers(context: PlayerHandlerContext) {
             context.DOMElements.kFactorInput.value = store.kFactor.toString();
         }
         context.updateKFactorInputState();
-        context.render(); // This will also save the state
+        context.updateKFactorInputState();
+        context.persist(); // Save cleared state
+        context.render();
         alert('All players and match history cleared.');
     }
 }

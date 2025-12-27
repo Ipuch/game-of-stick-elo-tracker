@@ -12,7 +12,7 @@ import { renderLeaderboard } from './renderers/leaderboard';
 import { renderPodium } from './renderers/podium';
 import { renderBattleHistory } from './renderers/battleHistory';
 import { renderCombatMatrix } from './renderers/combatMatrix';
-import { loadGameFromSession, saveGameToSession, createGameInLibrary } from './utils/fileSystemPersistence';
+import { loadGameFromSession, saveGameToSession, createGameInLibrary, saveTempBackup, loadTempBackup, deleteTempBackup } from './utils/fileSystemPersistence';
 
 // New Imports for Refactoring
 import { store } from './state/store';
@@ -85,6 +85,16 @@ function persist() {
     if (store.directoryHandle) {
         store.hasUnsavedChanges = true;
         updateSaveButton();
+
+        // AUTO-SAVE to .temp
+        if (store.libraryHandle && store.folderName) {
+            saveTempBackup(store.libraryHandle, store.folderName, {
+                players: store.players,
+                matchHistory: store.matchHistory,
+                kFactor: store.kFactor
+            });
+        }
+
     } else if (store.currentSessionId) {
         saveSession(store.currentSessionId, {
             players: store.players,
@@ -107,7 +117,7 @@ function render() {
     renderRosterList(store.players, DOMElements.rosterList || undefined);
     renderRemainingOpponents(store.players, store.matchHistory, DOMElements);
 
-    persist();
+    // persist(); // REMOVED: persist should be called by handlers, not render
 }
 
 function handleUpdateLeaderboardClick() {
@@ -200,7 +210,30 @@ async function loadGameFromLibrary(dirHandle: FileSystemDirectoryHandle, folderN
         store.folderName = folderName;
         store.currentSessionId = null;
 
-        const state = await loadGameFromSession(dirHandle);
+        // Load standard state
+        let state = await loadGameFromSession(dirHandle);
+
+        // CHECK FOR BACKUP
+        if (store.libraryHandle) {
+            const backup = await loadTempBackup(store.libraryHandle, folderName);
+            if (backup) {
+                // Formulate date string for prompt
+                const dateStr = new Date(backup.timestamp).toLocaleString();
+                if (confirm(`⚠️ Unsaved crash recovery file found (${dateStr}).\n\nDo you want to restore it?`)) {
+                    console.log('Restoring from backup...');
+                    state = backup.state;
+                    store.hasUnsavedChanges = true; // Restored state counts as unsaved
+                } else {
+                    // If they reject the backup, we should probably delete it or leave it?
+                    // Leaving it might annoy them next time. Deleting it is safer to ask.
+                    // For now, let's keep it just in case they clicked wrong. 
+                    // Or maybe delete it if they explicitly say NO?
+                    // Let's safe-delete it to avoid loop.
+                    await deleteTempBackup(store.libraryHandle, folderName);
+                }
+            }
+        }
+
         store.players = state.players;
         store.matchHistory = state.matchHistory;
         store.kFactor = state.kFactor;
@@ -213,8 +246,17 @@ async function loadGameFromLibrary(dirHandle: FileSystemDirectoryHandle, folderN
         document.getElementById('app-main')!.style.display = 'block';
 
         updateKFactorInputState();
-        store.hasUnsavedChanges = false;
         updateSaveButton();
+
+        // If we restored a backup, make sure button shows unsaved
+        if (store.hasUnsavedChanges) {
+            const btn = document.getElementById('nav-save-btn');
+            if (btn) {
+                btn.textContent = 'Save Game *';
+                btn.classList.add('unsaved');
+            }
+        }
+
         render();
 
         showNotification(`Loaded game: ${folderName}`);

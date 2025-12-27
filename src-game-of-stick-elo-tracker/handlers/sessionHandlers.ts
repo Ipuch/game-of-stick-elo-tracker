@@ -6,7 +6,7 @@
  */
 
 import { store } from '../state/store';
-import { saveGameToSession, selectLibraryFolder, createGameInLibrary } from '../utils/fileSystemPersistence';
+import { saveGameToSession, selectLibraryFolder, createGameInLibrary, deleteTempBackup } from '../utils/fileSystemPersistence';
 import { saveLastLibraryName, clearTemporaryData } from '../utils/localStoragePersistence';
 import { showNotification } from '../ui/notificationSystem';
 import { broadcastGameUpdate } from '../services/syncService';
@@ -28,6 +28,12 @@ export async function handleSaveGame(context: SessionHandlerContext) {
                 matchHistory: store.matchHistory,
                 kFactor: store.kFactor
             });
+
+            // CLEANUP BACKUP on successful save
+            if (store.libraryHandle && store.folderName) {
+                await deleteTempBackup(store.libraryHandle, store.folderName);
+            }
+
             store.hasUnsavedChanges = false;
             context.updateSaveButton();
             broadcastGameUpdate();
@@ -85,6 +91,10 @@ export function handleExit(context: SessionHandlerContext) {
     if (store.hasUnsavedChanges) {
         if (!confirm('You have unsaved changes. Are you sure you want to exit without saving?')) {
             return;
+        }
+        // If they confirm exit without saving, we should cleanup the backup too
+        if (store.libraryHandle && store.folderName) {
+            deleteTempBackup(store.libraryHandle, store.folderName).catch(console.error);
         }
     }
 
