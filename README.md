@@ -152,8 +152,8 @@ npm run test:watch  # Watch mode
 - **Vitest** — Unit testing framework
 - **File System Access API** — Local file persistence
 - **BroadcastChannel API** — Cross-tab synchronization
+- **ECharts** — Interactive chart visualizations
 - **Pure CSS** — No framework dependencies
-- **SVG Charts** — Beautiful animated visualizations
 
 ---
 
@@ -163,7 +163,7 @@ npm run test:watch  # Watch mode
 src-game-of-stick-elo-tracker/
 ├── index.html          # Main HTML
 ├── index.tsx           # App entry point
-├── index.css           # Styles
+├── index.css           # Styles (manga-inspired theme)
 ├── types/              # TypeScript interfaces
 ├── state/              # Global store
 ├── scoring/            # Scoring system (ELO) - extensible
@@ -171,14 +171,37 @@ src-game-of-stick-elo-tracker/
 │   ├── eloScoring.ts   # ELO implementation
 │   └── index.ts        # Exports and factory
 ├── renderers/          # UI rendering functions
-│   ├── leaderboard.ts
-│   ├── podium.ts
-│   ├── battleHistory.ts
-│   ├── combatMatrix.ts
-│   ├── profileStats.ts
-│   └── eloEvolutionChart.ts  # Animated ELO chart
+│   ├── leaderboard.ts          # Leaderboard table
+│   ├── podium.ts               # Top 3 display
+│   ├── battleHistory.ts        # Match history list
+│   ├── combatMatrix.ts         # Head-to-head heatmap
+│   ├── profileStats.ts         # Player profile cards
+│   ├── eloEvolutionChart.ts    # SVG ELO chart
+│   ├── eloEvolutionChartEcharts.ts  # ECharts ELO chart
+│   ├── aggregatedDashboard.ts  # Cross-game stats dashboard
+│   ├── libraryRenderer.ts      # Game library list
+│   ├── menuRenderer.ts         # Main menu UI
+│   ├── opponentsRenderer.ts    # Remaining opponents display
+│   └── rosterRenderer.ts       # Player roster
 ├── handlers/           # Event handlers
-├── utils/              # Utilities (CSV, persistence, PDF export)
+│   ├── matchHandlers.ts        # Match recording
+│   ├── playerHandlers.ts       # Player management
+│   ├── sessionHandlers.ts      # Game session logic
+│   └── importExportHandlers.ts # Import/export actions
+├── services/           # Background services
+│   └── syncService.ts          # Cross-tab synchronization
+├── ui/                 # UI components
+│   ├── autocomplete.ts         # Player autocomplete
+│   └── notificationSystem.ts   # Status bar notifications
+├── utils/              # Utilities
+│   ├── csvUtils.ts             # CSV parsing/export
+│   ├── fileSystemPersistence.ts # File system storage
+│   ├── localStoragePersistence.ts # LocalStorage fallback
+│   ├── pdfExport.ts            # PDF generation
+│   ├── aggregationUtils.ts     # Cross-game aggregation
+│   ├── chartUtils.ts           # Chart helpers
+│   ├── opponentTracker.ts      # Remaining opponents logic
+│   └── ...                     # Other utilities
 ├── constants/          # App constants
 └── tests/              # Unit tests
     └── scoring/        # Scoring system tests
