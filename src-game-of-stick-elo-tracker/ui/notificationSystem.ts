@@ -10,30 +10,17 @@ import { store } from '../state/store';
 /**
  * Show a toast notification
  */
+/**
+ * Show a notification in the status bar (footer) only
+ */
 export function showNotification(message: string, type: 'success' | 'error' = 'success') {
-    const toast = document.getElementById('app-notification');
-    if (!toast) return;
-
-    // Reset classes and force reflow to restart animation if clicked rapidly
-    toast.className = 'notification-toast';
-    void toast.offsetWidth;
-
-    toast.textContent = message;
-    toast.classList.add('show', type);
-
-    // Also update the persistent status bar with the message
+    // Show message in footer
     updateStatusBarMessage(message, type);
 
-    // Wait 1.5s then start vanishing
+    // Revert to default status (Current Game...) after 4 seconds
     setTimeout(() => {
-        toast.classList.remove('show');
-        toast.classList.add('hiding');
-
-        // After hiding animation (1s), reset fully
-        setTimeout(() => {
-            toast.classList.remove('hiding', 'success', 'error');
-        }, 1000);
-    }, 1500);
+        updateStatusBar();
+    }, 4000);
 }
 
 /**
