@@ -82,9 +82,15 @@ export function renderEloEvolutionChart(players: Player[], matchHistory: Match[]
         });
     });
 
+    // Dynamic height based on number of players for the legend
+    // Base height 450px, add space if we have many players
+    // Legend starts at top + 20, each item is 28px high
+    const legendHeight = 20 + players.length * 28 + 70; // +70 padding
+    const svgHeight = Math.max(450, legendHeight);
+
     // SVG dimensions - responsive
     const svgWidth = 800;
-    const svgHeight = 450;
+    // const svgHeight = 450; // Replaced by dynamic height
     const padding = { top: 50, right: 160, bottom: 70, left: 70 };
     const graphWidth = svgWidth - padding.left - padding.right;
     const graphHeight = svgHeight - padding.top - padding.bottom;

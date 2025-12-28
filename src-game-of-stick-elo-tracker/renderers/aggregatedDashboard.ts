@@ -434,7 +434,12 @@ function renderEloEvolutionChart(players: AggregatedPlayer[], matches: Match[]):
     }
 
     const svgWidth = 800;
-    const svgHeight = 400;
+    // Dynamic height based on number of players for the legend
+    // Base height 400px, add space if we have many players
+    // Legend starts at top + 15, each item is 22px high
+    const legendHeight = 15 + players.length * 22 + 50; // +50 padding
+    const svgHeight = Math.max(400, legendHeight);
+
     const padding = { top: 40, right: 150, bottom: 50, left: 60 };
     const graphWidth = svgWidth - padding.left - padding.right;
     const graphHeight = svgHeight - padding.top - padding.bottom;
@@ -509,8 +514,8 @@ function renderEloEvolutionChart(players: AggregatedPlayer[], matches: Match[]):
         svg += `<circle cx="${lastX}" cy="${yScale(lastElo)}" r="5" fill="${color}" stroke="#fff" stroke-width="1.5"/>`;
     });
 
-    // Legend (top 10)
-    sortedPlayers.slice(0, 10).forEach((player, i) => {
+    // Legend (All players)
+    sortedPlayers.forEach((player, i) => {
         const color = getPlayerColor(i);
         const yPos = padding.top + 15 + i * 22;
         const truncName = player.name.length > 10 ? player.name.substring(0, 10) + '…' : player.name;

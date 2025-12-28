@@ -269,9 +269,14 @@ export function generateSvgChart(
         return '<p style="color: #888; text-align: center; padding: 40px;">No match data available.</p>';
     }
 
+    // Dynamic height calculation
+    // Legend starts at top + 15, each item is 22px high
+    const legendHeight = 15 + chartData.players.length * 22 + 50;
+    const fullHeight = Math.max(height, legendHeight);
+
     const padding = { top: 40, right: 150, bottom: 50, left: 60 };
     const graphWidth = width - padding.left - padding.right;
-    const graphHeight = height - padding.top - padding.bottom;
+    const graphHeight = fullHeight - padding.top - padding.bottom;
 
     // Calculate ELO range
     let minElo = 1200, maxElo = 1200;
@@ -291,7 +296,7 @@ export function generateSvgChart(
     const yScale = (elo: number) => padding.top + graphHeight - ((elo - minElo) / eloRange) * graphHeight;
 
     let svg = `
-    <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Segoe UI', Arial, sans-serif; border-radius: 12px;">
+    <svg width="100%" height="${fullHeight}" viewBox="0 0 ${width} ${fullHeight}" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Segoe UI', Arial, sans-serif; border-radius: 12px;">
         <defs>
             <linearGradient id="chartBgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" style="stop-color:#0a0e17;stop-opacity:0.6" />
@@ -305,7 +310,7 @@ export function generateSvgChart(
                 </feMerge>
             </filter>
         </defs>
-        <rect x="0" y="0" width="${width}" height="${height}" fill="url(#chartBgGradient)" rx="12"/>
+        <rect x="0" y="0" width="${width}" height="${fullHeight}" fill="url(#chartBgGradient)" rx="12"/>
     `;
 
     // Grid lines
@@ -318,7 +323,7 @@ export function generateSvgChart(
 
     // Axis label
     if (showLabel) {
-        svg += `<text x="${padding.left + graphWidth / 2}" y="${height - 10}" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.6)">Matches (${chartData.totalMatches} total)</text>`;
+        svg += `<text x="${padding.left + graphWidth / 2}" y="${fullHeight - 10}" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.6)">Matches (${chartData.totalMatches} total)</text>`;
     }
 
     // Draw player curves
@@ -340,8 +345,8 @@ export function generateSvgChart(
         svg += `<circle cx="${lastX}" cy="${yScale(lastElo)}" r="5" fill="${color}" stroke="#fff" stroke-width="1.5"/>`;
     });
 
-    // Legend (top 10)
-    chartData.players.slice(0, 10).forEach((player, i) => {
+    // Legend (All participants)
+    chartData.players.forEach((player, i) => {
         const color = getPlayerColor(i);
         const yPos = padding.top + 15 + i * 22;
         const truncName = player.name.length > 10 ? player.name.substring(0, 10) + '…' : player.name;
