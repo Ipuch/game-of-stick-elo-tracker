@@ -130,6 +130,55 @@ function renderDashboardContent(
             </div>
         ` : ''}
 
+        <!-- K-Factor Info & Settings -->
+        <div class="agg-kfactor-panel">
+            <div class="kfactor-info">
+                <span class="kfactor-badge" title="K-Factor used for ELO calculation in aggregated stats">
+                    K = 60
+                </span>
+                <span class="kfactor-hint">
+                    ⓘ League standard K-factor is used for all aggregated ELO calculations, regardless of individual game settings.
+                </span>
+            </div>
+        </div>
+
+        <style>
+            .agg-kfactor-panel {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 1rem;
+                padding: 0.5rem 1rem;
+                margin: 0.5rem 0;
+            }
+            .kfactor-info {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                background: rgba(0, 0, 0, 0.2);
+                border: 1px solid var(--surface-border);
+                border-radius: 6px;
+                padding: 0.5rem 1rem;
+            }
+            .kfactor-badge {
+                background: linear-gradient(135deg, rgba(0, 243, 255, 0.15), rgba(0, 243, 255, 0.05));
+                border: 1px solid var(--primary-color);
+                color: var(--primary-color);
+                font-family: 'Orbitron', sans-serif;
+                font-size: 0.85rem;
+                font-weight: 600;
+                padding: 0.3rem 0.7rem;
+                border-radius: 4px;
+                cursor: help;
+            }
+            .kfactor-hint {
+                color: var(--text-muted);
+                font-size: 0.75rem;
+                max-width: 300px;
+                line-height: 1.3;
+            }
+        </style>
+
         <div class="agg-actions">
             <button class="button-secondary" id="agg-export-pdf">📄 Export PDF</button>
         </div>
