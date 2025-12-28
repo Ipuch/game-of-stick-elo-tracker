@@ -9,7 +9,7 @@ import { Match } from '../types/appTypes';
 import { AggregatedStats, AggregatedPlayer, TimeSegment, generateTimeSegments, aggregatePlayerStats, loadAllMatchesFromLibrary } from '../utils/aggregationUtils';
 import { showNotification } from '../ui/notificationSystem';
 import { ChartData, buildChartData, getPlayerColor } from '../utils/chartUtils';
-import { showFullscreenEloChart, hideFullscreenEloChart } from './fullscreenChartModal';
+import { showFullscreenChart, hideFullscreenChart } from './eloEvolutionChartEcharts';
 
 export type AggregatedDashboardCallbacks = {
     onBack: () => void;
@@ -297,7 +297,7 @@ function renderDashboardContent(
     document.getElementById('agg-fullscreen-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (cachedChartData) {
-            showFullscreenEloChart(cachedChartData, `ELO Evolution - ${currentSegment?.label}`);
+            showFullscreenChart(cachedChartData, `ELO Evolution - ${currentSegment?.label}`);
         }
     });
 
@@ -742,6 +742,6 @@ export function hideAggregatedDashboard() {
     if (container) {
         container.style.display = 'none';
     }
-    hideFullscreenEloChart();
+    hideFullscreenChart();
 }
 

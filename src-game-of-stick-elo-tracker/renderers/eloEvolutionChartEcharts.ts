@@ -8,32 +8,7 @@
 import type { ECharts, EChartsOption } from 'echarts';
 import { Player, Match } from '../types/appTypes';
 import { eloScoring } from '../scoring';
-
-/**
- * Beautiful color palette for player curves (distinct, vibrant colors)
- */
-const PLAYER_COLORS = [
-    '#FF6B35', // Vibrant Orange
-    '#00D4AA', // Teal
-    '#7B68EE', // Medium Slate Blue
-    '#FF1493', // Deep Pink
-    '#32CD32', // Lime Green
-    '#FFD700', // Gold
-    '#00BFFF', // Deep Sky Blue
-    '#FF4500', // Orange Red
-    '#9370DB', // Medium Purple
-    '#20B2AA', // Light Sea Green
-    '#DC143C', // Crimson
-    '#00CED1', // Dark Turquoise
-    '#FF69B4', // Hot Pink
-    '#00FF7F', // Spring Green
-    '#BA55D3', // Medium Orchid
-    '#FF8C00', // Dark Orange
-    '#48D1CC', // Medium Turquoise
-    '#C71585', // Medium Violet Red
-    '#7FFF00', // Chartreuse
-    '#4169E1', // Royal Blue
-];
+import { ChartData, PLAYER_COLORS } from '../utils/chartUtils';
 
 let chartInstance: ECharts | null = null;
 let modalElement: HTMLDivElement | null = null;
@@ -82,10 +57,54 @@ function buildEloHistoryData(players: Player[], matchHistory: Match[]) {
 }
 
 /**
- * Create and show the fullscreen ECharts modal
+ * Process ChartData into the internal history format
  */
-export async function showFullscreenChart(players: Player[], matchHistory: Match[]) {
-    if (matchHistory.length === 0 || players.length === 0) {
+function processChartData(chartData: ChartData) {
+    const playerHistories: Map<string, { name: string; color: string; data: number[] }> = new Map();
+
+    chartData.players.forEach((p, index) => {
+        // Use normalized name or ID as key
+        playerHistories.set(p.id || p.name, {
+            name: p.name,
+            color: PLAYER_COLORS[index % PLAYER_COLORS.length],
+            data: p.eloHistory
+        });
+    });
+
+    return {
+        playerHistories,
+        xAxisData: chartData.xAxisLabels
+    };
+}
+
+/**
+ * Create and show the fullscreen ECharts modal.
+ * Overloaded to support both raw player/match data and pre-computed ChartData.
+ */
+export async function showFullscreenChart(players: Player[], matchHistory: Match[]): Promise<void>;
+export async function showFullscreenChart(chartData: ChartData, title?: string): Promise<void>;
+export async function showFullscreenChart(arg1: any, arg2: any): Promise<void> {
+    // Check arguments
+    let players: Player[] = [];
+    let matchHistory: Match[] = [];
+    let chartData: ChartData | null = null;
+    let title = 'ELO Evolution Chart';
+
+    if (Array.isArray(arg1) && Array.isArray(arg2)) {
+        players = arg1;
+        matchHistory = arg2;
+    } else if (arg1 && typeof arg1 === 'object' && 'players' in arg1 && 'xAxisLabels' in arg1) {
+        chartData = arg1;
+        if (typeof arg2 === 'string') {
+            title = arg2;
+        }
+    } else {
+        console.error('Invalid arguments for showFullscreenChart');
+        return;
+    }
+
+    if ((!chartData && (matchHistory.length === 0 || players.length === 0)) ||
+        (chartData && (chartData.totalMatches === 0 || chartData.players.length === 0))) {
         alert('No match data available to display.');
         return;
     }
@@ -108,7 +127,7 @@ export async function showFullscreenChart(players: Player[], matchHistory: Match
             <div class="echarts-modal-backdrop"></div>
             <div class="echarts-modal-content">
                 <div class="echarts-modal-header">
-                    <h2>📈 ELO Evolution Chart</h2>
+                    <h2 id="echarts-modal-title">📈 ELO Evolution Chart</h2>
                     <div class="echarts-modal-actions">
                         <button id="echarts-reset-zoom" class="echarts-btn">Reset Zoom</button>
                         <button id="echarts-close" class="echarts-btn echarts-btn-close">✕ Close</button>
@@ -116,7 +135,7 @@ export async function showFullscreenChart(players: Player[], matchHistory: Match
                 </div>
                 <div id="echarts-container"></div>
                 <div class="echarts-modal-footer">
-                    <p>💡 Tip: Click legend items to toggle players • Scroll to zoom • Drag to pan</p>
+                    <p>💡 Tip: Click on a player's curve or label to dim/undim them • Scroll to zoom • Drag to pan</p>
                 </div>
             </div>
         `;
@@ -229,6 +248,12 @@ export async function showFullscreenChart(players: Player[], matchHistory: Match
         });
     }
 
+    // Update title
+    const titleEl = modalElement.querySelector('#echarts-modal-title');
+    if (titleEl) {
+        titleEl.textContent = title;
+    }
+
     // Show modal
     modalElement.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -244,188 +269,218 @@ export async function showFullscreenChart(players: Player[], matchHistory: Match
     // Use dynamically imported echarts
     chartInstance = echarts.init(container, 'dark');
 
-    // Build data
-    const { playerHistories, xAxisData } = buildEloHistoryData(players, matchHistory);
+    // Build data (either from raw players/matches or pre-computed chartData)
+    let processedData;
+    if (chartData) {
+        processedData = processChartData(chartData);
+    } else {
+        processedData = buildEloHistoryData(players, matchHistory);
+    }
 
-    // Sort by final ELO for legend ordering
+    const { playerHistories, xAxisData } = processedData;
+
+    // Sort by final ELO
     const sortedPlayers = Array.from(playerHistories.values())
         .sort((a, b) => b.data[b.data.length - 1] - a.data[a.data.length - 1]);
 
-    // Build series
-    // Build series
-    const series = sortedPlayers.map(playerData => {
-        // Format data to style the last point
-        const data = playerData.data.map((value, index) => {
-            if (index === playerData.data.length - 1) {
-                return {
-                    value,
-                    symbol: 'circle',
-                    symbolSize: 10,
-                    itemStyle: {
-                        borderColor: '#fff',
-                        borderWidth: 3,
-                        color: playerData.color
-                    },
-                    label: {
-                        show: true,
-                        position: 'right' as const,
-                        color: '#fff',
-                        fontWeight: 'bold' as const,
-                        fontSize: 18,
-                        formatter: '{a}: {c}',
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        padding: [6, 10],
-                        borderRadius: 6
+    // Track state of dimmed players
+    const dimmedPlayers = new Set<string>();
+
+    function updateChart() {
+        if (!chartInstance) return;
+
+        // Build series with dimmed state logic
+        const series = sortedPlayers.map(playerData => {
+            const isDimmed = dimmedPlayers.has(playerData.name);
+            const baseColor = isDimmed ? '#444' : playerData.color;
+            const zLevel = isDimmed ? 1 : 10;
+            const lineWidth = isDimmed ? 2 : 4;
+            const opacity = isDimmed ? 0.3 : 1;
+
+            // Format data to style the last point with label
+            const data = playerData.data.map((value, index) => {
+                if (index === playerData.data.length - 1) {
+                    return {
+                        value,
+                        symbol: 'circle',
+                        symbolSize: isDimmed ? 6 : 10,
+                        itemStyle: {
+                            borderColor: isDimmed ? '#666' : '#fff',
+                            borderWidth: isDimmed ? 1 : 3,
+                            color: baseColor,
+                            opacity: 1 // Keep end dot visible but styled
+                        },
+                        label: {
+                            show: true,
+                            position: 'right' as const,
+                            color: isDimmed ? '#666' : '#fff',
+                            fontWeight: (isDimmed ? 'normal' : 'bold') as any,
+                            fontSize: isDimmed ? 12 : 16,
+                            formatter: '{a}: {c}',
+                            backgroundColor: isDimmed ? 'transparent' : 'rgba(0,0,0,0.6)',
+                            padding: [4, 8],
+                            borderRadius: 4
+                        }
+                    };
+                }
+                return value;
+            });
+
+            return {
+                name: playerData.name,
+                type: 'line' as const,
+                data: data,
+                smooth: false,
+                symbol: 'circle',
+                symbolSize: isDimmed ? 4 : 8,
+                z: zLevel,
+                lineStyle: {
+                    width: lineWidth,
+                    color: baseColor,
+                    opacity: opacity
+                },
+                itemStyle: {
+                    color: baseColor,
+                    opacity: opacity
+                },
+                // Smart label layout to prevent overlaps
+                labelLayout: {
+                    moveOverlap: 'shiftY' as any
+                },
+                emphasis: {
+                    focus: 'none' as const, // Handle focus manually
+                    lineStyle: {
+                        width: isDimmed ? 2 : 6
                     }
-                };
-            }
-            return value;
+                }
+            };
         });
 
-        return {
-            name: playerData.name,
-            type: 'line' as const,
-            data: data,
-            smooth: false,
-            symbol: 'circle',
-            symbolSize: 8,
-            lineStyle: {
-                width: 4,
-                color: playerData.color
-            },
-            itemStyle: {
-                color: playerData.color
-            },
-            emphasis: {
-                focus: 'series' as const,
-                lineStyle: {
-                    width: 6
-                }
-            }
-        };
-    });
-
-    // Chart options
-    const option: EChartsOption = {
-        backgroundColor: 'transparent',
-        // Title removed as requested
-        tooltip: {
-            trigger: 'axis',
-            backgroundColor: 'rgba(20, 25, 40, 0.95)',
-            borderColor: 'rgba(0, 243, 255, 0.3)',
-            textStyle: {
-                color: '#fff',
-                fontSize: 16
-            },
-            formatter: function (params: any) {
-                if (!Array.isArray(params)) return '';
-                const header = `<div style="margin-bottom:8px;font-weight:bold;font-size:16px">${params[0].axisValue}</div>`;
-                const items = params
-                    .sort((a: any, b: any) => b.value - a.value)
-                    .map((p: any) => {
-                        // Handle both number and object data formats
-                        const val = typeof p.value === 'object' ? p.value.value : p.value;
-                        const seriesIndex = series.findIndex(s => s.name === p.seriesName);
-                        // Safe previous value check
-                        let prevVal = 0;
-                        if (p.dataIndex > 0 && seriesIndex !== -1) {
-                            const prevData = series[seriesIndex].data[p.dataIndex - 1];
-                            prevVal = typeof prevData === 'object' ? (prevData as any).value : prevData as number;
-                        }
-
-                        const change = p.dataIndex > 0 ? val - prevVal : 0;
-                        const changeStr = change !== 0 ?
-                            `<span style="color:${change > 0 ? '#4caf50' : '#f44336'}">(${change > 0 ? '+' : ''}${change})</span>` : '';
-                        return `<div style="display:flex;justify-content:space-between;gap:30px;font-size:15px;margin-bottom:4px;">
-                            <span>${p.marker} ${p.seriesName}</span>
-                            <span><strong>${val}</strong> ${changeStr}</span>
-                        </div>`;
-                    })
-                    .join('');
-                return header + items;
-            }
-        },
-        legend: {
-            type: 'scroll',
-            orient: 'vertical',
-            right: 20,
-            top: 60, // Adjusted top since title is gone
-            bottom: 80,
-            itemWidth: 25,
-            itemHeight: 25,
-            itemGap: 20,
-            textStyle: {
-                color: '#fff',
-                fontSize: 18,
-                fontWeight: 'bold'
-            },
-            pageTextStyle: {
-                color: '#fff'
-            },
-            pageIconColor: '#00f3ff',
-            pageIconInactiveColor: '#555'
-        },
-        grid: {
-            left: 80,
-            right: 250, // Increased right margin for longer labels
-            top: 60, // Reduced top margin since title is gone
-            bottom: 100,
-            containLabel: true
-        },
-        xAxis: {
-            type: 'category',
-            data: xAxisData,
-            axisLine: {
-                lineStyle: { color: 'rgba(255,255,255,0.4)', width: 2 }
-            },
-            axisLabel: {
-                color: 'rgba(255,255,255,0.8)',
-                fontSize: 16,
-                rotate: xAxisData.length > 20 ? 45 : 0,
-                margin: 16
-            }
-        },
-        yAxis: {
-            type: 'value',
-            min: (value) => Math.floor(value.min - 50), // Offset below min value
-            name: 'ELO Rating',
-            nameTextStyle: {
-                color: 'rgba(255,255,255,0.8)',
-                fontSize: 16,
-                padding: [0, 0, 10, 0]
-            },
-            axisLine: {
-                lineStyle: { color: 'rgba(255,255,255,0.4)', width: 2 }
-            },
-            axisLabel: {
-                color: 'rgba(255,255,255,0.8)',
-                fontSize: 16,
-                margin: 16
-            },
-            splitLine: {
-                lineStyle: { color: 'rgba(255,255,255,0.1)' }
-            }
-        },
-        dataZoom: [
-            {
-                type: 'inside',
-                start: 0,
-                end: 100
-            },
-            {
-                type: 'slider',
-                bottom: 30,
-                height: 30,
+        // Chart options
+        const option: EChartsOption = {
+            backgroundColor: 'transparent',
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: 'rgba(20, 25, 40, 0.95)',
+                borderColor: 'rgba(0, 243, 255, 0.3)',
                 textStyle: {
-                    color: 'rgba(255,255,255,0.8)',
-                    fontSize: 14
-                }
-            }
-        ],
-        series
-    };
+                    color: '#fff',
+                    fontSize: 16
+                },
+                formatter: function (params: any) {
+                    if (!Array.isArray(params)) return '';
+                    const header = `<div style="margin-bottom:8px;font-weight:bold;font-size:16px">${params[0].axisValue}</div>`;
 
-    chartInstance.setOption(option);
+                    const items = params
+                        .sort((a: any, b: any) => b.value - a.value)
+                        .map((p: any) => {
+                            const val = typeof p.value === 'object' ? p.value.value : p.value;
+                            const isDimmed = dimmedPlayers.has(p.seriesName);
+                            const seriesIndex = series.findIndex(s => s.name === p.seriesName);
+                            let prevVal = 0;
+                            if (p.dataIndex > 0 && seriesIndex !== -1) {
+                                const prevData = series[seriesIndex].data[p.dataIndex - 1];
+                                prevVal = typeof prevData === 'object' ? (prevData as any).value : prevData as number;
+                            }
+
+                            const change = p.dataIndex > 0 ? val - prevVal : 0;
+                            const changeStr = change !== 0 ?
+                                `<span style="color:${change > 0 ? '#4caf50' : '#f44336'}">(${change > 0 ? '+' : ''}${change})</span>` : '';
+
+                            const opacity = isDimmed ? 0.5 : 1;
+                            const color = isDimmed ? '#999' : '#fff';
+
+                            return `<div style="display:flex;justify-content:space-between;gap:30px;font-size:15px;margin-bottom:4px;opacity:${opacity};color:${color}">
+                                <span>${p.marker} ${p.seriesName}</span>
+                                <span><strong>${val}</strong> ${changeStr}</span>
+                            </div>`;
+                        })
+                        .join('');
+                    return header + items;
+                }
+            },
+            // Legend REMOVED
+            grid: {
+                left: 60,
+                right: 300, // Ample space for right-aligned labels
+                top: 40,
+                bottom: 80,
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: xAxisData,
+                axisLine: {
+                    lineStyle: { color: 'rgba(255,255,255,0.4)', width: 2 }
+                },
+                axisLabel: {
+                    color: 'rgba(255,255,255,0.8)',
+                    fontSize: 14,
+                    rotate: xAxisData.length > 20 ? 45 : 0,
+                    margin: 16
+                }
+            },
+            yAxis: {
+                type: 'value',
+                min: (value) => Math.floor(value.min - 50),
+                name: 'ELO Rating',
+                nameTextStyle: {
+                    color: 'rgba(255,255,255,0.8)',
+                    fontSize: 16,
+                    padding: [0, 0, 10, 0]
+                },
+                axisLine: {
+                    lineStyle: { color: 'rgba(255,255,255,0.4)', width: 2 }
+                },
+                axisLabel: {
+                    color: 'rgba(255,255,255,0.8)',
+                    fontSize: 14,
+                    margin: 16
+                },
+                splitLine: {
+                    lineStyle: { color: 'rgba(255,255,255,0.1)' }
+                }
+            },
+            dataZoom: [
+                {
+                    type: 'inside',
+                    start: 0,
+                    end: 100
+                },
+                {
+                    type: 'slider',
+                    bottom: 30,
+                    height: 30,
+                    textStyle: {
+                        color: 'rgba(255,255,255,0.8)',
+                        fontSize: 14
+                    }
+                }
+            ],
+            series
+        };
+
+        chartInstance.setOption(option);
+    }
+
+    // Initial render
+    updateChart();
+
+    // Click handler for interaction
+    chartInstance.on('click', (params) => {
+        // Toggle dim state on series click
+        if (params.componentType === 'series') {
+            const name = params.seriesName;
+            if (name) {
+                if (dimmedPlayers.has(name)) {
+                    dimmedPlayers.delete(name);
+                } else {
+                    dimmedPlayers.add(name);
+                }
+                updateChart();
+            }
+        }
+    });
 
     // Handle resize
     window.addEventListener('resize', () => {
