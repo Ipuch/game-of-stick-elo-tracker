@@ -1,0 +1,8 @@
+id,name,elo,wins,losses,draws,previousRank,currentStreakType,currentStreakLength
+fe87f11e-e5e2-4745-a238-4f82d134ab18,Pierre,1200,4,3,3,,,0
+9e7f9b8c-534f-4a12-b660-2746e2e21515,Thomas,1208,2,2,6,,,0
+2dd75e13-8eea-4684-8488-a99aafdfc9e3,John,1325,6,0,4,,,0
+d4015790-c778-4ffe-b52c-8adc0e356131,Lison,1216,2,2,3,,,0
+0e5e686b-b2f4-49a5-93d9-245a41a1ab4d,Bastien,1247,4,2,4,,,0
+4341292c-7bf8-40e8-89d6-5812eb61e8b2,Clément,1126,0,3,2,,,0
+2adc68ed-61b8-4bf3-acc4-ebb6476a005b,Nathan,1078,0,6,2,,,0

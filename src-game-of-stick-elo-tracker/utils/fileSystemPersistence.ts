@@ -62,6 +62,52 @@ export async function createGameInLibrary(libraryHandle: FileSystemDirectoryHand
     return gameDir;
 }
 
+export interface GameQuickStats {
+    playerCount: number;
+    matchCount: number;
+    lastMatchDate: number | null;
+    createdDate?: number; // Approximate from first match
+}
+
+export async function getGameQuickStats(dirHandle: FileSystemDirectoryHandle): Promise<GameQuickStats> {
+    let stats: GameQuickStats = {
+        playerCount: 0,
+        matchCount: 0,
+        lastMatchDate: null
+    };
+
+    try {
+        // Count Players
+        try {
+            const playersHandle = await dirHandle.getFileHandle(PLAYERS_FILE_CSV);
+            const file = await playersHandle.getFile();
+            const text = await file.text();
+            // Subtract 1 for header, ensure not negative if empty file
+            const lineCount = text.trim().split('\n').length;
+            stats.playerCount = Math.max(0, lineCount - 1);
+        } catch (e) { /* ignore */ }
+
+        // Count Matches & dates
+        try {
+            const matchesHandle = await dirHandle.getFileHandle(MATCHES_FILE_CSV);
+            const file = await matchesHandle.getFile();
+            const text = await file.text();
+            const matches = csvToMatches(text);
+            stats.matchCount = matches.length;
+
+            if (matches.length > 0) {
+                const timestamps = matches.map(m => m.timestamp);
+                stats.lastMatchDate = Math.max(...timestamps);
+                stats.createdDate = Math.min(...timestamps);
+            }
+        } catch (e) { /* ignore */ }
+
+    } catch (e) {
+        console.warn('Failed to get quick stats', e);
+    }
+    return stats;
+}
+
 // 4. LOAD GAME (From Subfolder, CSV based)
 export async function loadGameFromSession(dirHandle: FileSystemDirectoryHandle): Promise<AppState> {
     let players: Player[] = [];

@@ -23,19 +23,21 @@
   <div id="game-menu" class="game-menu">
     <div class="game-menu-content">
       <img src="Logo-west-coast-academy02.png" alt="Logo" class="menu-logo" />
-      <h1 class="game-menu-title">Game of S.T.I.C.K.</h1>
-      <p class="game-menu-subtitle">System Linked // Select Data Fragment</p>
+      <h1 class="game-menu-title compact-title">Game of S.T.I.C.K.</h1>
 
       <div class="game-menu-grid">
         <div class="session-list-container">
-          <h2>Previous Games</h2>
+          <div id="library-header-compact" class="library-header-compact"></div>
+          <div id="aggregated-stats-area" class="aggregated-stats-area"></div>
+
+          <h2 class="section-title-small">Previous Games</h2>
           <div id="session-list" class="session-list">
             <!-- Sessions inserted here -->
           </div>
         </div>
 
         <div class="new-session-container">
-          <h2>New Operation</h2>
+          <h2>New Game</h2>
           <form id="new-session-form">
             <div class="form-group">
               <label for="new-session-name">Operation Name</label>

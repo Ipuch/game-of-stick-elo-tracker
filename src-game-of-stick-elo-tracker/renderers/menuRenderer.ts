@@ -29,7 +29,12 @@ export function renderGameMenu(
     document.getElementById('app-main')!.style.display = 'none';
 
     const list = document.getElementById('session-list')!;
+    const headerArea = document.getElementById('library-header-compact');
+    const statsArea = document.getElementById('aggregated-stats-area');
+
     list.innerHTML = '';
+    if (headerArea) headerArea.innerHTML = '';
+    if (statsArea) statsArea.innerHTML = '';
 
     // Get last used library name for hint
     const lastLibraryName = getLastLibraryName();
@@ -68,15 +73,17 @@ export function renderGameMenu(
     divider.style.margin = '1.5rem 0';
     list.appendChild(divider);
 
-    // EXAMPLE GAME card
-    const exampleCard = document.createElement('div');
-    exampleCard.className = 'session-item';
+    const exampleCard = document.createElement('button'); // Use button
+    exampleCard.className = 'session-item session-item-detailed';
     exampleCard.innerHTML = `
-        <div class="session-info">
-            <h3>🎮 ${EXAMPLE_GAME_NAME}</h3>
-            <div class="session-meta">Demo with sample players & matches</div>
+        <div class="session-main-info">
+            <span class="session-name">🎮 ${EXAMPLE_GAME_NAME} (Demo)</span>
+            <span class="session-date-badge">Demo</span>
         </div>
-        <div class="session-arrow">➜</div>
+        <div class="session-details">
+            <span title="Players">👥 4</span>
+            <span title="Battles">⚔️ 6</span>
+        </div>
     `;
     exampleCard.onclick = callbacks.onLoadExample;
     list.appendChild(exampleCard);

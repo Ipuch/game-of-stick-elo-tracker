@@ -5,7 +5,7 @@
  * @license Apache-2.0
  */
 
-import { listGamesInLibrary } from '../utils/fileSystemPersistence';
+import { listGamesInLibrary, getGameQuickStats } from '../utils/fileSystemPersistence';
 
 export type LibraryCallbacks = {
     onLoadGame: (handle: FileSystemDirectoryHandle, name: string) => Promise<void>;
@@ -17,65 +17,70 @@ export async function renderGameLibrary(
     libraryHandle: FileSystemDirectoryHandle,
     callbacks: LibraryCallbacks
 ) {
+    // Fix Race Condition: Fetch ALL data (games + stats) BEFORE touching the DOM
     const games = await listGamesInLibrary(libraryHandle);
 
-    document.getElementById('game-menu')!.style.display = 'flex';
-    document.getElementById('app-main')!.style.display = 'none';
+    // Fetch stats concurrently for all games
+    const gameItems = await Promise.all(games.map(async (g) => {
+        const stats = await getGameQuickStats(g.handle);
+        return { handle: g.handle, name: g.name, stats };
+    }));
 
-    // Update Menu Header or Title to indicate Library Mode could be nice, but reusing current structure
+    // --- SYNCHRONOUS DOM UPDATE BLOCK ---
+    const menuEl = document.getElementById('game-menu');
+    const mainEl = document.getElementById('app-main');
+    if (menuEl) menuEl.style.display = 'flex';
+    if (mainEl) mainEl.style.display = 'none';
+
+    // Clear all menu areas
     const list = document.getElementById('session-list')!;
+    const headerArea = document.getElementById('library-header-compact');
+    const statsArea = document.getElementById('aggregated-stats-area');
+
     list.innerHTML = '';
+    if (headerArea) headerArea.innerHTML = '';
+    if (statsArea) statsArea.innerHTML = '';
 
-    // Header for Library
-    const libraryHeader = document.createElement('h3');
-    libraryHeader.textContent = `Library: ${libraryHandle.name}`;
-    libraryHeader.style.width = '100%';
-    libraryHeader.style.textAlign = 'center';
-    libraryHeader.style.color = 'var(--text-muted)';
-    list.appendChild(libraryHeader);
-
-    // Aggregated Stats Button
-    if (games.length > 0) {
-        const aggBtnContainer = document.createElement('div');
-        aggBtnContainer.className = 'agg-stats-btn-container';
-        aggBtnContainer.style.width = '100%';
-        aggBtnContainer.style.textAlign = 'center';
-        aggBtnContainer.style.marginBottom = '1rem';
-
-        const aggBtn = document.createElement('button');
-        aggBtn.className = 'button-secondary agg-stats-btn';
-        aggBtn.innerHTML = '📊 View Aggregated Stats';
-        aggBtn.style.width = '100%';
-        aggBtn.style.padding = '0.75rem';
-        aggBtn.onclick = () => callbacks.onViewAggregatedStats();
-        aggBtnContainer.appendChild(aggBtn);
-        list.appendChild(aggBtnContainer);
-
-        const divider = document.createElement('hr');
-        divider.style.width = '100%';
-        divider.style.margin = '0.5rem 0 1rem 0';
-        divider.style.opacity = '0.3';
-        list.appendChild(divider);
+    // 1. Render Library Name
+    if (headerArea) {
+        headerArea.innerHTML = `<span class="library-label">Library:</span> <span class="library-name">${libraryHandle.name}</span>`;
     }
 
-    if (games.length === 0) {
+    // 2. Render Aggregated Stats Button
+    if (gameItems.length > 0 && statsArea) {
+        const aggBtn = document.createElement('button');
+        aggBtn.className = 'button-secondary agg-stats-btn width-full';
+        aggBtn.innerHTML = '📊 View Aggregated Stats';
+        aggBtn.onclick = () => callbacks.onViewAggregatedStats();
+        statsArea.appendChild(aggBtn);
+    }
+
+    // 3. Render Game List
+    if (gameItems.length === 0) {
         const msg = document.createElement('div');
-        msg.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:1rem;">No games found in this folder. Create one below!</div>';
+        msg.innerHTML = '<div class="empty-list-msg">No games found. Create one below!</div>';
         list.appendChild(msg);
     } else {
-        games.forEach(g => {
-            const card = document.createElement('div');
-            card.className = 'session-item';
-            // We don't have metadata easily without reading every folder, so just show name
+        gameItems.forEach(({ handle, name, stats }) => {
+            const card = document.createElement('button'); // Use button for better semantics/a11y
+            card.className = 'session-item session-item-detailed';
+
+            const lastPlayed = stats.lastMatchDate
+                ? new Date(stats.lastMatchDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                : 'New';
+
             card.innerHTML = `
-                <div class="session-info">
-                    <h3>${g.name}</h3>
-                    <div class="session-meta">Folder Game</div>
+                <div class="session-main-info">
+                    <span class="session-name">${name}</span>
+                    <span class="session-date-badge">${lastPlayed}</span>
                 </div>
-                <div class="session-arrow">➜</div>
+                <div class="session-details">
+                    <span title="Players">👥 ${stats.playerCount}</span>
+                    <span title="Battles">⚔️ ${stats.matchCount}</span>
+                </div>
             `;
             card.onclick = async () => {
-                await callbacks.onLoadGame(g.handle, g.name);
+                await callbacks.onLoadGame(handle, name);
             };
             list.appendChild(card);
         });
@@ -85,8 +90,10 @@ export async function renderGameLibrary(
     const form = document.getElementById('new-session-form') as HTMLFormElement;
 
     // Update labels to reflect we are creating a folder
-    const legend = form.querySelector('legend');
-    if (legend) legend.textContent = 'Create New Game in Library';
+    const legend = form.querySelector('h2'); // It's an h2 in the new HTML, check index.html
+    if (legend) legend.textContent = 'New Game';
+    // Wait, the HTML has <h2>New Game</h2>. 
+    // We might want to change it to "New Game" if needed, but "New Game" is cool.
 
     form.onsubmit = async (e) => {
         e.preventDefault();
