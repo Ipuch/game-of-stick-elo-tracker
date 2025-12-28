@@ -121,6 +121,21 @@ function render() {
     // persist(); // REMOVED: persist should be called by handlers, not render
 }
 
+/**
+ * Render all UI elements EXCEPT the leaderboard.
+ * Used after recording matches so leaderboard updates are manual.
+ */
+function renderWithoutLeaderboard() {
+    renderPodium(store.players, DOMElements);
+    renderBattleHistory(store.matchHistory, DOMElements);
+    renderCombatMatrix(store.players, store.matchHistory, DOMElements);
+
+    renderProfileStatsSection(store.players, store.matchHistory);
+    renderEloEvolutionChart(store.players, store.matchHistory);
+    renderRosterList(store.players, DOMElements.rosterList || undefined);
+    renderRemainingOpponents(store.players, store.matchHistory, DOMElements);
+}
+
 function handleUpdateLeaderboardClick() {
     render();
     // Update baseline for next diff
@@ -141,6 +156,7 @@ function handleKFactorChange(event: Event) {
 // Prepare context objects for handlers to avoid passing too many args
 const getMatchContext = () => ({
     render,
+    renderWithoutLeaderboard,
     persist,
     updateKFactorInputState,
     DOMElements
@@ -257,6 +273,11 @@ async function loadGameFromLibrary(dirHandle: FileSystemDirectoryHandle, folderN
         store.players = state.players;
         store.matchHistory = state.matchHistory;
         store.kFactor = state.kFactor;
+
+        // Initialize lastLeaderboardElo with current player ELOs to prevent
+        // false ELO change display on first render after loading
+        store.lastLeaderboardElo = {};
+        store.players.forEach(p => store.lastLeaderboardElo[p.id] = p.elo);
 
         if (store.libraryHandle) {
             saveLastLibraryName(store.libraryHandle.name);

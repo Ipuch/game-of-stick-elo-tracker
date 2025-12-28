@@ -258,7 +258,11 @@ export function generateGamePDF(
     // Sort players by ELO
     const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
 
-    const dateStr = new Date().toLocaleDateString('en-GB', {
+    // Use date of last match instead of current date
+    const lastMatchTimestamp = matchHistory.length > 0
+        ? Math.max(...matchHistory.map(m => m.timestamp))
+        : Date.now();
+    const dateStr = new Date(lastMatchTimestamp).toLocaleDateString('en-GB', {
         day: 'numeric', month: 'long', year: 'numeric'
     });
 

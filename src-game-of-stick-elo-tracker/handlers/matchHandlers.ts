@@ -17,6 +17,7 @@ import { renderRemainingOpponents } from '../renderers/opponentsRenderer';
 
 export type MatchHandlerContext = {
     render: () => void;
+    renderWithoutLeaderboard: () => void;
     persist: () => void;
     updateKFactorInputState: () => void;
     DOMElements: AppDOMElements;
@@ -143,8 +144,8 @@ export function handleRecordMatch(event: SubmitEvent, context: MatchHandlerConte
     hideSuggestions(DOMElements.player1Suggestions);
     hideSuggestions(DOMElements.player2Suggestions);
 
-    // Ensure UI updates to reflect new match/rankings
-    context.render();
+    // Ensure UI updates to reflect new match (but NOT leaderboard - that's manual)
+    context.renderWithoutLeaderboard();
 }
 
 export function handleClearMatchHistory(context: MatchHandlerContext) {

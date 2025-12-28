@@ -15,3 +15,86 @@
      *  Display a counter if this list of players is for playing against all remaining players, once, or twice, if all already fought once, or more than twice. Display this number next to each player's list.
 
 - [x] Export game and player stats as a Nice PDF to be send like for Laser Tag
+
+
+--- 
+[ ] Player registry.
+
+# Cross-Game Aggregation — Lightweight MVP Plan
+
+## Summary
+
+A **read-only dashboard** that aggregates multiple game sessions by time period (last month, 3 months, year), using player name matching. No schema changes for MVP.
+
+
+## Phase 2: Player Registry (Future)
+
+> [!NOTE]
+> This phase comes **after** MVP validation. Lower priority.
+
+### What it adds
+1. **GlobalPlayer registry** with stable IDs
+2. **Birth date** field for age-based filtering
+3. **Alias merging** (handle typos, name variations)
+4. **Auto-suggest** when adding players (link to registry)
+
+### New Types
+
+```typescript
+interface GlobalPlayer {
+  id: string;
+  name: string;
+  birthDate?: string;      // ISO date, e.g. "2005-03-15"
+  aliases: string[];       // ["Pierre", "pierre", "P. Puchaud"]
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: number;
+}
+```
+
+### Storage
+- `registry.json` in library root
+- OR a `_registry/` folder alongside game folders
+
+### UI
+- Registry management screen (list, edit, merge players)
+- Age filter (kids / adults / all)
+
+---
+
+## File Changes (Phase 1 MVP)
+
+| File | Change |
+|------|--------|
+| [NEW] `utils/aggregationUtils.ts` | Core aggregation logic |
+| [NEW] `renderers/aggregatedDashboard.ts` | Dashboard rendering |
+| [MODIFY] [index.html](file:///home/ppuchaud/Documents/perso/game-of-stick-elo-tracker/src-game-of-stick-elo-tracker/index.html) | Add dashboard container |
+| [MODIFY] [index.tsx](file:///home/ppuchaud/Documents/perso/game-of-stick-elo-tracker/src-game-of-stick-elo-tracker/index.tsx) | Add dashboard button + view logic |
+| [MODIFY] [index.css](file:///home/ppuchaud/Documents/perso/game-of-stick-elo-tracker/src-game-of-stick-elo-tracker/index.css) | Dashboard styles |
+
+---
+
+## Verification Plan
+
+### Manual Testing
+1. Create/load 2-3 game sessions with overlapping player names
+2. Click "Aggregated Stats"
+3. Verify players are correctly merged by name
+4. Test each time filter (month/3mo/year/all)
+5. Verify ELO recalculation matches expectations
+
+### Edge Cases
+- Player name with different casing ("Pierre" vs "pierre")
+- Empty time range (no matches in last month)
+- Single-game scenario
+
+---
+
+## Questions Resolved
+
+| Question | Answer |
+|----------|--------|
+| ELO model | ✅ Cumulative (Option A) |
+| Player identification | ✅ Name-matching (MVP), registry later |
+| Seasons | ✅ Time-filtered views instead of manual seasons |
+| Birth date | ✅ Phase 2 with registry |
+| Multi-season games | ✅ N/A for MVP (time-based auto-filter) |
