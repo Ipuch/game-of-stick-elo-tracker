@@ -82,18 +82,26 @@ function updateSaveButton() {
     updateStatusBar();
 }
 
+// Debounce timer for temp backup (avoid constant disk I/O)
+let backupDebounceTimer: number | null = null;
+
 function persist() {
     if (store.directoryHandle) {
         store.hasUnsavedChanges = true;
         updateSaveButton();
 
-        // AUTO-SAVE to .temp
+        // AUTO-SAVE to .temp (DEBOUNCED - 1 second)
         if (store.libraryHandle && store.folderName) {
-            saveTempBackup(store.libraryHandle, store.folderName, {
-                players: store.players,
-                matchHistory: store.matchHistory,
-                kFactor: store.kFactor
-            });
+            if (backupDebounceTimer) clearTimeout(backupDebounceTimer);
+            const libraryHandle = store.libraryHandle;
+            const folderName = store.folderName;
+            backupDebounceTimer = window.setTimeout(() => {
+                saveTempBackup(libraryHandle, folderName, {
+                    players: store.players,
+                    matchHistory: store.matchHistory,
+                    kFactor: store.kFactor
+                });
+            }, 1000);
         }
 
     } else if (store.currentSessionId) {

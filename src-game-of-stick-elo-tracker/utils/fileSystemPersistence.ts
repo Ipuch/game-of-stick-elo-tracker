@@ -163,11 +163,8 @@ export async function loadGameFromSession(dirHandle: FileSystemDirectoryHandle):
 // 5. SAVE GAME (To Subfolder, CSV based)
 export async function saveGameToSession(dirHandle: FileSystemDirectoryHandle, state: AppState): Promise<void> {
     try {
-        console.log('Starting saveGameToSession...');
-
         // Helper to write file
         const writeFile = async (filename: string, content: string) => {
-            console.log(`Writing ${filename} (${content.length} chars)...`);
             const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(content);
@@ -176,12 +173,10 @@ export async function saveGameToSession(dirHandle: FileSystemDirectoryHandle, st
 
         // Write Players
         const playersCSV = playersToCSV(state.players);
-        console.log(`Players CSV preview: ${playersCSV.slice(0, 100)}...`);
         await writeFile(PLAYERS_FILE_CSV, playersCSV);
 
         // Write Matches
         const matchesCSV = matchesToCSV(state.matchHistory);
-        console.log(`Matches CSV preview: ${matchesCSV.slice(0, 100)}...`);
         await writeFile(MATCHES_FILE_CSV, matchesCSV);
 
         // Write Metadata
@@ -191,8 +186,6 @@ export async function saveGameToSession(dirHandle: FileSystemDirectoryHandle, st
             version: '2.0' // Bumped version for CSV support
         };
         await writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2));
-
-        console.log('saveGameToSession complete.');
 
     } catch (error) {
         console.error('Error saving game to folder:', error);
@@ -238,7 +231,6 @@ export async function saveTempBackup(libraryHandle: FileSystemDirectoryHandle, g
         const writable = await fileHandle.createWritable();
         await writable.write(JSON.stringify(backupData));
         await writable.close();
-        console.log(`Backup saved to .temp/${backupFilename}`);
 
     } catch (e) {
         // Silently fail or log warning - backup failure shouldn't crash the game
@@ -280,7 +272,6 @@ export async function deleteTempBackup(libraryHandle: FileSystemDirectoryHandle,
         const tempDir = await libraryHandle.getDirectoryHandle(TEMP_FOLDER_NAME, { create: false });
         const backupFilename = `backup_${gameName}.json`;
         await tempDir.removeEntry(backupFilename);
-        console.log(`Backup deleted: .temp/${backupFilename}`);
     } catch (e) {
         // Ignore if file doesn't exist
     }
