@@ -7,6 +7,7 @@
 
 import { Match } from '../types/appTypes';
 import { AggregatedStats, AggregatedPlayer, TimeSegment, generateTimeSegments, aggregatePlayerStats, loadAllMatchesFromLibrary } from '../utils/aggregationUtils';
+import { generateAggregatedPDF } from '../utils/pdfExport';
 import { showNotification } from '../ui/notificationSystem';
 import { ChartData, buildChartData, getPlayerColor } from '../utils/chartUtils';
 import { showFullscreenChart, hideFullscreenChart } from './eloEvolutionChartEcharts';
@@ -605,96 +606,6 @@ function renderMatchHistory(matches: Match[]): string {
     }).join('')}
         </div>
     `;
-}
-
-function generateAggregatedPDF(stats: AggregatedStats, segmentLabel: string) {
-    const { players, matches, totalMatches, totalGames, dateRange } = stats;
-    const filterLabel = segmentLabel;
-    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    const rangeStr = totalMatches > 0 ? `${dateRange.start.toLocaleDateString('en-GB')} — ${dateRange.end.toLocaleDateString('en-GB')}` : '';
-
-    let html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Aggregated Stats - ${filterLabel}</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; }
-        .header { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #00f3ff; }
-        .header h1 { font-size: 28px; margin-bottom: 5px; }
-        .header .subtitle { color: #666; font-size: 14px; }
-        .header .date-range { color: #999; font-size: 12px; margin-top: 5px; }
-        .stats-row { display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
-        .stat-box { text-align: center; padding: 10px 20px; background: #f5f5f5; border-radius: 8px; }
-        .stat-value { font-size: 24px; font-weight: bold; color: #00f3ff; }
-        .stat-label { font-size: 12px; color: #666; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f5f5f5; font-weight: 600; }
-        .section { margin-bottom: 25px; }
-        .section h2 { font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; }
-        @media print { body { padding: 10px; } }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>📊 AGGREGATED STATS</h1>
-        <div class="subtitle">${filterLabel} — ${dateStr}</div>
-        ${rangeStr ? `<div class="date-range">📅 Data range: ${rangeStr}</div>` : ''}
-    </div>
-    
-    <div class="stats-row">
-        <div class="stat-box">
-            <div class="stat-value">${totalGames}</div>
-            <div class="stat-label">Games</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-value">${totalMatches}</div>
-            <div class="stat-label">Matches</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-value">${players.length}</div>
-            <div class="stat-label">Players</div>
-        </div>
-    </div>
-    
-    <div class="section">
-        <h2>🏆 LEADERBOARD</h2>
-        <table>
-            <tr><th>#</th><th>Player</th><th>ELO</th><th>W</th><th>L</th><th>D</th><th>Matches</th><th>Win%</th></tr>
-            ${players.map((p, i) => {
-        const winRate = p.wins + p.losses > 0 ? Math.round((p.wins / (p.wins + p.losses)) * 100) : 0;
-        return `<tr><td>${i + 1}</td><td>${p.name}</td><td>${p.elo}</td><td>${p.wins}</td><td>${p.losses}</td><td>${p.draws}</td><td>${p.matchCount}</td><td>${winRate}%</td></tr>`;
-    }).join('')}
-        </table>
-    </div>
-    
-    <div class="section">
-        <h2>📅 Match History (Last 20)</h2>
-        <table>
-            <tr><th>Date</th><th>Game</th><th>Player 1</th><th>Player 2</th><th>Result</th></tr>
-            ${[...matches].reverse().slice(0, 20).map(m => {
-        const date = new Date(m.timestamp);
-        const dateStr = `${date.getDate()}/${date.getMonth() + 1}`;
-        const gameName = (m as any).gameName || 'Unknown';
-        const result = m.outcome === 'draw' ? 'Draw' : m.outcome === 'p1' ? 'P1 Win' : 'P2 Win';
-        return `<tr><td>${dateStr}</td><td>${gameName}</td><td>${m.player1Name}</td><td>${m.player2Name}</td><td>${result}</td></tr>`;
-    }).join('')}
-        </table>
-    </div>
-</body>
-</html>
-    `;
-
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => printWindow.print(), 250);
-    }
 }
 
 function getRankBadge(rank: number): string {

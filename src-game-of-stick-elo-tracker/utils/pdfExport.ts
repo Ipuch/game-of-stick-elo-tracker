@@ -7,6 +7,30 @@
 
 import { Player, Match } from '../types/appTypes';
 import { eloScoring } from '../scoring';
+import { AggregatedStats, AggregatedPlayer } from './aggregationUtils';
+
+// =============================================================================
+// SHARED TYPES
+// =============================================================================
+
+/**
+ * Common player data interface for PDF generation
+ * Abstracts differences between Player and AggregatedPlayer
+ */
+export interface PdfPlayerData {
+    id: string;
+    name: string;
+    elo: number;
+    wins: number;
+    losses: number;
+    draws: number;
+    matchCount: number;
+    streakHtml?: string;
+}
+
+// =============================================================================
+// COLOR PALETTE
+// =============================================================================
 
 /**
  * Beautiful color palette for player curves (distinct, vibrant colors)
@@ -25,6 +49,300 @@ const PLAYER_COLORS = [
     '#DC143C', // Crimson
     '#00CED1', // Dark Turquoise
 ];
+
+// =============================================================================
+// SHARED CSS STYLES
+// =============================================================================
+
+/**
+ * Get shared CSS styles for PDF export
+ */
+function getPdfStyles(): string {
+    return `
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            padding: 20px;
+            color: #333;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #00f3ff;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 5px; }
+        .header .subtitle { color: #666; font-size: 14px; }
+        .header .date-range { color: #999; font-size: 12px; margin-top: 5px; }
+        
+        .stats-row { display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
+        .stat-box { text-align: center; padding: 10px 20px; background: #f5f5f5; border-radius: 8px; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #00f3ff; }
+        .stat-label { font-size: 12px; color: #666; }
+        
+        .section { margin-bottom: 25px; }
+        .section h2 { 
+            font-size: 16px; 
+            border-bottom: 1px solid #ddd; 
+            padding-bottom: 5px; 
+            margin-bottom: 10px;
+        }
+        
+        .podium { display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
+        .podium-item { text-align: center; }
+        .podium-medal { font-size: 32px; }
+        .podium-name { font-weight: bold; font-size: 14px; }
+        .podium-elo { color: #666; font-size: 12px; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f5f5f5; font-weight: 600; }
+        
+        .player-card { 
+            page-break-inside: avoid;
+            page-break-before: always;
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin-bottom: 15px;
+        }
+        .player-card:first-of-type {
+            page-break-before: auto;
+        }
+        .player-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .player-name { font-size: 18px; font-weight: bold; }
+        .player-rank { color: #00f3ff; font-weight: bold; }
+        .player-stats { color: #666; font-size: 12px; margin-bottom: 10px; }
+        .player-streak { color: #ff6b35; }
+        
+        .battles { font-size: 11px; }
+        .battles h4 { margin-bottom: 5px; color: #333; }
+        .battle-row { 
+            padding: 3px 0; 
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            gap: 10px;
+        }
+        .battle-opponent { width: 100px; }
+        .battle-result { width: 50px; font-weight: bold; }
+        .battle-result.win { color: #4caf50; }
+        .battle-result.loss { color: #f44336; }
+        .battle-result.draw { color: #ff9800; }
+        .battle-elo { width: 50px; }
+        .battle-date { width: 80px; color: #999; }
+        .battle-odds { color: #888; }
+        .beat-odds { color: #ff6b35; font-weight: bold; }
+        
+        @media print {
+            body { padding: 10px; }
+            .player-card { page-break-inside: avoid; }
+        }
+    `;
+}
+
+// =============================================================================
+// DATA ADAPTERS
+// =============================================================================
+
+/**
+ * Convert Player to PdfPlayerData
+ */
+function playerToPdfData(player: Player): PdfPlayerData {
+    return {
+        id: player.id,
+        name: player.name,
+        elo: player.elo,
+        wins: player.wins,
+        losses: player.losses,
+        draws: player.draws,
+        matchCount: player.wins + player.losses + player.draws,
+        streakHtml: getStreakHtml(player),
+    };
+}
+
+/**
+ * Convert AggregatedPlayer to PdfPlayerData
+ */
+function aggregatedPlayerToPdfData(player: AggregatedPlayer): PdfPlayerData {
+    return {
+        id: player.normalizedName,  // Use normalized name as ID
+        name: player.name,
+        elo: player.elo,
+        wins: player.wins,
+        losses: player.losses,
+        draws: player.draws,
+        matchCount: player.matchCount,
+    };
+}
+
+/**
+ * Get streak HTML for a player
+ */
+function getStreakHtml(player: Player): string {
+    if (player.currentStreakType === 'W' && player.currentStreakLength >= 3) {
+        return `<span class="player-streak">🔥 W${player.currentStreakLength}</span>`;
+    }
+    if (player.currentStreakType === 'L' && player.currentStreakLength >= 3) {
+        return `<span class="player-streak">🧊 L${player.currentStreakLength}</span>`;
+    }
+    return '';
+}
+
+// =============================================================================
+// SHARED HTML COMPONENTS
+// =============================================================================
+
+/**
+ * Render PDF header with title, subtitle and optional date range
+ */
+function renderPdfHeader(title: string, subtitle: string, dateRange?: string): string {
+    return `
+    <div class="header">
+        <h1>${title}</h1>
+        <div class="subtitle">${subtitle}</div>
+        ${dateRange ? `<div class="date-range">📅 Data range: ${dateRange}</div>` : ''}
+    </div>
+    `;
+}
+
+/**
+ * Render stats row (games, matches, players counts)
+ */
+function renderStatsRow(games: number, matches: number, players: number): string {
+    return `
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="stat-value">${games}</div>
+            <div class="stat-label">Games</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">${matches}</div>
+            <div class="stat-label">Matches</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">${players}</div>
+            <div class="stat-label">Players</div>
+        </div>
+    </div>
+    `;
+}
+
+/**
+ * Render podium (top 3 players)
+ */
+function renderPodium(players: PdfPlayerData[]): string {
+    if (players.length === 0) return '';
+
+    const medals = ['🥇', '🥈', '🥉'];
+    let html = '<div class="podium">';
+
+    for (let i = 0; i < Math.min(3, players.length); i++) {
+        const p = players[i];
+        html += `
+            <div class="podium-item">
+                <div class="podium-medal">${medals[i]}</div>
+                <div class="podium-name">${p.name}</div>
+                <div class="podium-elo">${p.elo} ELO</div>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    return html;
+}
+
+/**
+ * Render leaderboard table
+ */
+function renderLeaderboard(players: PdfPlayerData[]): string {
+    let html = `
+    <div class="section">
+        <h2>📊 LEADERBOARD</h2>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Player</th>
+                <th>ELO</th>
+                <th>W</th>
+                <th>L</th>
+                <th>D</th>
+                <th>Total</th>
+                <th>Win%</th>
+            </tr>
+    `;
+
+    players.forEach((p, i) => {
+        const winRate = p.wins + p.losses > 0 ? Math.round((p.wins / (p.wins + p.losses)) * 100) : 0;
+        html += `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${p.name}</td>
+                <td>${p.elo}</td>
+                <td>${p.wins}</td>
+                <td>${p.losses}</td>
+                <td>${p.draws}</td>
+                <td>${p.matchCount}</td>
+                <td>${winRate}%</td>
+            </tr>
+        `;
+    });
+
+    html += '</table></div>';
+    return html;
+}
+
+/**
+ * Render match history table
+ */
+function renderMatchHistory(matches: Match[], limit: number = 20): string {
+    const recentMatches = [...matches].reverse().slice(0, limit);
+
+    let html = `
+    <div class="section">
+        <h2>📅 Match History (Last ${limit})</h2>
+        <table>
+            <tr><th>Date</th><th>Game</th><th>Player 1</th><th>Player 2</th><th>Result</th></tr>
+    `;
+
+    recentMatches.forEach(m => {
+        const date = new Date(m.timestamp);
+        const dateStr = `${date.getDate()}/${date.getMonth() + 1}`;
+        const gameName = (m as any).gameName || 'Unknown';
+        const result = m.outcome === 'draw' ? 'Draw' : m.outcome === 'p1' ? 'P1 Win' : 'P2 Win';
+        html += `<tr><td>${dateStr}</td><td>${gameName}</td><td>${m.player1Name}</td><td>${m.player2Name}</td><td>${result}</td></tr>`;
+    });
+
+    html += '</table></div>';
+    return html;
+}
+
+// =============================================================================
+// PRINT WINDOW UTILITY
+// =============================================================================
+
+/**
+ * Open print window with generated HTML content
+ */
+function openPrintWindow(html: string): void {
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+        }, 250);
+    }
+}
+
+// =============================================================================
+// SVG CHART GENERATION
+// =============================================================================
 
 /**
  * Generate beautiful multi-player ELO evolution chart
@@ -72,6 +390,68 @@ function generateAllPlayersEloChart(players: Player[], matchHistory: Match[]): s
         });
     });
 
+    return renderEloEvolutionSvg(playerHistories, sortedMatches.length);
+}
+
+/**
+ * Generate ELO evolution chart from aggregated player data
+ */
+function generateAggregatedEloChart(players: AggregatedPlayer[], matches: Match[]): string {
+    if (matches.length === 0 || players.length === 0) {
+        return '';
+    }
+
+    // Sort matches by timestamp
+    const sortedMatches = [...matches].sort((a, b) => a.timestamp - b.timestamp);
+
+    // Build ELO history for each player
+    const initialElo = eloScoring.getInitialRating();
+    const playerHistories: Map<string, { name: string; color: string; eloPoints: number[] }> = new Map();
+
+    // Initialize with normalized names
+    const playerElos: Map<string, number> = new Map();
+    players.forEach((player, index) => {
+        playerElos.set(player.normalizedName, initialElo);
+        playerHistories.set(player.normalizedName, {
+            name: player.name,
+            color: PLAYER_COLORS[index % PLAYER_COLORS.length],
+            eloPoints: [initialElo]
+        });
+    });
+
+    // Process each match
+    sortedMatches.forEach(match => {
+        const p1Name = match.player1Name.toLowerCase();
+        const p2Name = match.player2Name.toLowerCase();
+
+        if (playerElos.has(p1Name)) {
+            playerElos.set(p1Name, match.player1EloAfter);
+        }
+        if (playerElos.has(p2Name)) {
+            playerElos.set(p2Name, match.player2EloAfter);
+        }
+
+        // Record current state for all players
+        players.forEach(player => {
+            const history = playerHistories.get(player.normalizedName);
+            if (history) {
+                history.eloPoints.push(playerElos.get(player.normalizedName) || initialElo);
+            }
+        });
+    });
+
+    return renderEloEvolutionSvg(playerHistories, sortedMatches.length);
+}
+
+/**
+ * Render the ELO evolution SVG chart from player histories
+ */
+function renderEloEvolutionSvg(
+    playerHistories: Map<string, { name: string; color: string; eloPoints: number[] }>,
+    matchCount: number
+): string {
+    const initialElo = eloScoring.getInitialRating();
+
     // SVG dimensions
     const svgWidth = 700;
     const svgHeight = 400;
@@ -91,7 +471,7 @@ function generateAllPlayersEloChart(players: Player[], matchHistory: Match[]): s
     maxElo = Math.ceil((maxElo + eloMargin) / 50) * 50;
     const eloRange = maxElo - minElo || 100;
 
-    const numPoints = sortedMatches.length + 1;
+    const numPoints = matchCount + 1;
 
     // Helper functions
     const xScale = (index: number) => padding.left + (index / (numPoints - 1)) * graphWidth;
@@ -145,7 +525,7 @@ function generateAllPlayersEloChart(players: Player[], matchHistory: Match[]): s
     }
 
     // X-axis label
-    svg += `        <text x="${padding.left + graphWidth / 2}" y="${svgHeight - 15}" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.6)">Matches (${sortedMatches.length} total)</text>
+    svg += `        <text x="${padding.left + graphWidth / 2}" y="${svgHeight - 15}" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.6)">Matches (${matchCount} total)</text>
 `;
 
     // Y-axis label
@@ -247,184 +627,16 @@ function generateEloGraph(player: Player, matchHistory: Match[]): string {
     </svg>`;
 }
 
+// =============================================================================
+// PLAYER SCORECARD GENERATION
+// =============================================================================
+
 /**
- * Generate and trigger print dialog for game stats
+ * Render player scorecards with all battles
  */
-export function generateGamePDF(
-    players: Player[],
-    matchHistory: Match[],
-    gameName: string
-): void {
-    // Sort players by ELO
+function renderPlayerScorecards(players: Player[], matchHistory: Match[]): string {
     const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
-
-    // Use date of last match instead of current date
-    const lastMatchTimestamp = matchHistory.length > 0
-        ? Math.max(...matchHistory.map(m => m.timestamp))
-        : Date.now();
-    const dateStr = new Date(lastMatchTimestamp).toLocaleDateString('en-GB', {
-        day: 'numeric', month: 'long', year: 'numeric'
-    });
-
-    // Build HTML content
-    let html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>${gameName} - Stats</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            padding: 20px;
-            color: #333;
-        }
-        .header { 
-            text-align: center; 
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #00f3ff;
-        }
-        .header h1 { font-size: 28px; margin-bottom: 5px; }
-        .header .subtitle { color: #666; font-size: 14px; }
-        
-        .section { margin-bottom: 25px; }
-        .section h2 { 
-            font-size: 16px; 
-            border-bottom: 1px solid #ddd; 
-            padding-bottom: 5px; 
-            margin-bottom: 10px;
-        }
-        
-        .podium { display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
-        .podium-item { text-align: center; }
-        .podium-medal { font-size: 32px; }
-        .podium-name { font-weight: bold; font-size: 14px; }
-        .podium-elo { color: #666; font-size: 12px; }
-        
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f5f5f5; font-weight: 600; }
-        
-        .player-card { 
-            page-break-inside: avoid;
-            page-break-before: always;
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            padding: 15px; 
-            margin-bottom: 15px;
-        }
-        .player-card:first-of-type {
-            page-break-before: auto;
-        }
-        .player-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .player-name { font-size: 18px; font-weight: bold; }
-        .player-rank { color: #00f3ff; font-weight: bold; }
-        .player-stats { color: #666; font-size: 12px; margin-bottom: 10px; }
-        .player-streak { color: #ff6b35; }
-        
-        .battles { font-size: 11px; }
-        .battles h4 { margin-bottom: 5px; color: #333; }
-        .battle-row { 
-            padding: 3px 0; 
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            gap: 10px;
-        }
-        .battle-opponent { width: 100px; }
-        .battle-result { width: 50px; font-weight: bold; }
-        .battle-result.win { color: #4caf50; }
-        .battle-result.loss { color: #f44336; }
-        .battle-result.draw { color: #ff9800; }
-        .battle-elo { width: 50px; }
-        .battle-date { width: 80px; color: #999; }
-        .battle-odds { color: #888; }
-        .beat-odds { color: #ff6b35; font-weight: bold; }
-        
-        @media print {
-            body { padding: 10px; }
-            .player-card { page-break-inside: avoid; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>🏆 GAME OF S.T.I.C.K.</h1>
-        <div class="subtitle">${gameName} — ${dateStr}</div>
-    </div>
-`;
-
-    // Podium
-    if (sortedPlayers.length >= 1) {
-        const medals = ['🥇', '🥈', '🥉'];
-        html += '<div class="podium">';
-        for (let i = 0; i < Math.min(3, sortedPlayers.length); i++) {
-            const p = sortedPlayers[i];
-            html += `
-                <div class="podium-item">
-                    <div class="podium-medal">${medals[i]}</div>
-                    <div class="podium-name">${p.name}</div>
-                    <div class="podium-elo">${p.elo} ELO</div>
-                </div>
-            `;
-        }
-        html += '</div>';
-    }
-
-    // Leaderboard
-    html += `
-        <div class="section">
-            <h2>📊 LEADERBOARD</h2>
-            <table>
-                <tr>
-                    <th>#</th>
-                    <th>Player</th>
-                    <th>ELO</th>
-                    <th>W</th>
-                    <th>L</th>
-                    <th>D</th>
-                    <th>Total</th>
-                    <th>Win%</th>
-                </tr>
-    `;
-    sortedPlayers.forEach((p, i) => {
-        const total = p.wins + p.losses + p.draws;
-        const winRate = p.wins + p.losses > 0 ? Math.round((p.wins / (p.wins + p.losses)) * 100) : 0;
-        html += `
-            <tr>
-                <td>${i + 1}</td>
-                <td>${p.name}</td>
-                <td>${p.elo}</td>
-                <td>${p.wins}</td>
-                <td>${p.losses}</td>
-                <td>${p.draws}</td>
-                <td>${total}</td>
-                <td>${winRate}%</td>
-            </tr>
-        `;
-    });
-    html += '</table></div>';
-
-    // ELO Evolution Chart - Full page visualization
-    const evolutionChart = generateAllPlayersEloChart(sortedPlayers, matchHistory);
-    if (evolutionChart) {
-        html += `
-        <div class="section" style="page-break-before: always; text-align: center;">
-            <h2>📈 ELO EVOLUTION OVER TIME</h2>
-            <p style="color: #666; margin-bottom: 20px;">Track how each player's rating changed throughout the tournament</p>
-            ${evolutionChart}
-        </div>
-        `;
-    }
-
-    // Player Scorecards
-    html += '<div class="section"><h2>📋 PLAYER SCORECARDS</h2>';
+    let html = '<div class="section"><h2>📋 PLAYER SCORECARDS</h2>';
 
     sortedPlayers.forEach((player, playerIndex) => {
         const rank = playerIndex + 1;
@@ -495,26 +707,122 @@ export function generateGamePDF(
         html += '</div>';
     });
 
-    html += '</div></body></html>';
-
-    // Open print window
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-            printWindow.print();
-        }, 250);
-    }
+    html += '</div>';
+    return html;
 }
 
-function getStreakHtml(player: Player): string {
-    if (player.currentStreakType === 'W' && player.currentStreakLength >= 3) {
-        return `<span class="player-streak">🔥 W${player.currentStreakLength}</span>`;
+// =============================================================================
+// PUBLIC API: GAME PDF EXPORT
+// =============================================================================
+
+/**
+ * Generate and trigger print dialog for single game stats
+ */
+export function generateGamePDF(
+    players: Player[],
+    matchHistory: Match[],
+    gameName: string
+): void {
+    // Sort players by ELO
+    const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
+    const pdfPlayers = sortedPlayers.map(playerToPdfData);
+
+    // Use date of last match instead of current date
+    const lastMatchTimestamp = matchHistory.length > 0
+        ? Math.max(...matchHistory.map(m => m.timestamp))
+        : Date.now();
+    const dateStr = new Date(lastMatchTimestamp).toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
+
+    // Build HTML content
+    let html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${gameName} - Stats</title>
+    <style>${getPdfStyles()}</style>
+</head>
+<body>
+    ${renderPdfHeader('🏆 GAME OF S.T.I.C.K.', `${gameName} — ${dateStr}`)}
+    ${renderPodium(pdfPlayers)}
+    ${renderLeaderboard(pdfPlayers)}
+`;
+
+    // ELO Evolution Chart - Full page visualization
+    const evolutionChart = generateAllPlayersEloChart(sortedPlayers, matchHistory);
+    if (evolutionChart) {
+        html += `
+        <div class="section" style="page-break-before: always; text-align: center;">
+            <h2>📈 ELO EVOLUTION OVER TIME</h2>
+            <p style="color: #666; margin-bottom: 20px;">Track how each player's rating changed throughout the tournament</p>
+            ${evolutionChart}
+        </div>
+        `;
     }
-    if (player.currentStreakType === 'L' && player.currentStreakLength >= 3) {
-        return `<span class="player-streak">🧊 L${player.currentStreakLength}</span>`;
+
+    // Player Scorecards
+    html += renderPlayerScorecards(sortedPlayers, matchHistory);
+
+    html += '</body></html>';
+
+    openPrintWindow(html);
+}
+
+// =============================================================================
+// PUBLIC API: AGGREGATED STATS PDF EXPORT
+// =============================================================================
+
+/**
+ * Generate and trigger print dialog for aggregated stats
+ */
+export function generateAggregatedPDF(stats: AggregatedStats, segmentLabel: string): void {
+    const { players, matches, totalMatches, totalGames, dateRange } = stats;
+
+    const dateStr = new Date().toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
+
+    const rangeStr = totalMatches > 0
+        ? `${dateRange.start.toLocaleDateString('en-GB')} — ${dateRange.end.toLocaleDateString('en-GB')}`
+        : '';
+
+    // Convert to PdfPlayerData
+    const pdfPlayers = players.map(aggregatedPlayerToPdfData);
+
+    // Build HTML content
+    let html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Aggregated Stats - ${segmentLabel}</title>
+    <style>${getPdfStyles()}</style>
+</head>
+<body>
+    ${renderPdfHeader('📊 AGGREGATED STATS', `${segmentLabel} — ${dateStr}`, rangeStr)}
+    ${renderStatsRow(totalGames, totalMatches, players.length)}
+    ${renderPodium(pdfPlayers)}
+    ${renderLeaderboard(pdfPlayers)}
+`;
+
+    // ELO Evolution Chart
+    const evolutionChart = generateAggregatedEloChart(players, matches);
+    if (evolutionChart) {
+        html += `
+        <div class="section" style="page-break-before: always; text-align: center;">
+            <h2>📈 ELO EVOLUTION OVER TIME</h2>
+            <p style="color: #666; margin-bottom: 20px;">Track how each player's rating changed across all games</p>
+            ${evolutionChart}
+        </div>
+        `;
     }
-    return '';
+
+    // Match History
+    html += renderMatchHistory(matches, 20);
+
+    html += '</body></html>';
+
+    openPrintWindow(html);
 }
