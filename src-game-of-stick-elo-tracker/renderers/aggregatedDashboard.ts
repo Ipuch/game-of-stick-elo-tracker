@@ -6,7 +6,7 @@
  */
 
 import { Match } from '../types/appTypes';
-import { AggregatedStats, AggregatedPlayer, TimeFilter, getAggregatedStats } from '../utils/aggregationUtils';
+import { AggregatedStats, AggregatedPlayer, TimeSegment, generateTimeSegments, aggregatePlayerStats, loadAllMatchesFromLibrary } from '../utils/aggregationUtils';
 import { showNotification } from '../ui/notificationSystem';
 import { ChartData, buildChartData, getPlayerColor } from '../utils/chartUtils';
 import { showFullscreenEloChart, hideFullscreenEloChart } from './fullscreenChartModal';
@@ -15,7 +15,9 @@ export type AggregatedDashboardCallbacks = {
     onBack: () => void;
 };
 
-let currentFilter: TimeFilter = 'month';
+let allMatches: Match[] = [];
+let availableSegments: TimeSegment[] = [];
+let currentSegment: TimeSegment | null = null;
 let currentStats: AggregatedStats | null = null;
 let expandedSections: Set<string> = new Set(['leaderboard']); // Start with leaderboard expanded
 
@@ -49,8 +51,21 @@ export async function renderAggregatedDashboard(
     document.getElementById('app-main')!.style.display = 'none';
 
     try {
-        currentStats = await getAggregatedStats(libraryHandle, currentFilter);
-        renderDashboardContent(container, libraryHandle, callbacks);
+        // Load all matches and generate segments if needed
+        if (allMatches.length === 0) {
+            const result = await loadAllMatchesFromLibrary(libraryHandle);
+            allMatches = result.matches;
+            availableSegments = generateTimeSegments(allMatches);
+
+            // Default to most recent month if available, otherwise first segment (All Time)
+            const recentMonth = availableSegments.find(s => s.type === 'month');
+            currentSegment = recentMonth || availableSegments[0];
+        }
+
+        if (currentSegment) {
+            currentStats = aggregatePlayerStats(allMatches, currentSegment);
+            renderDashboardContent(container, libraryHandle, callbacks);
+        }
     } catch (e) {
         console.error('Failed to load aggregated stats:', e);
         showNotification('Failed to load aggregated stats', 'error');
@@ -90,10 +105,23 @@ function renderDashboardContent(
         </div>
 
         <div class="agg-filters">
-            <button class="filter-btn ${currentFilter === 'month' ? 'active' : ''}" data-filter="month">Last Month</button>
-            <button class="filter-btn ${currentFilter === '3months' ? 'active' : ''}" data-filter="3months">Last 3 Months</button>
-            <button class="filter-btn ${currentFilter === 'year' ? 'active' : ''}" data-filter="year">Last Year</button>
-            <button class="filter-btn ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">All Time</button>
+            <div class="filter-group" style="display: flex; align-items: center; gap: 1rem;">
+                <label style="color: var(--text-muted); font-family: 'Orbitron', sans-serif; font-size: 0.85rem; letter-spacing: 1px;" class="filter-label">⏱️ TIME PERIOD</label>
+                <div class="period-selector-container" id="period-selector-container">
+                    <div class="period-select-trigger" id="period-select-trigger">
+                        <span>${currentSegment?.label || 'Select Period'}</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="period-options-list" id="period-options-list">
+                        ${availableSegments.map(s => `
+                            <div class="period-option ${currentSegment?.id === s.id ? 'selected' : ''}" data-value="${s.id}">
+                                <span>${s.label}</span>
+                                <span class="period-option-type">${s.type === 'all' ? '∞' : s.type === 'year' ? '📅' : '🗓️'}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
         </div>
 
         ${totalMatches > 0 ? `
@@ -109,7 +137,7 @@ function renderDashboardContent(
         ${players.length === 0 ? `
             <div class="agg-empty">
                 <p>No matches found in this time range.</p>
-                <p class="text-muted">Try selecting a longer time period.</p>
+                <p class="text-muted">Try selecting a different period.</p>
             </div>
         ` : `
             <!-- Collapsible Sections -->
@@ -149,7 +177,7 @@ function renderDashboardContent(
                 <!-- Player Profiles Section -->
                 <div class="agg-section ${expandedSections.has('profiles') ? 'expanded' : ''}" data-section="profiles">
                     <div class="agg-section-header">
-                        <h2>👤 Player Profiles</h2>
+                        <h2>👥 Player Profiles</h2>
                         <span class="toggle-icon">${expandedSections.has('profiles') ? '▼' : '▶'}</span>
                     </div>
                     <div class="agg-section-content">
@@ -183,23 +211,44 @@ function renderDashboardContent(
     // Bind event listeners
     document.getElementById('agg-back-btn')?.addEventListener('click', callbacks.onBack);
 
-    // Filter buttons
-    container.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const filter = btn.getAttribute('data-filter') as TimeFilter;
-            if (filter && filter !== currentFilter) {
-                currentFilter = filter;
-                await renderAggregatedDashboard(libraryHandle, callbacks);
+    // Custom Period Selector
+    const selectorContainer = document.getElementById('period-selector-container');
+    const trigger = document.getElementById('period-select-trigger');
+    const optionsList = document.getElementById('period-options-list');
+
+    // Toggle dropdown open/close
+    trigger?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectorContainer?.classList.toggle('open');
+    });
+
+    // Option selection
+    optionsList?.querySelectorAll('.period-option').forEach(opt => {
+        opt.addEventListener('click', async () => {
+            const val = opt.getAttribute('data-value');
+            if (val && val !== currentSegment?.id) {
+                const segment = availableSegments.find(s => s.id === val);
+                if (segment) {
+                    currentSegment = segment;
+                    await renderAggregatedDashboard(libraryHandle, callbacks);
+                }
             }
         });
     });
+
+    // Close dropdown when clicking outside
+    container.onclick = (e) => {
+        if (selectorContainer && !selectorContainer.contains(e.target as Node)) {
+            selectorContainer.classList.remove('open');
+        }
+    };
 
     // Fullscreen chart button
     cachedChartData = buildChartDataFromAggregated(players, matches);
     document.getElementById('agg-fullscreen-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (cachedChartData) {
-            showFullscreenEloChart(cachedChartData, 'Aggregated ELO Evolution');
+            showFullscreenEloChart(cachedChartData, `ELO Evolution - ${currentSegment?.label}`);
         }
     });
 
@@ -227,8 +276,10 @@ function renderDashboardContent(
 
     // PDF Export
     document.getElementById('agg-export-pdf')?.addEventListener('click', () => {
-        if (currentStats) {
-            generateAggregatedPDF(currentStats, currentFilter);
+        if (currentStats && currentSegment) {
+            // Check if generateAggregatedPDF accepts string or segment
+            // Assuming it needs update, but for now passing label as string might work if it was taking a string
+            generateAggregatedPDF(currentStats, currentSegment.label);
         }
     });
 }
@@ -502,9 +553,9 @@ function renderMatchHistory(matches: Match[]): string {
     `;
 }
 
-function generateAggregatedPDF(stats: AggregatedStats, filter: TimeFilter) {
+function generateAggregatedPDF(stats: AggregatedStats, segmentLabel: string) {
     const { players, matches, totalMatches, totalGames, dateRange } = stats;
-    const filterLabel = filter === 'month' ? 'Last Month' : filter === '3months' ? 'Last 3 Months' : filter === 'year' ? 'Last Year' : 'All Time';
+    const filterLabel = segmentLabel;
     const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     const rangeStr = totalMatches > 0 ? `${dateRange.start.toLocaleDateString('en-GB')} — ${dateRange.end.toLocaleDateString('en-GB')}` : '';
 

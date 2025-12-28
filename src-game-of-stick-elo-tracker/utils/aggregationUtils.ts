@@ -30,24 +30,87 @@ export interface AggregatedStats {
     dateRange: { start: Date; end: Date };
 }
 
-export type TimeFilter = 'month' | '3months' | 'year' | 'all';
+export interface TimeSegment {
+    id: string;
+    label: string;
+    start: Date;
+    end: Date;
+    type: 'month' | 'year' | 'all';
+}
 
 /**
- * Get the start date for a given time filter
+ * Generate available time segments from matches
  */
-export function getFilterStartDate(filter: TimeFilter): Date {
-    const now = new Date();
-    switch (filter) {
-        case 'month':
-            return new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-        case '3months':
-            return new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-        case 'year':
-            return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-        case 'all':
-        default:
-            return new Date(0); // Beginning of time
+export function generateTimeSegments(matches: Match[]): TimeSegment[] {
+    if (matches.length === 0) {
+        return [{
+            id: 'all',
+            label: 'All Time',
+            start: new Date(0),
+            end: new Date(8640000000000000), // Max date
+            type: 'all'
+        }];
     }
+
+    const segments: TimeSegment[] = [];
+    const timestamps = matches.map(m => m.timestamp);
+    const minDate = new Date(Math.min(...timestamps));
+    const maxDate = new Date(Math.max(...timestamps));
+
+    // 1. All Time
+    segments.push({
+        id: 'all',
+        label: 'All Time',
+        start: new Date(0),
+        end: new Date(8640000000000000),
+        type: 'all'
+    });
+
+    // 2. Years
+    const startYear = minDate.getFullYear();
+    const endYear = maxDate.getFullYear();
+    for (let year = endYear; year >= startYear; year--) {
+        segments.push({
+            id: `year-${year}`,
+            label: `${year}`, // "2025"
+            start: new Date(year, 0, 1),
+            end: new Date(year, 11, 31, 23, 59, 59, 999),
+            type: 'year'
+        });
+    }
+
+    // 3. Months
+    // Iterate month by month backwards from maxDate to minDate
+    let current = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+    const stop = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+
+    while (current >= stop) {
+        const year = current.getFullYear();
+        const month = current.getMonth();
+        const monthName = current.toLocaleString('default', { month: 'long' });
+
+        // Check if there are matches in this month
+        const nextMonth = new Date(year, month + 1, 1);
+        const hasMatches = matches.some(m => {
+            const d = new Date(m.timestamp);
+            return d >= current && d < nextMonth;
+        });
+
+        if (hasMatches) {
+            segments.push({
+                id: `month-${year}-${month}`,
+                label: `${monthName} ${year}`, // "December 2025"
+                start: new Date(current),
+                end: new Date(year, month + 1, 0, 23, 59, 59, 999), // End of month
+                type: 'month'
+            });
+        }
+
+        // Previous month
+        current = new Date(year, month - 1, 1);
+    }
+
+    return segments;
 }
 
 /**
@@ -91,16 +154,20 @@ export async function loadAllMatchesFromLibrary(
  */
 export function aggregatePlayerStats(
     matches: Match[],
-    since: Date
+    range: { start: Date; end: Date }
 ): AggregatedStats {
-    // Filter matches by date
-    const filteredMatches = matches.filter(m => new Date(m.timestamp) >= since);
+    // Filter matches by date range
+    const filteredMatches = matches.filter(m => {
+        const d = new Date(m.timestamp);
+        return d >= range.start && d <= range.end;
+    });
 
     // Sort by timestamp (oldest first) for correct ELO calculation
     const sortedMatches = [...filteredMatches].sort((a, b) => a.timestamp - b.timestamp);
 
     // Build player map (normalized name -> player data)
     const playerMap = new Map<string, AggregatedPlayer>();
+    const players: AggregatedPlayer[] = []; // Explicit list to maintain order if needed
 
     const eloSystem = new EloScoringSystem();
     const initialElo = DEFAULT_ELO_CONFIG.initialRating;
@@ -118,8 +185,9 @@ export function aggregatePlayerStats(
                 draws: 0,
                 elo: initialElo,
                 gamesParticipated: [],
-                eloHistory: [{ timestamp: 0, elo: initialElo }]
+                eloHistory: [{ timestamp: range.start.getTime(), elo: initialElo }]
             });
+            players.push(playerMap.get(normalized)!);
         }
         const player = playerMap.get(normalized)!;
         // Track game participation
@@ -166,16 +234,8 @@ export function aggregatePlayerStats(
         p2.eloHistory.push({ timestamp: match.timestamp, elo: p2.elo });
     }
 
-    // Convert to array and sort by ELO descending
-    const players = Array.from(playerMap.values())
-        .sort((a, b) => b.elo - a.elo);
-
-    // Determine date range
-    const timestamps = sortedMatches.map(m => m.timestamp);
-    const dateRange = {
-        start: timestamps.length > 0 ? new Date(Math.min(...timestamps)) : new Date(),
-        end: timestamps.length > 0 ? new Date(Math.max(...timestamps)) : new Date()
-    };
+    // Sort players by ELO (descending)
+    players.sort((a, b) => b.elo - a.elo);
 
     // Collect unique game names from filtered matches
     const gameNamesInRange = [...new Set(sortedMatches.map(m => (m as any).gameName || 'Unknown'))];
@@ -186,7 +246,7 @@ export function aggregatePlayerStats(
         totalMatches: sortedMatches.length,
         totalGames: gameNamesInRange.length,
         gameNames: gameNamesInRange,
-        dateRange
+        dateRange: range
     };
 }
 
@@ -195,11 +255,10 @@ export function aggregatePlayerStats(
  */
 export async function getAggregatedStats(
     libraryHandle: FileSystemDirectoryHandle,
-    filter: TimeFilter
+    range: { start: Date; end: Date }
 ): Promise<AggregatedStats> {
     const { matches, gameNames } = await loadAllMatchesFromLibrary(libraryHandle);
-    const since = getFilterStartDate(filter);
-    const stats = aggregatePlayerStats(matches, since);
+    const stats = aggregatePlayerStats(matches, range);
 
     // Include all game names that were loaded (even if no matches in range)
     if (stats.gameNames.length === 0 && gameNames.length > 0) {

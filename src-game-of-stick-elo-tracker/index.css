@@ -1745,3 +1745,106 @@ button {
     transform: scale(1.1);
     box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
 }
+/* Custom Period Selector */
+.period-selector-container {
+    position: relative;
+    min-width: 240px;
+    font-family: 'Outfit', sans-serif;
+    user-select: none;
+}
+
+.period-select-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(10, 14, 23, 0.6);
+    border: 1px solid var(--surface-border);
+    border-radius: 6px;
+    padding: 0.7rem 1rem;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.period-select-trigger:hover {
+    border-color: var(--primary-color);
+    background: rgba(10, 14, 23, 0.8);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
+}
+
+.period-select-trigger .arrow {
+    font-size: 0.7rem;
+    color: var(--primary-color);
+    transition: transform 0.3s ease;
+}
+
+.period-selector-container.open .period-select-trigger .arrow {
+    transform: rotate(180deg);
+}
+
+.period-options-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 100%;
+    background: rgba(16, 20, 30, 0.95);
+    border: 1px solid var(--surface-border);
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(-10px);
+}
+
+.period-selector-container.open .period-options-list {
+    max-height: 300px;
+    opacity: 1;
+    overflow-y: auto;
+    transform: translateY(0);
+}
+
+/* Custom scrollbar for dropdown */
+.period-options-list::-webkit-scrollbar {
+    width: 4px;
+}
+.period-options-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+.period-options-list::-webkit-scrollbar-thumb {
+    background: var(--surface-border);
+    border-radius: 2px;
+}
+
+.period-option {
+    padding: 0.7rem 1rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.period-option:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-main);
+    padding-left: 1.2rem;
+}
+
+.period-option.selected {
+    background: rgba(0, 243, 255, 0.05);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+}
+
+.period-option-type {
+    font-size: 0.7rem;
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
