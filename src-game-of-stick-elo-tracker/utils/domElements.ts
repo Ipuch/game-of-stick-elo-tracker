@@ -11,6 +11,7 @@ export interface AppDOMElements {
     updateLeaderboardBtn: HTMLButtonElement | null;
     addPlayerForm: HTMLFormElement | null;
     newPlayerNameInput: HTMLInputElement | null;
+    newPlayerBirthdateInput: HTMLInputElement | null;
     addPlayerError: HTMLParagraphElement | null;
     recordMatchForm: HTMLFormElement | null;
     player1Input: HTMLInputElement | null;
@@ -46,6 +47,7 @@ export function queryDOMElements(): AppDOMElements {
         updateLeaderboardBtn: document.getElementById('update-leaderboard-btn') as HTMLButtonElement,
         addPlayerForm: document.getElementById('add-player-form') as HTMLFormElement,
         newPlayerNameInput: document.getElementById('new-player-name') as HTMLInputElement,
+        newPlayerBirthdateInput: document.getElementById('new-player-birthdate') as HTMLInputElement,
         addPlayerError: document.getElementById('add-player-error') as HTMLParagraphElement,
         recordMatchForm: document.getElementById('record-match-form') as HTMLFormElement,
         player1Input: document.getElementById('player1-input') as HTMLInputElement,

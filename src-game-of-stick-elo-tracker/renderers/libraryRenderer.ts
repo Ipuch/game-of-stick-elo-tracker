@@ -11,6 +11,7 @@ export type LibraryCallbacks = {
     onLoadGame: (handle: FileSystemDirectoryHandle, name: string) => Promise<void>;
     onCreateGame: (name: string, kFactor: number) => Promise<void>;
     onViewAggregatedStats: () => void;
+    onViewRegistry: () => void;
 };
 
 export async function renderGameLibrary(
@@ -46,13 +47,22 @@ export async function renderGameLibrary(
         headerArea.innerHTML = `<span class="library-label">Library:</span> <span class="library-name">${libraryHandle.name}</span>`;
     }
 
-    // 2. Render Aggregated Stats Button
-    if (gameItems.length > 0 && statsArea) {
-        const aggBtn = document.createElement('button');
-        aggBtn.className = 'button-secondary agg-stats-btn width-full';
-        aggBtn.innerHTML = '📊 View Aggregated Stats';
-        aggBtn.onclick = () => callbacks.onViewAggregatedStats();
-        statsArea.appendChild(aggBtn);
+    // 2. Render Aggregated Stats Button & Registry Button
+    if (statsArea) {
+        if (gameItems.length > 0) {
+            const aggBtn = document.createElement('button');
+            aggBtn.className = 'button-secondary agg-stats-btn width-full';
+            aggBtn.innerHTML = '📊 View Aggregated Stats';
+            aggBtn.onclick = () => callbacks.onViewAggregatedStats();
+            statsArea.appendChild(aggBtn);
+        }
+
+        // Registry Manager Button
+        const regBtn = document.createElement('button');
+        regBtn.className = 'button-secondary registry-nav-btn width-full';
+        regBtn.innerHTML = '👥 Manage Player Registry';
+        regBtn.onclick = () => callbacks.onViewRegistry();
+        statsArea.appendChild(regBtn);
     }
 
     // 3. Render Game List

@@ -6,11 +6,12 @@
  */
 
 import { Player } from '../types/appTypes';
-import { generateUUID } from '../utils/uuid';
 import { eloScoring, DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 import { AppDOMElements } from '../utils/domElements';
 import { store } from '../state/store';
 import { showNotification } from '../ui/notificationSystem';
+import { findPlayerByName, createGlobalPlayer, addAliasToPlayer } from '../utils/registryUtils';
+import { saveRegistry } from '../utils/registryPersistence';
 
 export type PlayerHandlerContext = {
     render: () => void;
@@ -19,11 +20,13 @@ export type PlayerHandlerContext = {
     DOMElements: AppDOMElements;
 };
 
-export function handleAddPlayer(event: SubmitEvent, context: PlayerHandlerContext) {
+export async function handleAddPlayer(event: SubmitEvent, context: PlayerHandlerContext) {
     event.preventDefault();
     const { DOMElements } = context;
     const nameInput = DOMElements.newPlayerNameInput;
+    const birthdateInput = DOMElements.newPlayerBirthdateInput;
     const name = nameInput?.value.trim();
+    const birthDate = birthdateInput?.value || undefined; // ISO date string or undefined
 
     if (DOMElements.addPlayerError) DOMElements.addPlayerError.textContent = '';
 
@@ -32,30 +35,66 @@ export function handleAddPlayer(event: SubmitEvent, context: PlayerHandlerContex
         return;
     }
 
+    // Check if already in current session
     if (store.players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-        showNotification(`Player "${name}" already exists!`, 'error');
-    } else {
-        const newPlayer: Player = {
-            id: generateUUID(),
-            name: name,
-            elo: eloScoring.getInitialRating(),
-            wins: 0,
-            losses: 0,
-            draws: 0,
-            previousRank: 0,
-            currentStreakType: null,
-            currentStreakLength: 0,
-        };
-        store.players.push(newPlayer);
-
-        // Persist state and update UI immediately
-        context.persist();
-        context.render();
-
-        showNotification(`Player "${name}" added!`, 'success');
-
-        if (nameInput) nameInput.value = '';
+        showNotification(`Player "${name}" already exists in this session!`, 'error');
+        return;
     }
+
+    // --- Registry Integration ---
+    let globalPlayer = findPlayerByName(store.registry, name);
+    let isNewGlobalPlayer = false;
+
+    if (!globalPlayer) {
+        // Create new global player with birthdate
+        globalPlayer = createGlobalPlayer(name, birthDate);
+        store.registry.push(globalPlayer);
+        isNewGlobalPlayer = true;
+    } else {
+        // Add this spelling as alias if different
+        addAliasToPlayer(globalPlayer, name);
+        // Update birthdate if provided and player didn't have one
+        if (birthDate && !globalPlayer.birthDate) {
+            globalPlayer.birthDate = birthDate;
+        }
+    }
+
+    // Save registry if we have a library handle
+    if (store.libraryHandle && (isNewGlobalPlayer || store.registryLoaded)) {
+        try {
+            await saveRegistry(store.libraryHandle, store.registry);
+        } catch (e) {
+            console.warn('Failed to save registry:', e);
+            // Non-fatal - continue with session
+        }
+    }
+
+    // Create session player linked to global ID
+    const newPlayer: Player = {
+        id: globalPlayer.id, // Use global ID instead of random UUID
+        name: name,
+        elo: eloScoring.getInitialRating(),
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        previousRank: 0,
+        currentStreakType: null,
+        currentStreakLength: 0,
+    };
+    store.players.push(newPlayer);
+
+    // Persist state and update UI immediately
+    context.persist();
+    context.render();
+
+    const msg = isNewGlobalPlayer
+        ? `Player "${name}" added (new in registry)`
+        : `Player "${name}" added (from registry)`;
+    showNotification(msg, 'success');
+
+    // Clear form inputs
+    if (nameInput) nameInput.value = '';
+    if (birthdateInput) birthdateInput.value = '';
 }
 
 export function handleClearPlayers(context: PlayerHandlerContext) {

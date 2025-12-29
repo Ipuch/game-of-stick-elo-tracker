@@ -5,6 +5,7 @@
  */
 
 import { Player, Match } from '../types/appTypes';
+import { GlobalPlayer } from '../types/registryTypes';
 import { DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 
 export class AppStore {
@@ -18,6 +19,10 @@ export class AppStore {
     libraryHandle: FileSystemDirectoryHandle | null = null; // Add library handle
     folderName: string | null = null;
     hasUnsavedChanges: boolean = false;
+
+    // --- Player Registry ---
+    registry: GlobalPlayer[] = [];
+    registryLoaded: boolean = false;
 
     setPlayers(players: Player[]) {
         this.players = players;

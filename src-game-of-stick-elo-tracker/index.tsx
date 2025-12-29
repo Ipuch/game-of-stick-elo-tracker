@@ -13,6 +13,7 @@ import { renderPodium } from './renderers/podium';
 import { renderBattleHistory } from './renderers/battleHistory';
 import { renderCombatMatrix } from './renderers/combatMatrix';
 import { loadGameFromSession, saveGameToSession, createGameInLibrary, saveTempBackup, loadTempBackup, deleteTempBackup } from './utils/fileSystemPersistence';
+import { loadRegistry } from './utils/registryPersistence';
 
 // New Imports for Refactoring
 import { store } from './state/store';
@@ -32,6 +33,7 @@ import { renderRemainingOpponents } from './renderers/opponentsRenderer';
 import { renderGameLibrary } from './renderers/libraryRenderer';
 import { renderGameMenu } from './renderers/menuRenderer';
 import { renderAggregatedDashboard, hideAggregatedDashboard } from './renderers/aggregatedDashboard';
+import { renderRegistryManager, hideRegistryManager } from './renderers/registryManager';
 
 // Handlers
 import { handleRecordMatch, updateWinnerLabels, handleClearMatchHistory } from './handlers/matchHandlers';
@@ -184,11 +186,7 @@ const getSessionContext = () => ({
         onOpenLibrary: handleOpenLibrary,
         onLoadExample: loadExampleGame,
         onStartNewGame: startNewGame,
-        renderLibrary: () => renderGameLibrary(store.libraryHandle!, {
-            onLoadGame: loadGameFromLibrary,
-            onCreateGame: createNewGameInLibrary,
-            onViewAggregatedStats: handleViewAggregatedStats
-        })
+        renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks())
     })
 });
 
@@ -202,11 +200,18 @@ async function handleOpenLibrary() {
         const libraryHandle = await selectLibraryFolder();
         if (libraryHandle) {
             store.libraryHandle = libraryHandle;
-            renderGameLibrary(libraryHandle, {
-                onLoadGame: loadGameFromLibrary,
-                onCreateGame: createNewGameInLibrary,
-                onViewAggregatedStats: handleViewAggregatedStats
-            });
+
+            // Load global player registry
+            try {
+                store.registry = await loadRegistry(libraryHandle);
+                store.registryLoaded = true;
+                console.log(`Registry loaded: ${store.registry.length} players`);
+            } catch (e) {
+                console.warn('Failed to load registry:', e);
+                store.registry = [];
+            }
+
+            renderGameLibrary(libraryHandle, getLibraryCallbacks());
         }
     } catch (e) {
         console.error(e);
@@ -222,13 +227,32 @@ function handleViewAggregatedStats() {
     renderAggregatedDashboard(store.libraryHandle, {
         onBack: () => {
             hideAggregatedDashboard();
-            renderGameLibrary(store.libraryHandle!, {
-                onLoadGame: loadGameFromLibrary,
-                onCreateGame: createNewGameInLibrary,
-                onViewAggregatedStats: handleViewAggregatedStats
-            });
+            renderGameLibrary(store.libraryHandle!, getLibraryCallbacks());
         }
     });
+}
+
+function handleViewRegistry() {
+    if (!store.libraryHandle) {
+        showNotification('No library loaded', 'error');
+        return;
+    }
+    renderRegistryManager({
+        onBack: () => {
+            hideRegistryManager();
+            renderGameLibrary(store.libraryHandle!, getLibraryCallbacks());
+        }
+    });
+}
+
+// Helper to get library callbacks (avoids repetition)
+function getLibraryCallbacks() {
+    return {
+        onLoadGame: loadGameFromLibrary,
+        onCreateGame: createNewGameInLibrary,
+        onViewAggregatedStats: handleViewAggregatedStats,
+        onViewRegistry: handleViewRegistry
+    };
 }
 
 async function createNewGameInLibrary(name: string, kFactor: number) {
@@ -289,6 +313,16 @@ async function loadGameFromLibrary(dirHandle: FileSystemDirectoryHandle, folderN
 
         if (store.libraryHandle) {
             saveLastLibraryName(store.libraryHandle.name);
+
+            // Ensure registry is loaded (in case game was loaded directly)
+            if (!store.registryLoaded) {
+                try {
+                    store.registry = await loadRegistry(store.libraryHandle);
+                    store.registryLoaded = true;
+                } catch (e) {
+                    console.warn('Failed to load registry:', e);
+                }
+            }
         }
 
         document.getElementById('game-menu')!.style.display = 'none';
@@ -509,11 +543,7 @@ function setupGlobalListeners() {
                     onOpenLibrary: handleOpenLibrary,
                     onLoadExample: loadExampleGame,
                     onStartNewGame: startNewGame,
-                    renderLibrary: () => renderGameLibrary(store.libraryHandle!, {
-                        onLoadGame: loadGameFromLibrary,
-                        onCreateGame: createNewGameInLibrary,
-                        onViewAggregatedStats: handleViewAggregatedStats
-                    })
+                    renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks())
                 });
             }
         });
@@ -556,11 +586,7 @@ function main() {
         onOpenLibrary: handleOpenLibrary,
         onLoadExample: loadExampleGame,
         onStartNewGame: startNewGame,
-        renderLibrary: () => renderGameLibrary(store.libraryHandle!, {
-            onLoadGame: loadGameFromLibrary,
-            onCreateGame: createNewGameInLibrary,
-            onViewAggregatedStats: handleViewAggregatedStats
-        })
+        renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks())
     });
 }
 
