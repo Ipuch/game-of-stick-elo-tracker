@@ -36,8 +36,9 @@ export function renderRegistryManager(callbacks: RegistryManagerCallbacks) {
 
     container.style.display = 'block';
 
-    // Filter players
-    const filteredPlayers = filterByAge(store.registry, currentAgeFilter);
+    // Filter and sort players alphabetically
+    const filteredPlayers = filterByAge(store.registry, currentAgeFilter)
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
     container.innerHTML = `
         <div class="registry-manager">

@@ -27,6 +27,13 @@ export async function renderGameLibrary(
         return { handle: g.handle, name: g.name, stats };
     }));
 
+    // Sort by last match date (most recent first)
+    gameItems.sort((a, b) => {
+        const dateA = a.stats.lastMatchDate || 0;
+        const dateB = b.stats.lastMatchDate || 0;
+        return dateB - dateA; // Descending (newest first)
+    });
+
     // --- SYNCHRONOUS DOM UPDATE BLOCK ---
     const menuEl = document.getElementById('game-menu');
     const mainEl = document.getElementById('app-main');
