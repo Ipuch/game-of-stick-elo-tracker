@@ -8,6 +8,7 @@
 import { Player, Match } from '../types/appTypes';
 import { eloScoring } from '../scoring';
 import { AggregatedStats, AggregatedPlayer } from './aggregationUtils';
+import { calculateWinRate } from './statsUtils';
 
 // =============================================================================
 // SHARED TYPES
@@ -277,7 +278,7 @@ function renderLeaderboard(players: PdfPlayerData[]): string {
     `;
 
     players.forEach((p, i) => {
-        const winRate = p.wins + p.losses > 0 ? Math.round((p.wins / (p.wins + p.losses)) * 100) : 0;
+        const winRate = calculateWinRate(p.wins, p.losses, p.draws);
         html += `
             <tr>
                 <td>${i + 1}</td>
@@ -641,9 +642,7 @@ function renderPlayerScorecards(players: Player[], matchHistory: Match[]): strin
     sortedPlayers.forEach((player, playerIndex) => {
         const rank = playerIndex + 1;
         const streakStr = getStreakHtml(player);
-        const winRate = player.wins + player.losses > 0
-            ? Math.round((player.wins / (player.wins + player.losses)) * 100)
-            : 0;
+        const winRate = calculateWinRate(player.wins, player.losses, player.draws);
         const eloGraph = generateEloGraph(player, matchHistory);
 
         html += `

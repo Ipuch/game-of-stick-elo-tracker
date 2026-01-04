@@ -20,6 +20,7 @@ import { store } from './state/store';
 import { renderProfileStatsSection } from './renderers/profileStats';
 import { renderEloEvolutionChart } from './renderers/eloEvolutionChart';
 import { generateGamePDF } from './utils/pdfExport';
+import { generateGameInstagramStories } from './utils/instagramExport';
 import { handleExportPlayers, createImportPlayersHandler } from './handlers/importExportHandlers';
 
 // Services
@@ -511,6 +512,23 @@ function setupGlobalListeners() {
             const gameName = store.folderName || 'Game of Stick';
             generateGamePDF(store.players, store.matchHistory, gameName);
             showNotification('PDF exported successfully!');
+        });
+    }
+
+    // Instagram Stories Export
+    const exportInstaBtn = document.getElementById('export-instagram-btn');
+    if (exportInstaBtn && !exportInstaBtn.hasAttribute('data-bound')) {
+        exportInstaBtn.setAttribute('data-bound', 'true');
+        exportInstaBtn.addEventListener('click', async () => {
+            const gameName = store.folderName || 'Game of Stick';
+            showNotification('Generating Instagram stories...');
+            try {
+                await generateGameInstagramStories(store.players, store.matchHistory, gameName);
+                showNotification('Instagram stories exported!');
+            } catch (e) {
+                console.error(e);
+                showNotification('Failed to export stories', 'error');
+            }
         });
     }
 

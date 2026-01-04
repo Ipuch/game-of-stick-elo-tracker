@@ -6,6 +6,21 @@
 
 import { Player, Match } from '../types/appTypes';
 
+/**
+ * Calculate win rate as a percentage.
+ * Formula: wins / (wins + losses + draws) * 100
+ * 
+ * @param wins - Number of wins
+ * @param losses - Number of losses
+ * @param draws - Number of draws
+ * @returns Win rate percentage (0-100), rounded to nearest integer
+ */
+export function calculateWinRate(wins: number, losses: number, draws: number): number {
+    const totalMatches = wins + losses + draws;
+    if (totalMatches === 0) return 0;
+    return Math.round((wins / totalMatches) * 100);
+}
+
 export function calculatePlayerStreaks(players: Player[], matchHistory: Match[]) {
     players.forEach(player => {
         let streakType: 'W' | 'L' | null = null;

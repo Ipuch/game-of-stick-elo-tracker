@@ -8,9 +8,11 @@
 import { Match } from '../types/appTypes';
 import { AggregatedStats, AggregatedPlayer, TimeSegment, generateTimeSegments, aggregatePlayerStats, loadAllMatchesFromLibrary } from '../utils/aggregationUtils';
 import { generateAggregatedPDF } from '../utils/pdfExport';
+import { generateAggregatedInstagramStories } from '../utils/instagramExport';
 import { showNotification } from '../ui/notificationSystem';
 import { ChartData, buildChartData, getPlayerColor } from '../utils/chartUtils';
 import { showFullscreenChart, hideFullscreenChart } from './eloEvolutionChartEcharts';
+import { calculateWinRate } from '../utils/statsUtils';
 
 export type AggregatedDashboardCallbacks = {
     onBack: () => void;
@@ -182,6 +184,7 @@ function renderDashboardContent(
 
         <div class="agg-actions">
             <button class="button-secondary" id="agg-export-pdf">📄 Export PDF</button>
+            <button class="button-secondary" id="agg-export-instagram">📱 Export Instagram Stories</button>
         </div>
 
         ${players.length === 0 ? `
@@ -327,9 +330,21 @@ function renderDashboardContent(
     // PDF Export
     document.getElementById('agg-export-pdf')?.addEventListener('click', () => {
         if (currentStats && currentSegment) {
-            // Check if generateAggregatedPDF accepts string or segment
-            // Assuming it needs update, but for now passing label as string might work if it was taking a string
             generateAggregatedPDF(currentStats, currentSegment.label);
+        }
+    });
+
+    // Instagram Stories Export
+    document.getElementById('agg-export-instagram')?.addEventListener('click', async () => {
+        if (currentStats && currentSegment) {
+            showNotification('Generating Instagram stories...');
+            try {
+                await generateAggregatedInstagramStories(currentStats, currentSegment.label);
+                showNotification('Instagram stories exported!');
+            } catch (e) {
+                console.error(e);
+                showNotification('Failed to export stories', 'error');
+            }
         }
     });
 }
@@ -533,9 +548,7 @@ function renderPlayerProfiles(players: AggregatedPlayer[], matches: Match[]): st
     return `
         <div class="agg-profiles">
             ${players.map((player, idx) => {
-        const winRate = player.wins + player.losses > 0
-            ? Math.round((player.wins / (player.wins + player.losses)) * 100)
-            : 0;
+        const winRate = calculateWinRate(player.wins, player.losses, player.draws);
         const color = getPlayerColor(idx);
 
         // Get player matches
