@@ -10,6 +10,9 @@ import { AggregatedPlayer, AggregatedStats } from './aggregationUtils';
 import { calculateWinRate } from './statsUtils';
 import html2canvas from 'html2canvas';
 
+// @ts-ignore - Import png to ensure bundle inclusion
+import WcaLogo from '../Logo-west-coast-academy02.png';
+
 // =============================================================================
 // CONSTANTS
 // =============================================================================
@@ -140,18 +143,292 @@ export function findBiggestUpset(matches: Match[]): StoryHighlight | null {
 // SHARED STYLES
 // =============================================================================
 
-function getStoryStyles(): string {
+// =============================================================================
+// SHARED STYLES
+// =============================================================================
+
+// =============================================================================
+// SHARED STYLES & THEMES
+// =============================================================================
+
+type Theme = 'neon' | 'cholet';
+
+function getStyles(theme: Theme): string {
+    if (theme === 'cholet') {
+        return getCholetStyles();
+    }
+    return getNeonStyles();
+}
+
+function getNeonStyles(): string {
     return `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;800&display=swap');
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-purple: #bc13fe;
+            --neon-gold: #ffd700;
+            --bg-dark: #050510;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+
         .story-container {
             width: ${STORY_WIDTH}px;
             height: ${STORY_HEIGHT}px;
-            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
-            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: radial-gradient(circle at 50% 0%, #1a1a3a 0%, #050510 60%);
+            font-family: 'Outfit', sans-serif;
             color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 100px 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bg-glow {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.2;
+            z-index: 0;
+        }
+        .bg-glow-1 { top: -200px; left: -200px; background: var(--neon-blue); }
+        .bg-glow-2 { bottom: -200px; right: -200px; background: var(--neon-purple); }
+        
+        .bg-grid {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+        }
+
+        .content-layer {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo-container {
+            margin-bottom: 30px;
+        }
+        .wca-logo {
+            height: 120px;
+            filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.5));
+        }
+
+        .branding {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .game-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 42px;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 60px;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .story-footer {
+            position: absolute;
+            bottom: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-tag {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        .footer-date {
+            font-size: 20px;
+            color: rgba(255,255,255,0.4);
+            font-weight: 300;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 30px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        /* CHAMPION */
+        .champion-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+            padding: 80px 40px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            background: linear-gradient(180deg, rgba(255,215,0,0.05) 0%, rgba(0,0,0,0) 100%);
+        }
+        .champion-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,215,0,0.1), transparent);
+            animation: shine 3s infinite;
+        }
+        .champion-rank {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 200px;
+            font-weight: 900;
+            line-height: 1;
+            background: linear-gradient(180deg, #ffd700 0%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: -20px;
+            filter: drop-shadow(0 10px 20px rgba(255,215,0,0.3));
+        }
+        .champion-title {
+            font-size: 36px; color: #ffd700; letter-spacing: 4px; margin-bottom: 40px; text-transform: uppercase;
+        }
+        .champion-name {
+            font-size: 80px; font-weight: 800; margin-bottom: 20px; text-align: center; line-height: 1.1;
+        }
+        .champion-elo-box {
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,215,0,0.3); padding: 15px 40px;
+            border-radius: 50px; margin-bottom: 60px; display: flex; align-items: baseline; gap: 10px;
+        }
+        .champion-elo-val { font-family: 'Orbitron', sans-serif; font-size: 64px; font-weight: 700; color: #fff; }
+        .champion-elo-label { font-size: 24px; color: rgba(255,255,255,0.5); font-weight: 600; }
+        
+        .stats-row {
+            display: flex; justify-content: space-between; width: 100%; gap: 20px; margin-top: 20px;
+        }
+        .mini-stat {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            background: rgba(255,255,255,0.05); border-radius: 20px; padding: 25px 10px;
+        }
+        .mini-stat-val { font-family: 'Orbitron', sans-serif; font-size: 42px; font-weight: 700; margin-bottom: 5px; }
+        .mini-stat-label { font-size: 16px; text-transform: uppercase; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
+        
+        .val-win { color: #4caf50; }
+        .val-loss { color: #f44336; }
+        .val-rate { color: var(--neon-blue); }
+
+        /* PODIUM */
+        .podium-stack { display: flex; flex-direction: column; gap: 30px; width: 100%; max-width: 950px; margin-top: 40px; }
+        .podium-entry {
+            display: flex; align-items: center; background: var(--card-bg);
+            border: 1px solid var(--card-border); border-radius: 24px; padding: 30px 40px; gap: 30px; position: relative;
+        }
+        .podium-entry.gold {
+            background: linear-gradient(90deg, rgba(255,215,0,0.1), transparent);
+            border-color: rgba(255,215,0,0.4); transform: scale(1.05); box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 2;
+        }
+        .podium-entry.silver { border-color: rgba(192,192,192,0.3); }
+        .podium-entry.bronze { border-color: rgba(205,127,50,0.3); }
+        
+        .rank-badge {
+            font-family: 'Orbitron', sans-serif; font-size: 42px; font-weight: 900; width: 80px; height: 80px;
+            display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.1);
+        }
+        .gold .rank-badge { background: #ffd700; color: #000; box-shadow: 0 0 20px rgba(255,215,0,0.4); }
+        .silver .rank-badge { background: #c0c0c0; color: #000; }
+        .bronze .rank-badge { background: #cd7f32; color: #000; }
+        
+        .entry-info { flex: 1; }
+        .entry-name { font-size: 48px; font-weight: 700; margin-bottom: 5px; }
+        .entry-detail { font-size: 24px; color: rgba(255,255,255,0.6); }
+        .entry-elo { text-align: right; }
+        .elo-big { font-family: 'Orbitron', sans-serif; font-size: 56px; font-weight: 700; color: #fff; }
+        .elo-label { font-size: 18px; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+
+        /* HIGHLIGHTS */
+        .highlights-grid { display: grid; grid-template-columns: 1fr; gap: 50px; width: 100%; max-width: 900px; margin-top: 20px; }
+        .hl-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 40px; padding: 50px;
+            display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden;
+        }
+        .hl-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px;
+            background: var(--hl-color, #fff); box-shadow: 0 0 20px var(--hl-color, #fff);
+        }
+        .hl-icon {
+            font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));
+            background: rgba(255,255,255,0.05); width: 140px; height: 140px;
+            display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1);
+        }
+        .hl-label {
+            font-family: 'Orbitron', sans-serif; font-size: 28px; color: var(--hl-color);
+            text-transform: uppercase; letter-spacing: 4px; margin-bottom: 20px;
+        }
+        .hl-player { font-size: 64px; font-weight: 800; margin-bottom: 15px; line-height: 1; }
+        .hl-value {
+            font-family: 'Orbitron', sans-serif; font-size: 100px; font-weight: 900;
+            color: #fff; text-shadow: 0 0 30px var(--hl-color); margin-bottom: 10px; line-height: 1;
+        }
+        .hl-sub { font-size: 28px; color: rgba(255,255,255,0.6); max-width: 80%; line-height: 1.4; }
+    `;
+}
+
+function getCholetStyles(): string {
+    return `
+        @import url('https://fonts.googleapis.com/css2?family=Alata&family=Jost:wght@400;500;700;800&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            /* Extracted from WCA Cholet CSS */
+            --cholet-red: rgb(204, 16, 21);
+            --cholet-red-dark: rgb(179, 33, 46);
+            --cholet-text-dark: rgb(33, 33, 33);
+            --cholet-bg: #ffffff;
+            --cholet-grey-light: #f4f4f4;
+        }
+
+        .story-container {
+            width: ${STORY_WIDTH}px;
+            height: ${STORY_HEIGHT}px;
+            background: var(--cholet-bg);
+            /* Subtle texture pattern to mimic 'motif01.png' */
+            background-image: 
+                radial-gradient(circle at 100% 50%, transparent 20%, rgba(204,16,21,0.03) 21%, rgba(204,16,21,0.03) 34%, transparent 35%, transparent),
+                radial-gradient(circle at 0% 50%, transparent 20%, rgba(204,16,21,0.03) 21%, rgba(204,16,21,0.03) 34%, transparent 35%, transparent);
+            background-size: 100px 100px;
+            font-family: 'Jost', sans-serif;
+            color: var(--cholet-text-dark);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -160,259 +437,186 @@ function getStoryStyles(): string {
             overflow: hidden;
         }
         
-        /* Decorative background elements */
+        /* Top Red Line */
         .story-container::before {
-            content: '';
-            position: absolute;
-            top: -200px;
-            right: -200px;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(0,243,255,0.15) 0%, transparent 70%);
-            border-radius: 50%;
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 24px;
+            background: var(--cholet-red);
         }
-        
-        .story-container::after {
-            content: '';
-            position: absolute;
-            bottom: -150px;
-            left: -150px;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(255,107,53,0.1) 0%, transparent 70%);
-            border-radius: 50%;
+
+        .content-layer {
+            position: relative; z-index: 10; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center;
         }
-        
+
+        .logo-container { 
+            margin-bottom: 30px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Dark circular background to make white logo visible */
+            background: var(--cholet-red);
+            border-radius: 50%;
+            padding: 20px 30px;
+            box-shadow: 0 5px 20px rgba(204, 16, 21, 0.3);
+        }
+        .wca-logo { 
+            height: 100px;
+            width: auto;
+            display: block;
+            /* Simple drop shadow - no complex filters */
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        } 
+
         .branding {
-            font-size: 28px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.4);
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 40px;
+            font-family: 'Alata', sans-serif;
+            font-size: 20px; 
+            text-transform: uppercase; 
+            color: var(--cholet-text-dark);
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            opacity: 0.7;
         }
         
         .game-name {
-            font-size: 36px;
-            font-weight: 700;
-            color: #00f3ff;
-            margin-bottom: 60px;
-            text-align: center;
-            text-shadow: 0 0 30px rgba(0,243,255,0.5);
-        }
-        
-        .section-title {
-            font-size: 32px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.7);
-            margin-bottom: 40px;
-            letter-spacing: 2px;
-        }
-        
-        /* Champion Story Styles */
-        .champion-medal {
-            font-size: 180px;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 10px 30px rgba(255,215,0,0.4));
-        }
-        
-        .champion-name {
-            font-size: 72px;
-            font-weight: 900;
-            text-align: center;
-            margin-bottom: 30px;
-            background: linear-gradient(135deg, #fff 0%, #00f3ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .champion-elo {
-            font-size: 96px;
-            font-weight: 700;
-            color: #00f3ff;
-            text-shadow: 0 0 40px rgba(0,243,255,0.6);
-            margin-bottom: 60px;
-        }
-        
-        .champion-elo span {
-            font-size: 48px;
-            color: rgba(255,255,255,0.5);
-        }
-        
-        .stats-grid {
-            display: flex;
-            gap: 50px;
-            margin-bottom: 60px;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 64px;
-            font-weight: 700;
-        }
-        
-        .stat-value.wins { color: #4caf50; }
-        .stat-value.losses { color: #f44336; }
-        .stat-value.draws { color: #ff9800; }
-        
-        .stat-label {
-            font-size: 24px;
-            color: rgba(255,255,255,0.5);
+            font-family: 'Alata', sans-serif;
+            font-size: 48px; 
+            /* Red color for main headers as per CSS .wt-container-9408621 */
+            color: var(--cholet-red-dark);
             text-transform: uppercase;
-            letter-spacing: 2px;
+            margin-bottom: 50px; 
+            text-align: center; 
+            font-weight: 400; /* Alata is 400 */
         }
-        
-        .win-rate {
-            font-size: 56px;
-            font-weight: 700;
-            color: #32CD32;
-            margin-top: 40px;
-        }
-        
-        .win-rate span {
-            font-size: 28px;
-            color: rgba(255,255,255,0.5);
-        }
-        
-        /* Podium Story Styles */
-        .podium-container {
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-            width: 100%;
-            max-width: 900px;
-            margin-top: 40px;
-        }
-        
-        .podium-card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px;
-            padding: 40px 50px;
-            display: flex;
-            align-items: center;
-            gap: 30px;
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s;
-        }
-        
-        .podium-card.gold {
-            background: linear-gradient(135deg, rgba(255,215,0,0.15) 0%, rgba(255,215,0,0.05) 100%);
-            border-color: rgba(255,215,0,0.3);
-            transform: scale(1.05);
-        }
-        
-        .podium-card.silver {
-            background: linear-gradient(135deg, rgba(192,192,192,0.1) 0%, rgba(192,192,192,0.03) 100%);
-            border-color: rgba(192,192,192,0.2);
-        }
-        
-        .podium-card.bronze {
-            background: linear-gradient(135deg, rgba(205,127,50,0.1) 0%, rgba(205,127,50,0.03) 100%);
-            border-color: rgba(205,127,50,0.2);
-        }
-        
-        .podium-medal {
-            font-size: 80px;
-        }
-        
-        .podium-info {
-            flex: 1;
-        }
-        
-        .podium-name {
-            font-size: 42px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .podium-stats {
-            font-size: 24px;
-            color: rgba(255,255,255,0.6);
-        }
-        
-        .podium-elo {
-            font-size: 48px;
-            font-weight: 700;
-            color: #00f3ff;
-        }
-        
-        /* Highlights Story Styles */
-        .highlights-container {
-            display: flex;
-            flex-direction: column;
-            gap: 50px;
-            width: 100%;
-            max-width: 900px;
-            margin-top: 60px;
-        }
-        
-        .highlight-card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px;
-            padding: 50px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .highlight-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--accent-color), transparent);
-        }
-        
-        .highlight-emoji {
-            font-size: 100px;
-            margin-bottom: 20px;
-        }
-        
-        .highlight-title {
-            font-size: 32px;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-        }
-        
-        .highlight-player {
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-        
-        .highlight-value {
-            font-size: 72px;
-            font-weight: 900;
-            color: var(--accent-color);
-            text-shadow: 0 0 30px var(--accent-color);
-        }
-        
-        .highlight-desc {
-            font-size: 28px;
-            color: rgba(255,255,255,0.5);
-            margin-top: 15px;
-        }
-        
-        /* Footer */
+
         .story-footer {
-            position: absolute;
-            bottom: 80px;
-            font-size: 24px;
-            color: rgba(255,255,255,0.3);
-            letter-spacing: 2px;
+            position: absolute; bottom: 80px; display: flex; flex-direction: column; align-items: center; gap: 5px;
         }
+        .footer-tag {
+            font-family: 'Alata', sans-serif;
+            font-size: 32px; 
+            color: var(--cholet-red);
+            text-transform: uppercase; 
+        }
+        .footer-date { font-size: 20px; color: #666; font-weight: 500; }
+
+        .glass-card {
+            background: #fff; border-radius: 40px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08); /* Softer shadow */
+            border: 1px solid #eaeaea;
+        }
+
+        /* CHAMPION */
+        .champion-card {
+            display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 900px;
+            padding: 80px 40px; position: relative; overflow: hidden;
+        }
+        .champion-rank {
+            font-family: 'Alata', sans-serif;
+            font-size: 220px; line-height: 0.8; color: var(--cholet-red);
+            margin-bottom: 10px;
+        }
+        .champion-title {
+            font-family: 'Jost', sans-serif;
+            font-size: 32px; font-weight: 700; color: var(--cholet-text-dark);
+            text-transform: uppercase; letter-spacing: 4px; margin-bottom: 30px;
+        }
+        .champion-name {
+            font-family: 'Alata', sans-serif;
+            font-size: 72px; margin-bottom: 30px; text-align: center; color: var(--cholet-text-dark);
+        }
+        .champion-elo-box {
+            background: var(--cholet-red); color: #fff; padding: 15px 50px;
+            border-radius: 50px; margin-bottom: 60px; display: flex; align-items: baseline; gap: 10px;
+            box-shadow: 0 5px 15px rgba(204, 16, 21, 0.3);
+        }
+        .champion-elo-val { 
+            font-family: 'Jost', sans-serif; font-size: 64px; font-weight: 700; 
+        }
+        .champion-elo-label { font-size: 20px; opacity: 0.9; font-weight: 500; text-transform: uppercase; }
+        
+        .stats-row { display: flex; justify-content: space-between; width: 100%; gap: 20px; margin-top: 20px; }
+        .mini-stat {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            background: var(--cholet-grey-light); border-radius: 20px; padding: 25px 10px;
+        }
+        .mini-stat-val { 
+            font-family: 'Jost', sans-serif; font-size: 48px; font-weight: 700; margin-bottom: 5px; color: var(--cholet-text-dark); 
+        }
+        .mini-stat-label { font-family: 'Alata', sans-serif; font-size: 14px; text-transform: uppercase; color: #666; }
+        
+        .val-win { color: #2e7d32; }
+        .val-loss { color: #c62828; }
+        .val-rate { color: var(--cholet-red); }
+
+        /* PODIUM */
+        .podium-stack { display: flex; flex-direction: column; gap: 25px; width: 100%; max-width: 950px; margin-top: 40px; }
+        .podium-entry {
+            display: flex; align-items: center; background: #fff;
+            border: 1px solid #eee; border-radius: 20px; padding: 25px 40px; gap: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            font-family: 'Jost', sans-serif;
+        }
+        .podium-entry.gold {
+            border: 2px solid #ffd700; transform: scale(1.02); box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        .podium-entry.silver { border-left: 8px solid #c0c0c0; }
+        .podium-entry.bronze { border-left: 8px solid #cd7f32; }
+        
+        .rank-badge {
+            font-family: 'Alata', sans-serif;
+            font-size: 42px; width: 70px; height: 70px;
+            display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f0f0f0;
+        }
+        .gold .rank-badge { background: #ffd700; color: #fff; }
+        .silver .rank-badge { background: #c0c0c0; color: #fff; }
+        .bronze .rank-badge { background: #cd7f32; color: #fff; }
+        
+        .entry-info { flex: 1; }
+        .entry-name { 
+            font-family: 'Alata', sans-serif; font-size: 42px; margin-bottom: 5px; color: var(--cholet-text-dark); 
+        }
+        .entry-detail { font-size: 22px; color: #666; font-weight: 500; }
+        .entry-elo { text-align: right; }
+        .elo-big { 
+            font-family: 'Jost', sans-serif; font-size: 48px; font-weight: 700; color: var(--cholet-red); 
+        }
+        .elo-label { font-size: 16px; color: #999; text-transform: uppercase; font-weight: 700; }
+
+        /* HIGHLIGHTS */
+        .highlights-grid { display: grid; grid-template-columns: 1fr; gap: 40px; width: 100%; max-width: 900px; margin-top: 20px; }
+        .hl-card {
+            background: #fff; border: 1px solid #eee; border-radius: 30px; padding: 50px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-top: 8px solid var(--hl-color);
+        }
+        .hl-icon {
+            font-size: 80px; margin-bottom: 20px; background: var(--cholet-grey-light); width: 140px; height: 140px;
+            display: flex; align-items: center; justify-content: center; border-radius: 50%;
+        }
+        .hl-label {
+            font-family: 'Alata', sans-serif;
+            font-size: 24px; color: var(--hl-color); text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 15px;
+        }
+        .hl-player { 
+            font-family: 'Jost', sans-serif; font-size: 56px; font-weight: 700; margin-bottom: 15px; line-height: 1; color: var(--cholet-text-dark); 
+        }
+        .hl-value {
+            font-family: 'Jost', sans-serif; font-size: 90px; font-weight: 800; color: var(--cholet-red); margin-bottom: 10px; line-height: 1;
+        }
+        .hl-sub { font-size: 24px; color: #666; max-width: 80%; font-weight: 400; }
     `;
 }
+
+// =============================================================================
+// STORY HTML GENERATORS
+// =============================================================================
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+// function deleted
 
 // =============================================================================
 // STORY HTML GENERATORS
@@ -421,43 +625,62 @@ function getStoryStyles(): string {
 /**
  * Generate Story 1: Champion Spotlight
  */
-function generateChampionHTML(player: Player | AggregatedPlayer, gameName: string): string {
+function generateChampionHTML(player: Player | AggregatedPlayer, gameName: string, theme: Theme, logoBase64: string): string {
     const winRate = calculateWinRate(player.wins, player.losses, player.draws);
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const styles = getStyles(theme);
+
+    const logoHtml = logoBase64 ? `<div class="logo-container"><img src="${logoBase64}" class="wca-logo" /></div>` : '';
 
     return `
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="UTF-8">
-        <style>${getStoryStyles()}</style>
+        <style>${styles}</style>
     </head>
     <body>
         <div class="story-container" id="story">
-            <div class="branding">Game of S.T.I.C.K.</div>
-            <div class="game-name">${gameName}</div>
-            
-            <div class="champion-medal">🥇</div>
-            <div class="champion-name">${player.name}</div>
-            <div class="champion-elo">${player.elo} <span>ELO</span></div>
-            
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value wins">${player.wins}</div>
-                    <div class="stat-label">Wins</div>
+            <div class="bg-glow bg-glow-1"></div>
+            <div class="bg-glow bg-glow-2"></div>
+            <div class="bg-grid"></div>
+
+            <div class="content-layer">
+                ${logoHtml}
+                <div class="branding">Game of S.T.I.C.K.</div>
+                <div class="game-name">${gameName}</div>
+                
+                <div class="glass-card champion-card">
+                    <div class="champion-rank">1</div>
+                    <div class="champion-title">The Champion</div>
+                    <div class="champion-name">${player.name}</div>
+                    
+                    <div class="champion-elo-box">
+                        <span class="champion-elo-val">${player.elo}</span>
+                        <span class="champion-elo-label">ELO RATING</span>
+                    </div>
+                    
+                    <div class="stats-row">
+                        <div class="mini-stat">
+                            <span class="mini-stat-val val-win">${player.wins}</span>
+                            <span class="mini-stat-label">Wins</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-val val-rate">${winRate}%</span>
+                            <span class="mini-stat-label">Win Rate</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-val val-loss">${player.losses}</span>
+                            <span class="mini-stat-label">Losses</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value losses">${player.losses}</div>
-                    <div class="stat-label">Losses</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value draws">${player.draws}</div>
-                    <div class="stat-label">Draws</div>
+
+                <div class="story-footer">
+                    <div class="footer-tag">#CurrentMeta</div>
+                    <div class="footer-date">${dateStr}</div>
                 </div>
             </div>
-            
-            <div class="win-rate">${winRate}% <span>WIN RATE</span></div>
-            
-            <div class="story-footer">🏆 THE CHAMPION</div>
         </div>
     </body>
     </html>
@@ -467,21 +690,27 @@ function generateChampionHTML(player: Player | AggregatedPlayer, gameName: strin
 /**
  * Generate Story 2: Podium View
  */
-function generatePodiumHTML(players: (Player | AggregatedPlayer)[], gameName: string): string {
+function generatePodiumHTML(players: (Player | AggregatedPlayer)[], gameName: string, theme: Theme, logoBase64: string): string {
     const top3 = players.slice(0, 3);
-    const medals = ['🥇', '🥈', '🥉'];
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     const classes = ['gold', 'silver', 'bronze'];
+    const styles = getStyles(theme);
 
-    const podiumCards = top3.map((p, i) => {
+    const logoHtml = logoBase64 ? `<div class="logo-container"><img src="${logoBase64}" class="wca-logo" /></div>` : '';
+
+    const podiumEntries = top3.map((p, i) => {
         const winRate = calculateWinRate(p.wins, p.losses, p.draws);
         return `
-            <div class="podium-card ${classes[i]}">
-                <div class="podium-medal">${medals[i]}</div>
-                <div class="podium-info">
-                    <div class="podium-name">${p.name}</div>
-                    <div class="podium-stats">${p.wins}W / ${p.losses}L • ${winRate}% win rate</div>
+            <div class="podium-entry ${classes[i]}">
+                <div class="rank-badge">${i + 1}</div>
+                <div class="entry-info">
+                    <div class="entry-name">${p.name}</div>
+                    <div class="entry-detail">${p.wins} Wins • ${winRate}% WR</div>
                 </div>
-                <div class="podium-elo">${p.elo}</div>
+                <div class="entry-elo">
+                    <div class="elo-big">${p.elo}</div>
+                    <div class="elo-label">ELO</div>
+                </div>
             </div>
         `;
     }).join('');
@@ -491,20 +720,28 @@ function generatePodiumHTML(players: (Player | AggregatedPlayer)[], gameName: st
     <html>
     <head>
         <meta charset="UTF-8">
-        <style>${getStoryStyles()}</style>
+        <style>${styles}</style>
     </head>
     <body>
         <div class="story-container" id="story">
-            <div class="branding">Game of S.T.I.C.K.</div>
-            <div class="game-name">${gameName}</div>
-            
-            <div class="section-title">🏆 THE PODIUM</div>
-            
-            <div class="podium-container">
-                ${podiumCards}
+            <div class="bg-glow bg-glow-1"></div>
+            <div class="bg-glow bg-glow-2"></div>
+            <div class="bg-grid"></div>
+
+            <div class="content-layer">
+                ${logoHtml}
+                <div class="branding">Game of S.T.I.C.K.</div>
+                <div class="game-name">${gameName}</div>
+                
+                <div class="podium-stack">
+                    ${podiumEntries}
+                </div>
+
+                <div class="story-footer">
+                    <div class="footer-tag">Leaderboard</div>
+                    <div class="footer-date">${dateStr}</div>
+                </div>
             </div>
-            
-            <div class="story-footer">TOP 3 PLAYERS</div>
         </div>
     </body>
     </html>
@@ -514,29 +751,46 @@ function generatePodiumHTML(players: (Player | AggregatedPlayer)[], gameName: st
 /**
  * Generate Story 3: Match Highlights
  */
-function generateHighlightsHTML(
-    highlights: StoryHighlight[],
-    gameName: string
-): string {
-    const accentColors: Record<string, string> = {
-        streak: '#FF6B35',
-        elo_gain: '#00f3ff',
-        upset: '#9370DB',
+function generateHighlightsHTML(highlights: StoryHighlight[], gameName: string, theme: Theme, logoBase64: string): string {
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const styles = getStyles(theme);
+
+    // Map highlight types to colors
+    const colors: Record<string, string> = {
+        streak: '#ff6b35', // Orange
+        elo_gain: '#00f3ff', // Cyan
+        upset: '#bc13fe', // Purple
     };
 
-    const titles: Record<string, string> = {
-        streak: '🔥 BIGGEST STREAK',
-        elo_gain: '⚡ BIGGEST WIN',
-        upset: '💀 BIGGEST UPSET',
+    const labels: Record<string, string> = {
+        streak: 'Unstoppable',
+        elo_gain: 'Skyrocketing',
+        upset: 'Underdog Win',
     };
 
-    const highlightCards = highlights.slice(0, 2).map(h => `
-        <div class="highlight-card" style="--accent-color: ${accentColors[h.type]}">
-            <div class="highlight-emoji">${h.emoji}</div>
-            <div class="highlight-title">${titles[h.type]}</div>
-            <div class="highlight-player">${h.playerName}</div>
-            <div class="highlight-value">${h.type === 'streak' ? h.value + ' WINS' : '+' + h.value}</div>
-            ${h.opponent ? `<div class="highlight-desc">vs ${h.opponent}</div>` : ''}
+    // Cholet specific colors overrides (if needed, but usually CSS var handles main things, 
+    // these are for the dynamic JS parts)
+    if (theme === 'cholet') {
+        colors.streak = '#E60000';
+        colors.elo_gain = '#003399';
+        colors.upset = '#333';
+    }
+
+    const logoHtml = logoBase64 ? `<div class="logo-container"><img src="${logoBase64}" class="wca-logo" /></div>` : '';
+    const validHighlights = highlights.slice(0, 2);
+
+    const cards = validHighlights.map(h => `
+        <div class="hl-card" style="--hl-color: ${colors[h.type]}">
+            <div class="hl-icon">${h.emoji}</div>
+            <div class="hl-label">${labels[h.type]}</div>
+            <div class="hl-player">${h.playerName}</div>
+            <div class="hl-value">
+                ${h.type === 'streak' ? h.value : (h.type === 'elo_gain' ? '+' + h.value : h.value + '%')}
+            </div>
+            <div class="hl-sub">
+                ${h.type === 'streak' ? 'Consecutive Wins' : (h.type === 'elo_gain' ? 'Points in one match' : 'Win Probability')}
+                ${h.opponent ? `<br><span style="font-size: 0.8em; opacity: 0.7">vs ${h.opponent}</span>` : ''}
+            </div>
         </div>
     `).join('');
 
@@ -545,20 +799,28 @@ function generateHighlightsHTML(
     <html>
     <head>
         <meta charset="UTF-8">
-        <style>${getStoryStyles()}</style>
+        <style>${styles}</style>
     </head>
     <body>
         <div class="story-container" id="story">
-            <div class="branding">Game of S.T.I.C.K.</div>
-            <div class="game-name">${gameName}</div>
-            
-            <div class="section-title">⚡ MATCH SPOTLIGHT</div>
-            
-            <div class="highlights-container">
-                ${highlightCards}
+            <div class="bg-glow bg-glow-1"></div>
+            <div class="bg-glow bg-glow-2"></div>
+            <div class="bg-grid"></div>
+
+            <div class="content-layer">
+                ${logoHtml}
+                <div class="branding">Game of S.T.I.C.K.</div>
+                <div class="game-name">${gameName}</div>
+                
+                <div class="highlights-grid">
+                    ${cards}
+                </div>
+
+                <div class="story-footer">
+                    <div class="footer-tag">Top Moments</div>
+                    <div class="footer-date">${dateStr}</div>
+                </div>
             </div>
-            
-            <div class="story-footer">BEST MOMENTS</div>
         </div>
     </body>
     </html>
@@ -572,8 +834,34 @@ function generateHighlightsHTML(
 /**
  * Render HTML to canvas and convert to PNG blob
  */
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+async function loadLogoAsBase64(): Promise<string> {
+    try {
+        const response = await fetch(WcaLogo);
+        const blob = await response.blob();
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+        });
+    } catch (e) {
+        console.error('Failed to load logo', e);
+        // Return transparent pixel as fallback to avoid broken image icon
+        return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    }
+}
+
+// =============================================================================
+// CORE EXPORT FUNCTIONS
+// =============================================================================
+
+/**
+ * Render HTML to canvas and convert to PNG blob
+ */
 async function htmlToImageBlob(html: string): Promise<Blob> {
-    // Create a temporary container
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.left = '-9999px';
@@ -581,9 +869,20 @@ async function htmlToImageBlob(html: string): Promise<Blob> {
     container.innerHTML = html;
     document.body.appendChild(container);
 
-    // Wait for fonts to load
     await document.fonts.ready;
-    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Improved image waiter
+    const images = Array.from(container.querySelectorAll('img'));
+    await Promise.all(images.map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => {
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(true);
+        });
+    }));
+
+    // Small buffer
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     const storyElement = container.querySelector('#story') as HTMLElement;
 
@@ -593,6 +892,7 @@ async function htmlToImageBlob(html: string): Promise<Blob> {
         scale: 1,
         useCORS: true,
         backgroundColor: null,
+        logging: false,
     });
 
     document.body.removeChild(container);
@@ -608,9 +908,6 @@ async function htmlToImageBlob(html: string): Promise<Blob> {
     });
 }
 
-/**
- * Download a blob as an image file
- */
 function downloadBlob(blob: Blob, filename: string): void {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -626,9 +923,6 @@ function downloadBlob(blob: Blob, filename: string): void {
 // PUBLIC API
 // =============================================================================
 
-/**
- * Generate and download Instagram stories for a single game
- */
 export async function generateGameInstagramStories(
     players: Player[],
     matches: Match[],
@@ -641,40 +935,39 @@ export async function generateGameInstagramStories(
         return;
     }
 
-    // Story 1: Champion
-    const championHtml = generateChampionHTML(sortedPlayers[0], gameName);
-    const championBlob = await htmlToImageBlob(championHtml);
-    downloadBlob(championBlob, `${gameName.toLowerCase().replace(/\s+/g, '-')}-story-1-champion.png`);
+    // Load logo as Base64 to ensure html2canvas captures it
+    const logoBase64 = await loadLogoAsBase64();
+    const themes: Theme[] = ['neon', 'cholet'];
 
-    // Story 2: Podium
-    if (sortedPlayers.length >= 3) {
-        const podiumHtml = generatePodiumHTML(sortedPlayers, gameName);
-        const podiumBlob = await htmlToImageBlob(podiumHtml);
-        downloadBlob(podiumBlob, `${gameName.toLowerCase().replace(/\s+/g, '-')}-story-2-podium.png`);
-    }
+    for (const theme of themes) {
+        const filePrefix = `${gameName.toLowerCase().replace(/\s+/g, '-')}-${theme}`;
 
-    // Story 3: Highlights
-    const highlights: StoryHighlight[] = [];
+        const championHtml = generateChampionHTML(sortedPlayers[0], gameName, theme, logoBase64);
+        const championBlob = await htmlToImageBlob(championHtml);
+        downloadBlob(championBlob, `${filePrefix}-story-1-champion.png`);
 
-    const streakHighlight = findBiggestWinStreak(sortedPlayers);
-    if (streakHighlight) highlights.push(streakHighlight);
+        if (sortedPlayers.length >= 3) {
+            const podiumHtml = generatePodiumHTML(sortedPlayers, gameName, theme, logoBase64);
+            const podiumBlob = await htmlToImageBlob(podiumHtml);
+            downloadBlob(podiumBlob, `${filePrefix}-story-2-podium.png`);
+        }
 
-    const eloGainHighlight = findBiggestEloGain(matches);
-    if (eloGainHighlight) highlights.push(eloGainHighlight);
+        const highlights: StoryHighlight[] = [];
+        const streakHighlight = findBiggestWinStreak(sortedPlayers);
+        if (streakHighlight) highlights.push(streakHighlight);
+        const eloGainHighlight = findBiggestEloGain(matches);
+        if (eloGainHighlight) highlights.push(eloGainHighlight);
+        const upsetHighlight = findBiggestUpset(matches);
+        if (upsetHighlight && highlights.length < 2) highlights.push(upsetHighlight);
 
-    const upsetHighlight = findBiggestUpset(matches);
-    if (upsetHighlight && highlights.length < 2) highlights.push(upsetHighlight);
-
-    if (highlights.length > 0) {
-        const highlightsHtml = generateHighlightsHTML(highlights, gameName);
-        const highlightsBlob = await htmlToImageBlob(highlightsHtml);
-        downloadBlob(highlightsBlob, `${gameName.toLowerCase().replace(/\s+/g, '-')}-story-3-highlights.png`);
+        if (highlights.length > 0) {
+            const highlightsHtml = generateHighlightsHTML(highlights, gameName, theme, logoBase64);
+            const highlightsBlob = await htmlToImageBlob(highlightsHtml);
+            downloadBlob(highlightsBlob, `${filePrefix}-story-3-highlights.png`);
+        }
     }
 }
 
-/**
- * Generate and download Instagram stories for aggregated stats
- */
 export async function generateAggregatedInstagramStories(
     stats: AggregatedStats,
     segmentLabel: string
@@ -687,32 +980,33 @@ export async function generateAggregatedInstagramStories(
         return;
     }
 
+    const logoBase64 = await loadLogoAsBase64();
+    const themes: Theme[] = ['neon', 'cholet'];
     const safeName = segmentLabel.toLowerCase().replace(/\s+/g, '-');
 
-    // Story 1: Champion
-    const championHtml = generateChampionHTML(sortedPlayers[0], segmentLabel);
-    const championBlob = await htmlToImageBlob(championHtml);
-    downloadBlob(championBlob, `${safeName}-story-1-champion.png`);
+    for (const theme of themes) {
+        const filePrefix = `${safeName}-${theme}`;
 
-    // Story 2: Podium
-    if (sortedPlayers.length >= 3) {
-        const podiumHtml = generatePodiumHTML(sortedPlayers, segmentLabel);
-        const podiumBlob = await htmlToImageBlob(podiumHtml);
-        downloadBlob(podiumBlob, `${safeName}-story-2-podium.png`);
-    }
+        const championHtml = generateChampionHTML(sortedPlayers[0], segmentLabel, theme, logoBase64);
+        const championBlob = await htmlToImageBlob(championHtml);
+        downloadBlob(championBlob, `${filePrefix}-story-1-champion.png`);
 
-    // Story 3: Highlights (ELO gain + upset for aggregated)
-    const highlights: StoryHighlight[] = [];
+        if (sortedPlayers.length >= 3) {
+            const podiumHtml = generatePodiumHTML(sortedPlayers, segmentLabel, theme, logoBase64);
+            const podiumBlob = await htmlToImageBlob(podiumHtml);
+            downloadBlob(podiumBlob, `${filePrefix}-story-2-podium.png`);
+        }
 
-    const eloGainHighlight = findBiggestEloGain(matches);
-    if (eloGainHighlight) highlights.push(eloGainHighlight);
+        const highlights: StoryHighlight[] = [];
+        const eloGainHighlight = findBiggestEloGain(matches);
+        if (eloGainHighlight) highlights.push(eloGainHighlight);
+        const upsetHighlight = findBiggestUpset(matches);
+        if (upsetHighlight) highlights.push(upsetHighlight);
 
-    const upsetHighlight = findBiggestUpset(matches);
-    if (upsetHighlight) highlights.push(upsetHighlight);
-
-    if (highlights.length > 0) {
-        const highlightsHtml = generateHighlightsHTML(highlights, segmentLabel);
-        const highlightsBlob = await htmlToImageBlob(highlightsHtml);
-        downloadBlob(highlightsBlob, `${safeName}-story-3-highlights.png`);
+        if (highlights.length > 0) {
+            const highlightsHtml = generateHighlightsHTML(highlights, segmentLabel, theme, logoBase64);
+            const highlightsBlob = await htmlToImageBlob(highlightsHtml);
+            downloadBlob(highlightsBlob, `${filePrefix}-story-3-highlights.png`);
+        }
     }
 }
