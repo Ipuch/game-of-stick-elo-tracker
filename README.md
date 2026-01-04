@@ -20,6 +20,7 @@
 | **Combat Matrix** | Head-to-head stats visualized in a heatmap |
 | **Player Profiles** | Detailed per-player stats and match history |
 | **PDF Export** | 📄 Export full tournament stats as printable PDF |
+| **📱 Instagram Stories** | Generate shareable 1080×1920 story images in 2 themes |
 | **Multi-Window Sync** | Real-time sync between browser tabs |
 | **File-Based Save** | Save games to local folders as CSV files |
 | **🛡️ Crash Recovery** | Auto-backup protects against browser crashes and data loss |
@@ -111,14 +112,24 @@ npm run test:watch  # Watch mode
   - 📈 ELO Evolution chart (all players over time)
   - Player profiles with match history
   - Click **📄 Export PDF Stats** for printable report
+  - Click **📱 Export Instagram Stories** for shareable social media images
 
-### 6️⃣ Save Your Game
+### 6️⃣ Share on Instagram
+
+1. Go to **STATS** tab
+2. Click **📱 Export Instagram Stories**
+3. **6 images** are automatically downloaded:
+   - 3 in **Neon Cyberpunk** style (dark, glowing, sci-fi)
+   - 3 in **Cholet WCA** style (clean white, red accents)
+4. Upload to Instagram Stories!
+
+### 7️⃣ Save Your Game
 
 1. Click **SAVE GAME** button
 2. First time: Select a folder location
 3. Data is saved as CSV files (`players.csv`, `matches.csv`)
 
-### 7️⃣ Exit and Return
+### 8️⃣ Exit and Return
 
 - Click **EXIT GAME** to return to the menu
 - Your library folder stays selected for quick access
@@ -153,6 +164,7 @@ npm run test:watch  # Watch mode
 - **File System Access API** — Local file persistence
 - **BroadcastChannel API** — Cross-tab synchronization
 - **ECharts** — Interactive chart visualizations
+- **html2canvas** — Instagram story image generation
 - **Pure CSS** — No framework dependencies
 
 ---
@@ -198,6 +210,7 @@ src-game-of-stick-elo-tracker/
 │   ├── fileSystemPersistence.ts # File system storage
 │   ├── localStoragePersistence.ts # LocalStorage fallback
 │   ├── pdfExport.ts            # PDF generation
+│   ├── instagramExport.ts      # Instagram story image generation
 │   ├── aggregationUtils.ts     # Cross-game aggregation
 │   ├── chartUtils.ts           # Chart helpers
 │   ├── opponentTracker.ts      # Remaining opponents logic
