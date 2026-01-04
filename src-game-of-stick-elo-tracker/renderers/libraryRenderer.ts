@@ -6,6 +6,7 @@
  */
 
 import { listGamesInLibrary, getGameQuickStats } from '../utils/fileSystemPersistence';
+import { t } from '../utils/i18n';
 
 export type LibraryCallbacks = {
     onLoadGame: (handle: FileSystemDirectoryHandle, name: string) => Promise<void>;
@@ -51,7 +52,7 @@ export async function renderGameLibrary(
 
     // 1. Render Library Name
     if (headerArea) {
-        headerArea.innerHTML = `<span class="library-label">Library:</span> <span class="library-name">${libraryHandle.name}</span>`;
+        headerArea.innerHTML = `<span class="library-label">${t('library.label')}:</span> <span class="library-name">${libraryHandle.name}</span>`;
     }
 
     // 2. Render Aggregated Stats Button & Registry Button
@@ -59,7 +60,7 @@ export async function renderGameLibrary(
         if (gameItems.length > 0) {
             const aggBtn = document.createElement('button');
             aggBtn.className = 'button-secondary agg-stats-btn width-full';
-            aggBtn.innerHTML = '📊 View Aggregated Stats';
+            aggBtn.innerHTML = t('library.viewAggregatedStats');
             aggBtn.onclick = () => callbacks.onViewAggregatedStats();
             statsArea.appendChild(aggBtn);
         }
@@ -67,7 +68,7 @@ export async function renderGameLibrary(
         // Registry Manager Button
         const regBtn = document.createElement('button');
         regBtn.className = 'button-secondary registry-nav-btn width-full';
-        regBtn.innerHTML = '👥 Manage Player Registry';
+        regBtn.innerHTML = t('library.manageRegistry');
         regBtn.onclick = () => callbacks.onViewRegistry();
         statsArea.appendChild(regBtn);
     }
@@ -75,7 +76,7 @@ export async function renderGameLibrary(
     // 3. Render Game List
     if (gameItems.length === 0) {
         const msg = document.createElement('div');
-        msg.innerHTML = '<div class="empty-list-msg">No games found. Create one below!</div>';
+        msg.innerHTML = `<div class="empty-list-msg">${t('library.empty')}</div>`;
         list.appendChild(msg);
     } else {
         gameItems.forEach(({ handle, name, stats }) => {
@@ -84,7 +85,7 @@ export async function renderGameLibrary(
 
             const lastPlayed = stats.lastMatchDate
                 ? new Date(stats.lastMatchDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-                : 'New';
+                : t('library.new');
 
             card.innerHTML = `
                 <div class="session-main-info">

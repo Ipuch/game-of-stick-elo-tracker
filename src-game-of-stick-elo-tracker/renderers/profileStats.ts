@@ -6,6 +6,7 @@
 
 import { Player, Match } from '../types/appTypes';
 import { eloScoring } from '../scoring';
+import { t } from '../utils/i18n';
 
 
 
@@ -22,15 +23,15 @@ export function renderProfileStatsSection(players: Player[], matchHistory: Match
     externalToggleBtn = document.createElement('button');
     externalToggleBtn.id = 'profile-stats-toggle-btn';
     externalToggleBtn.className = 'button-secondary profile-toggle-btn';
-    externalToggleBtn.textContent = section.style.display === 'none' ? 'Show Profile Stats' : 'Hide Profile Stats';
+    externalToggleBtn.textContent = section.style.display === 'none' ? t('profile.show') : t('profile.hide');
     section.parentNode?.insertBefore(externalToggleBtn, section);
     externalToggleBtn.addEventListener('click', () => {
         if (section.style.display === 'none') {
             section.style.display = '';
-            externalToggleBtn.textContent = 'Hide Profile Stats';
+            externalToggleBtn.textContent = t('profile.hide');
         } else {
             section.style.display = 'none';
-            externalToggleBtn.textContent = 'Show Profile Stats';
+            externalToggleBtn.textContent = t('profile.show');
         }
     });
 
@@ -73,7 +74,7 @@ export function renderProfileStatsSection(players: Player[], matchHistory: Match
         renderProfileStatsContent(sortedPlayers[0].id, players, matchHistory);
     } else {
         const content = document.getElementById('profile-stats-content');
-        if (content) content.innerHTML = '<p>No players.</p>';
+        if (content) content.innerHTML = `<p>${t('profile.noPlayers')}</p>`;
     }
 }
 
@@ -83,7 +84,7 @@ function renderProfileStatsContent(playerId: string, players: Player[], matchHis
 
     const player = players.find(p => p.id === playerId);
     if (!player) {
-        content.innerHTML = '<p>No player selected.</p>';
+        content.innerHTML = `<p>${t('profile.noPlayerSelected')}</p>`;
         return;
     }
 
@@ -137,21 +138,21 @@ function renderProfileStatsContent(playerId: string, players: Player[], matchHis
     // Stats (one line) with graph
     let streakHtml = '';
     if (player.currentStreakType === 'W' && player.currentStreakLength >= 2) {
-        streakHtml = `| <span class='win-streak'>Win Streak: <span title='Win Streak'>🔥${player.currentStreakLength}</span></span>`;
+        streakHtml = `| <span class='win-streak'>${t('profile.winStreak')}: <span title='${t('profile.winStreak')}'>🔥${player.currentStreakLength}</span></span>`;
     }
     if (player.currentStreakType === 'L' && player.currentStreakLength >= 2) {
-        streakHtml = `| <span class='loss-streak'>Loss Streak: <span title= Loss Streak'>🧊${player.currentStreakLength}</span></span>`;
+        streakHtml = `| <span class='loss-streak'>${t('profile.lossStreak')}: <span title='${t('profile.lossStreak')}'>🧊${player.currentStreakLength}</span></span>`;
     }
 
     let html = `
     <div class="profile-stats-header">
         <div class="profile-stats-info">
-            <span class='rank-number'>#${rank}</span> 
+            <span class='rank-number'>${t('profile.rank')}${rank}</span> 
             <strong>${player.name}</strong> &nbsp; 
-            ELO: <strong>${player.elo}</strong> &nbsp; 
-            <span class='elo-up'>Wins: <strong>${player.wins}</strong></span> | 
-            <span class='elo-down'>Losses: <strong>${player.losses}</strong></span> | 
-            Draws: <strong>${player.draws}</strong>
+            EL0: <strong>${player.elo}</strong> &nbsp; 
+            <span class='elo-up'>${t('profile.wins')}: <strong>${player.wins}</strong></span> | 
+            <span class='elo-down'>${t('profile.losses')}: <strong>${player.losses}</strong></span> | 
+            ${t('profile.draws')}: <strong>${player.draws}</strong>
             ${streakHtml}
         </div>
         <svg class="profile-elo-graph" width="${svgWidth}" height="${svgHeight}">
@@ -164,12 +165,12 @@ function renderProfileStatsContent(playerId: string, players: Player[], matchHis
         .sort((a, b) => b.timestamp - a.timestamp)
         .slice(0, 10);
     if (personalMatches.length > 0) {
-        html += '<h4>Last Battles</h4><pre style="max-height:220px;overflow:auto;padding-left:0.5em;font-size:1em;">';
+        html += `<h4>${t('profile.lastBattles')}</h4><pre style="max-height:220px;overflow:auto;padding-left:0.5em;font-size:1em;">`;
         personalMatches.forEach(match => {
             const isP1 = match.player1Id === player.id;
             const opponent = isP1 ? match.player2Name : match.player1Name;
-            const result = match.outcome === 'draw' ? 'Draw' :
-                (isP1 && match.outcome === 'p1') || (!isP1 && match.outcome === 'p2') ? 'Win' : 'Loss';
+            const result = match.outcome === 'draw' ? t('profile.draw') :
+                (isP1 && match.outcome === 'p1') || (!isP1 && match.outcome === 'p2') ? t('profile.win') : t('profile.loss');
             const eloChange = isP1 ? match.player1EloChange : match.player2EloChange;
             const eloStr = (eloChange && eloChange > 0 ? '+' : '') + (eloChange || 0);
             // Odds calculation using centralized scoring
@@ -177,8 +178,8 @@ function renderProfileStatsContent(playerId: string, players: Player[], matchHis
             const odds = isP1 ? expectedScore : 1 - expectedScore;
             const oddsPercent = Math.round(odds * 100);
             // Odds comment
-            let oddsComment = `odds: ${oddsPercent}%`;
-            if (result === 'Win' && odds < 0.5) oddsComment += ' — Beat the odds!';
+            let oddsComment = `${t('profile.odds')}: ${oddsPercent}%`;
+            if (result === t('profile.win') && odds < 0.5) oddsComment += ` — ${t('profile.beatTheOdds')}`;
             // Date formatting (DD/MM HH:MM:SS)
             const d = new Date(match.timestamp);
             const day = String(d.getDate()).padStart(2, '0');
@@ -190,15 +191,15 @@ function renderProfileStatsContent(playerId: string, players: Player[], matchHis
             // Color classes
             let resultClass = '';
             let eloClass = '';
-            if (result === 'Win') resultClass = 'elo-up';
-            else if (result === 'Loss') resultClass = 'elo-down';
+            if (result === t('profile.win')) resultClass = 'elo-up';
+            else if (result === t('profile.loss')) resultClass = 'elo-down';
             if (eloChange && eloChange > 0) eloClass = 'elo-up';
             else if (eloChange && eloChange < 0) eloClass = 'elo-down';
-            html += `vs. ${opponent.padEnd(12)}\t— <span class="${resultClass}">${result.padEnd(4)}</span>\t(<span class="elo-change ${eloClass}">${eloStr}</span>)\t${dateStr}\t${oddsComment}\n`;
+            html += `${t('profile.vs')} ${opponent.padEnd(12)}\t— <span class="${resultClass}">${result.padEnd(4)}</span>\t(<span class="elo-change ${eloClass}">${eloStr}</span>)\t${dateStr}\t${oddsComment}\n`;
         });
         html += '</pre>';
     } else {
-        html += '<p style="color:#aaa;">No battles yet.</p>';
+        html += `<p style="color:#aaa;">${t('profile.noBattles')}</p>`;
     }
     content.innerHTML = html;
 }

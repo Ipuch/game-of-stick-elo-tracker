@@ -22,6 +22,9 @@
 <body>
   <div id="game-menu" class="game-menu">
     <div class="game-menu-content">
+      <div class="menu-header">
+        <button class="locale-toggle" id="menu-locale-toggle" title="Toggle language">🇫🇷</button>
+      </div>
       <img src="Logo-west-coast-academy02.png" alt="Logo" class="menu-logo" />
       <h1 class="game-menu-title compact-title">Game of S.T.I.C.K.</h1>
 
@@ -30,28 +33,28 @@
           <div id="library-header-compact" class="library-header-compact"></div>
           <div id="aggregated-stats-area" class="aggregated-stats-area"></div>
 
-          <h2 class="section-title-small">Previous Games</h2>
+          <h2 class="section-title-small" data-i18n="menu.previousGames">Previous Games</h2>
           <div id="session-list" class="session-list">
             <!-- Sessions inserted here -->
           </div>
         </div>
 
         <div class="new-session-container">
-          <h2 class="section-title-small">New Game</h2>
+          <h2 class="section-title-small" data-i18n="menu.newGame">New Game</h2>
           <form id="new-session-form">
             <div class="form-group">
-              <label for="new-session-name">Operation Name</label>
+              <label for="new-session-name" data-i18n="menu.operationName">Operation Name</label>
               <input type="text" id="new-session-name" required placeholder="e.g. Tournament 2025" />
             </div>
             <div class="form-group">
-              <label for="new-session-k">K-Factor</label>
+              <label for="new-session-k" data-i18n="menu.kFactor">K-Factor</label>
               <input type="number" id="new-session-k" value="60" min="1" required />
             </div>
-            <button type="submit" class="button-primary">Initialize System</button>
+            <button type="submit" class="button-primary" data-i18n="menu.initializeSystem">Initialize System</button>
           </form>
         </div>
       </div>
-      <p class="dev-credit-menu">crafted by Pierre Puchaud</p>
+      <p class="dev-credit-menu" data-i18n="menu.craftedBy">crafted by Pierre Puchaud</p>
     </div>
   </div>
 
@@ -77,13 +80,14 @@
           </div>
         </div>
         <nav class="app-nav">
-          <button class="nav-btn active" data-view="view-dashboard">Leaderboard</button>
-          <button class="nav-btn" data-view="view-arena">Arena</button>
-          <button class="nav-btn" data-view="view-roster">Roster</button>
-          <button class="nav-btn" data-view="view-stats">Stats</button>
-          <button class="nav-btn" data-view="view-settings">Settings</button>
-          <button class="nav-btn" id="nav-save-btn">Save</button>
-          <button class="nav-btn nav-exit" id="nav-exit-btn">Exit</button>
+          <button class="locale-toggle" id="header-locale-toggle" title="Toggle language">🇫🇷</button>
+          <button class="nav-btn active" data-view="view-dashboard" data-i18n="nav.leaderboard">Leaderboard</button>
+          <button class="nav-btn" data-view="view-arena" data-i18n="nav.arena">Arena</button>
+          <button class="nav-btn" data-view="view-roster" data-i18n="nav.roster">Roster</button>
+          <button class="nav-btn" data-view="view-stats" data-i18n="nav.stats">Stats</button>
+          <button class="nav-btn" data-view="view-settings" data-i18n="nav.settings">Settings</button>
+          <button class="nav-btn" id="nav-save-btn" data-i18n="nav.save">Save</button>
+          <button class="nav-btn nav-exit" id="nav-exit-btn" data-i18n="nav.exit">Exit</button>
         </nav>
       </div>
     </header>
@@ -93,19 +97,20 @@
       <section class="leaderboard-section">
         <div id="podium-container" class="podium-container"></div>
         <div id="update-leaderboard-container">
-          <button id="update-leaderboard-btn" class="button-primary">Update Leaderboard</button>
+          <button id="update-leaderboard-btn" class="button-primary" data-i18n="leaderboard.updateBtn">Update
+            Leaderboard</button>
         </div>
         <div class="table-container">
           <table>
             <thead>
               <tr>
-                <th>#</th>
-                <th>Player</th>
-                <th>ELO</th>
-                <th>W</th>
-                <th>L</th>
-                <th>D</th>
-                <th>Total Battles</th>
+                <th data-i18n="leaderboard.rank">#</th>
+                <th data-i18n="leaderboard.player">Player</th>
+                <th data-i18n="leaderboard.elo">ELO</th>
+                <th data-i18n="leaderboard.wins">W</th>
+                <th data-i18n="leaderboard.losses">L</th>
+                <th data-i18n="leaderboard.draws">D</th>
+                <th data-i18n="leaderboard.battles">Total Battles</th>
               </tr>
             </thead>
             <tbody id="leaderboard-body"></tbody>
@@ -124,23 +129,26 @@
             <div class="rule-card rule-agreement">
               <div class="rule-icon">🤝</div>
               <div class="rule-content">
-                <h3>Mutual Agreement</h3>
-                <p>Both players must agree on the challenge before attempting it.</p>
+                <h3 data-i18n="arena.mutualAgreement">Mutual Agreement</h3>
+                <p data-i18n="arena.mutualAgreementDesc">Both players must agree on the challenge before attempting it.
+                </p>
               </div>
             </div>
             <div class="rule-card rule-win">
               <div class="rule-icon">🏆</div>
               <div class="rule-content">
-                <h3>Victory</h3>
-                <p>First to succeed the challenge wins — whether it's a parkour run or a combo ending with a S.T.I.C.K.
+                <h3 data-i18n="arena.victory">Victory</h3>
+                <p data-i18n="arena.victoryDesc">First to succeed the challenge wins — whether it's a parkour run or a
+                  combo ending with a S.T.I.C.K.
                 </p>
               </div>
             </div>
             <div class="rule-card rule-draw">
               <div class="rule-icon">⚖️</div>
               <div class="rule-content">
-                <h3>A draw</h3>
-                <p>A draw is declared when both players have given an equal number of attempts to complete the
+                <h3 data-i18n="arena.drawRule">A draw</h3>
+                <p data-i18n="arena.drawRuleDesc">A draw is declared when both players have given an equal number of
+                  attempts to complete the
                   challenge.
                 </p>
               </div>
@@ -149,47 +157,47 @@
         </section>
 
         <section class="panel" aria-labelledby="match-heading">
-          <h2 id="match-heading">Record Match</h2>
+          <h2 id="match-heading" data-i18n="arena.title">Record Match</h2>
           <form id="record-match-form">
             <div class="form-group autocomplete-container">
-              <label for="player1-input">Player 1</label>
-              <input type="text" id="player1-input" name="player1Name" autocomplete="off" placeholder="Search..."
+              <label for="player1-input" data-i18n="arena.player1">Player 1</label>
+              <input type="text" id="player1-input" name="player1Name" autocomplete="off" data-i18n="common.search"
                 required>
               <input type="hidden" id="player1-id" name="player1">
               <div class="suggestions-list" id="player1-suggestions"></div>
             </div>
             <div class="form-group autocomplete-container">
-              <label for="player2-input">Player 2</label>
-              <input type="text" id="player2-input" name="player2Name" autocomplete="off" placeholder="Search..."
+              <label for="player2-input" data-i18n="arena.player2">Player 2</label>
+              <input type="text" id="player2-input" name="player2Name" autocomplete="off" data-i18n="common.search"
                 required>
               <input type="hidden" id="player2-id" name="player2">
               <div class="suggestions-list" id="player2-suggestions"></div>
             </div>
             <fieldset class="form-group">
-              <legend>Outcome</legend>
+              <legend data-i18n="arena.outcome">Outcome</legend>
               <div class="radio-group">
                 <div class="radio-option">
                   <input type="radio" id="winner-p1" name="winner" value="p1" required>
-                  <label for="winner-p1" id="winner-p1-label">Player 1 Wins</label>
+                  <label for="winner-p1" id="winner-p1-label" data-i18n="arena.p1Wins">Player 1 Wins</label>
                 </div>
                 <div class="radio-option">
                   <input type="radio" id="winner-draw" name="winner" value="draw">
-                  <label for="winner-draw">A draw</label>
+                  <label for="winner-draw" data-i18n="arena.draw">A draw</label>
                 </div>
                 <div class="radio-option">
                   <input type="radio" id="winner-p2" name="winner" value="p2">
-                  <label for="winner-p2" id="winner-p2-label">Player 2 Wins</label>
+                  <label for="winner-p2" id="winner-p2-label" data-i18n="arena.p2Wins">Player 2 Wins</label>
                 </div>
               </div>
             </fieldset>
             <p id="match-error" class="error-message"></p>
-            <button type="submit" class="button-primary">Submit Result</button>
+            <button type="submit" class="button-primary" data-i18n="arena.submit">Submit Result</button>
           </form>
         </section>
 
         <!-- Remaining Opponents Card -->
         <section id="remaining-opponents-card" class="panel remaining-opponents-panel" hidden>
-          <h3>Remaining Opponents</h3>
+          <h3 data-i18n="arena.remainingOpponents">Remaining Opponents</h3>
           <div class="opponent-columns">
             <div class="opponent-column" id="p1-opponents-col">
               <h4 id="p1-opponents-header">Player 1</h4>
@@ -208,29 +216,34 @@
     <div id="view-roster" class="view">
       <div class="panel-container-center">
         <section class="panel" aria-labelledby="player-heading">
-          <h2 id="player-heading">Add New Player</h2>
+          <h2 id="player-heading" data-i18n="roster.title">Add New Player</h2>
           <form id="add-player-form">
             <div class="form-group">
-              <label for="new-player-name">Player Name</label>
+              <label for="new-player-name" data-i18n="roster.playerName">Player Name</label>
               <input type="text" id="new-player-name" name="playerName" required minlength="2"
                 placeholder="e.g., Flowmaster" />
             </div>
             <div class="form-group">
-              <label for="new-player-birthdate">Birth Date <span class="optional-label">(optional)</span></label>
+              <label for="new-player-birthdate">
+                <span data-i18n="roster.birthDate">Birth Date</span>
+                <span class="optional-label" data-i18n="roster.optional">(optional)</span>
+              </label>
               <input type="date" id="new-player-birthdate" name="birthDate" />
             </div>
             <p id="add-player-error" class="error-message"></p>
-            <button type="submit" class="button-primary">Add Player</button>
+            <button type="submit" class="button-primary" data-i18n="roster.addPlayer">Add Player</button>
             <div class="player-actions">
-              <button id="export-players-btn" class="button-secondary">Export Players (.csv)</button>
+              <button id="export-players-btn" class="button-secondary" data-i18n="roster.exportPlayers">Export Players
+                (.csv)</button>
               <div class="import-group">
-                <label for="import-players-file" class="button-secondary">Import Players (.csv)</label>
+                <label for="import-players-file" class="button-secondary" data-i18n="roster.importPlayers">Import
+                  Players (.csv)</label>
                 <input type="file" id="import-players-file" accept=".csv" hidden>
               </div>
             </div>
           </form>
           <div id="roster-list-container" class="roster-list-container">
-            <h3>Current Roster</h3>
+            <h3 data-i18n="roster.currentRoster">Current Roster</h3>
             <div id="roster-list" class="roster-list">
               <!-- Player chips will go here -->
             </div>
@@ -243,13 +256,14 @@
     <div id="view-stats" class="view">
       <!-- PDF Export at top -->
       <div class="stats-actions" style="margin-bottom: 20px;">
-        <button id="export-pdf-btn" class="button-secondary">📄 Export PDF Stats</button>
-        <button id="export-instagram-btn" class="button-secondary">📱 Export Instagram Stories</button>
+        <button id="export-pdf-btn" class="button-secondary" data-i18n="stats.exportPdf">📄 Export PDF Stats</button>
+        <button id="export-instagram-btn" class="button-secondary" data-i18n="stats.exportInstagram">📱 Export Instagram
+          Stories</button>
       </div>
 
       <!-- ELO Evolution Chart -->
       <section id="elo-evolution-section" class="panel">
-        <h2>📈 ELO Evolution</h2>
+        <h2 data-i18n="stats.eloEvolution">📈 ELO Evolution</h2>
         <div id="elo-evolution-chart"></div>
       </section>
 
@@ -260,7 +274,7 @@
 
       <section class="battle-history-section">
         <div class="battle-history-header">
-          <h2>Battle History</h2>
+          <h2 data-i18n="stats.battleHistory">Battle History</h2>
           <div class="battle-actions">
             <div id="battle-history-list"></div>
           </div>
@@ -271,19 +285,31 @@
     <div id="view-settings" class="view">
       <div class="panel-container-center">
         <section class="panel" aria-labelledby="settings-heading">
-          <h2 id="settings-heading">System Configuration</h2>
+          <h2 id="settings-heading" data-i18n="settings.title">System Configuration</h2>
           <form id="settings-form">
             <div class="form-group">
-              <label for="k-factor-input">K-Factor</label>
+              <label for="k-factor-input" data-i18n="settings.kFactor">K-Factor</label>
               <input type="number" id="k-factor-input" name="kFactor" min="1" step="1" required>
-              <p class="form-hint">Determines ELO change. Default: 60.</p>
+              <p class="form-hint" data-i18n="settings.kFactorHint">Determines ELO change. Default: 60.</p>
             </div>
           </form>
+
+          <div class="settings-section">
+            <h3 data-i18n="settings.language">Language</h3>
+            <div class="language-toggle-container">
+              <button class="locale-toggle locale-toggle-large" id="settings-locale-toggle"
+                title="Toggle language">🇫🇷</button>
+              <span class="language-hint">Français / English</span>
+            </div>
+          </div>
+
           <div class="settings-actions">
             <hr class="settings-divider">
-            <h3>Danger Zone</h3>
-            <button id="clear-history-btn" class="button-danger">Clear Match History</button>
-            <button id="clear-players-btn" class="button-danger">Clear All Data</button>
+            <h3 data-i18n="settings.dangerZone">Danger Zone</h3>
+            <button id="clear-history-btn" class="button-danger" data-i18n="settings.clearHistory">Clear Match
+              History</button>
+            <button id="clear-players-btn" class="button-danger" data-i18n="settings.clearPlayers">Clear All
+              Data</button>
           </div>
         </section>
       </div>

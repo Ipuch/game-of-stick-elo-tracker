@@ -7,6 +7,7 @@
 
 import { getLastLibraryName } from '../utils/localStoragePersistence';
 import { EXAMPLE_GAME_NAME } from '../utils/exampleGameData';
+import { t } from '../utils/i18n';
 
 export type MenuCallbacks = {
     onOpenLibrary: () => void;
@@ -51,7 +52,7 @@ export function renderGameMenu(
     openFolderBtn.style.width = '100%';
     openFolderBtn.style.fontSize = '1.1rem';
     openFolderBtn.style.padding = '1rem';
-    openFolderBtn.textContent = '📂 Load Saved Games';
+    openFolderBtn.textContent = t('menu.loadSavedGames');
     openFolderBtn.onclick = callbacks.onOpenLibrary;
 
     openFolderBtnContainer.appendChild(openFolderBtn);
@@ -62,7 +63,7 @@ export function renderGameMenu(
         hint.className = 'form-hint';
         hint.style.textAlign = 'center';
         hint.style.marginTop = '0.5rem';
-        hint.innerHTML = `Last used: <strong>${lastLibraryName}</strong>`;
+        hint.innerHTML = `${t('menu.lastUsed')}: <strong>${lastLibraryName}</strong>`;
         openFolderBtnContainer.appendChild(hint);
     }
 
@@ -77,12 +78,12 @@ export function renderGameMenu(
     exampleCard.className = 'session-item session-item-detailed';
     exampleCard.innerHTML = `
         <div class="session-main-info">
-            <span class="session-name">🎮 ${EXAMPLE_GAME_NAME} (Demo)</span>
-            <span class="session-date-badge">Demo</span>
+            <span class="session-name">🎮 ${EXAMPLE_GAME_NAME} (${t('menu.demo')})</span>
+            <span class="session-date-badge">${t('menu.demo')}</span>
         </div>
         <div class="session-details">
-            <span title="Players">👥 4</span>
-            <span title="Battles">⚔️ 6</span>
+            <span title="${t('aggregated.players')}">👥 4</span>
+            <span title="${t('aggregated.matches')}">⚔️ 6</span>
         </div>
     `;
     exampleCard.onclick = callbacks.onLoadExample;

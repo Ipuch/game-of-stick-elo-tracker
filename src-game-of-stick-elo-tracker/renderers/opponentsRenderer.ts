@@ -8,6 +8,7 @@
 import { Player, Match } from '../types/appTypes';
 import { AppDOMElements } from '../utils/domElements';
 import { getRemainingOpponents } from '../utils/opponentTracker';
+import { t } from '../utils/i18n';
 
 /**
  * Render the opponent list for a single player
@@ -70,7 +71,8 @@ export function renderRemainingOpponents(
     // Render Player 1 opponents
     if (p1Id) {
         const p1 = storePlayers.find(p => p.id === p1Id);
-        p1Header.textContent = `${p1?.name || 'Player 1'} (Round ${getRemainingOpponents(p1Id, storePlayers, storeMatchHistory).round})`;
+        const p1Round = getRemainingOpponents(p1Id, storePlayers, storeMatchHistory).round;
+        p1Header.textContent = `${p1?.name || t('arena.player1')} (${t('arena.round', p1Round.toString())})`;
         renderOpponentList(p1Id, p1List, p2Id, storePlayers, storeMatchHistory);
         p1Col.style.display = 'block';
     } else {
@@ -80,7 +82,8 @@ export function renderRemainingOpponents(
     // Render Player 2 opponents
     if (p2Id) {
         const p2 = storePlayers.find(p => p.id === p2Id);
-        p2Header.textContent = `${p2?.name || 'Player 2'} (Round ${getRemainingOpponents(p2Id, storePlayers, storeMatchHistory).round})`;
+        const p2Round = getRemainingOpponents(p2Id, storePlayers, storeMatchHistory).round;
+        p2Header.textContent = `${p2?.name || t('arena.player2')} (${t('arena.round', p2Round.toString())})`;
         renderOpponentList(p2Id, p2List, p1Id, storePlayers, storeMatchHistory);
         p2Col.style.display = 'block';
     } else {

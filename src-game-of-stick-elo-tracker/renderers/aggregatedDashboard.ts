@@ -13,6 +13,7 @@ import { showNotification } from '../ui/notificationSystem';
 import { ChartData, buildChartData, getPlayerColor } from '../utils/chartUtils';
 import { showFullscreenChart, hideFullscreenChart } from './eloEvolutionChartEcharts';
 import { calculateWinRate } from '../utils/statsUtils';
+import { t } from '../utils/i18n';
 
 export type AggregatedDashboardCallbacks = {
     onBack: () => void;
@@ -44,7 +45,7 @@ export async function renderAggregatedDashboard(
     container.innerHTML = `
         <div class="aggregated-loading">
             <div class="loading-spinner"></div>
-            <p>Loading stats from all games...</p>
+            <p>${t('aggregated.loading')}</p>
         </div>
     `;
     container.style.display = 'block';
@@ -74,9 +75,9 @@ export async function renderAggregatedDashboard(
         showNotification('Failed to load aggregated stats', 'error');
         container.innerHTML = `
             <div class="aggregated-error">
-                <h2>❌ Error Loading Stats</h2>
-                <p>Could not load stats from games.</p>
-                <button class="button-secondary" id="agg-back-btn">← Back to Library</button>
+                <h2>${t('aggregated.errorLoading')}</h2>
+                <p>${t('aggregated.errorMsg')}</p>
+                <button class="button-secondary" id="agg-back-btn">${t('aggregated.backToLibrary')}</button>
             </div>
         `;
         document.getElementById('agg-back-btn')?.addEventListener('click', callbacks.onBack);
@@ -100,19 +101,19 @@ function renderDashboardContent(
 
     container.innerHTML = `
         <div class="aggregated-header">
-            <button class="button-secondary agg-back-btn" id="agg-back-btn">← Back to Library</button>
-            <h1>📊 Aggregated Stats</h1>
+            <button class="button-secondary agg-back-btn" id="agg-back-btn">${t('aggregated.backToLibrary')}</button>
+            <h1>${t('aggregated.title')}</h1>
             <div class="agg-subtitle">
-                ${totalGames} game${totalGames !== 1 ? 's' : ''} • ${totalMatches} match${totalMatches !== 1 ? 'es' : ''} • ${players.length} player${players.length !== 1 ? 's' : ''}
+                ${totalGames} ${t('aggregated.games')} • ${totalMatches} ${t('aggregated.matches')} • ${players.length} ${t('aggregated.players')}
             </div>
         </div>
 
         <div class="agg-filters">
             <div class="filter-group" style="display: flex; align-items: center; gap: 1rem;">
-                <label style="color: var(--text-muted); font-family: 'Orbitron', sans-serif; font-size: 0.85rem; letter-spacing: 1px;" class="filter-label">⏱️ TIME PERIOD</label>
+                <label style="color: var(--text-muted); font-family: 'Orbitron', sans-serif; font-size: 0.85rem; letter-spacing: 1px;" class="filter-label">${t('aggregated.timePeriod')}</label>
                 <div class="period-selector-container" id="period-selector-container">
                     <div class="period-select-trigger" id="period-select-trigger">
-                        <span>${currentSegment?.label || 'Select Period'}</span>
+                        <span>${currentSegment?.label || t('aggregated.selectPeriod')}</span>
                         <span class="arrow">▼</span>
                     </div>
                     <div class="period-options-list" id="period-options-list">
@@ -140,7 +141,7 @@ function renderDashboardContent(
                     K = 60
                 </span>
                 <span class="kfactor-hint">
-                    ⓘ League standard K-factor is used for all aggregated ELO calculations, regardless of individual game settings.
+                    ${t('aggregated.kFactorHint')}
                 </span>
             </div>
         </div>
@@ -183,14 +184,14 @@ function renderDashboardContent(
         </style>
 
         <div class="agg-actions">
-            <button class="button-secondary" id="agg-export-pdf">📄 Export PDF</button>
-            <button class="button-secondary" id="agg-export-instagram">📱 Export Instagram Stories</button>
+            <button class="button-secondary" id="agg-export-pdf">${t('aggregated.exportPdf')}</button>
+            <button class="button-secondary" id="agg-export-instagram">${t('aggregated.exportInstagram')}</button>
         </div>
 
         ${players.length === 0 ? `
             <div class="agg-empty">
-                <p>No matches found in this time range.</p>
-                <p class="text-muted">Try selecting a different period.</p>
+                <p>${t('aggregated.noMatchesRange')}</p>
+                <p class="text-muted">${t('aggregated.tryDifferentPeriod')}</p>
             </div>
         ` : `
             <!-- Collapsible Sections -->
@@ -198,7 +199,7 @@ function renderDashboardContent(
                 <!-- Leaderboard Section -->
                 <div class="agg-section ${expandedSections.has('leaderboard') ? 'expanded' : ''}" data-section="leaderboard">
                     <div class="agg-section-header">
-                        <h2>🏆 Leaderboard</h2>
+                        <h2>${t('aggregated.leaderboard')}</h2>
                         <span class="toggle-icon">${expandedSections.has('leaderboard') ? '▼' : '▶'}</span>
                     </div>
                     <div class="agg-section-content">
@@ -209,7 +210,7 @@ function renderDashboardContent(
                 <!-- ELO Evolution Chart Section -->
                 <div class="agg-section ${expandedSections.has('chart') ? 'expanded' : ''}" data-section="chart">
                     <div class="agg-section-header">
-                        <h2>📈 ELO Evolution</h2>
+                        <h2>${t('aggregated.eloEvolution')}</h2>
                         <span class="toggle-icon">${expandedSections.has('chart') ? '▼' : '▶'}</span>
                     </div>
                     <div class="agg-section-content">
@@ -230,7 +231,7 @@ function renderDashboardContent(
                 <!-- Player Profiles Section -->
                 <div class="agg-section ${expandedSections.has('profiles') ? 'expanded' : ''}" data-section="profiles">
                     <div class="agg-section-header">
-                        <h2>👥 Player Profiles</h2>
+                        <h2>${t('aggregated.profiles')}</h2>
                         <span class="toggle-icon">${expandedSections.has('profiles') ? '▼' : '▶'}</span>
                     </div>
                     <div class="agg-section-content">
@@ -241,7 +242,7 @@ function renderDashboardContent(
                 <!-- Match History Section -->
                 <div class="agg-section ${expandedSections.has('history') ? 'expanded' : ''}" data-section="history">
                     <div class="agg-section-header">
-                        <h2>⚔️ Match History</h2>
+                        <h2>${t('aggregated.matchHistory')}</h2>
                         <span class="toggle-icon">${expandedSections.has('history') ? '▼' : '▶'}</span>
                     </div>
                     <div class="agg-section-content">
@@ -251,7 +252,7 @@ function renderDashboardContent(
             </div>
 
             <div class="agg-game-list">
-                <h3>Games Included</h3>
+                <h3>${t('aggregated.gamesIncluded')}</h3>
                 <div class="game-chips">
                     ${currentStats.gameNames.map(name => `
                         <span class="game-chip">${escapeHtml(name)}</span>
@@ -337,13 +338,13 @@ function renderDashboardContent(
     // Instagram Stories Export
     document.getElementById('agg-export-instagram')?.addEventListener('click', async () => {
         if (currentStats && currentSegment) {
-            showNotification('Generating Instagram stories...');
+            showNotification(t('aggregated.generatingStories'));
             try {
                 await generateAggregatedInstagramStories(currentStats, currentSegment.label);
-                showNotification('Instagram stories exported!');
+                showNotification(t('aggregated.storiesExported'));
             } catch (e) {
                 console.error(e);
-                showNotification('Failed to export stories', 'error');
+                showNotification(t('aggregated.failedExport'), 'error');
             }
         }
     });
@@ -355,14 +356,14 @@ function renderLeaderboardTable(players: AggregatedPlayer[]): string {
             <table class="agg-leaderboard">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Player</th>
-                        <th>ELO</th>
-                        <th>W</th>
-                        <th>L</th>
-                        <th>D</th>
-                        <th>Matches</th>
-                        <th>Games</th>
+                        <th>${t('aggregated.th_rank')}</th>
+                        <th>${t('aggregated.th_player')}</th>
+                        <th>${t('aggregated.th_elo')}</th>
+                        <th>${t('aggregated.th_w')}</th>
+                        <th>${t('aggregated.th_l')}</th>
+                        <th>${t('aggregated.th_d')}</th>
+                        <th>${t('aggregated.th_matches')}</th>
+                        <th>${t('aggregated.th_games')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -573,7 +574,7 @@ function renderPlayerProfiles(players: AggregatedPlayer[], matches: Match[]): st
                         </div>
                         ${playerMatches.length > 0 ? `
                             <div class="profile-recent">
-                                <strong>Recent:</strong>
+                                <strong>${t('aggregated.recent')}</strong>
                                 ${playerMatches.map(m => {
             const isP1 = m.player1Name.toLowerCase() === player.normalizedName;
             const result = m.outcome === 'draw' ? 'D' :
@@ -604,8 +605,8 @@ function renderMatchHistory(matches: Match[]): string {
         const date = new Date(m.timestamp);
         const dateStr = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
         const gameName = (m as any).gameName || 'Unknown';
-        const resultStr = m.outcome === 'draw' ? 'Draw' :
-            m.outcome === 'p1' ? `${m.player1Name} won` : `${m.player2Name} won`;
+        const resultStr = m.outcome === 'draw' ? t('profile.draw') :
+            m.outcome === 'p1' ? `${m.player1Name} ${t('aggregated.won')}` : `${m.player2Name} ${t('aggregated.won')}`;
         const resultClass = m.outcome === 'draw' ? 'draw' : 'win';
 
         return `

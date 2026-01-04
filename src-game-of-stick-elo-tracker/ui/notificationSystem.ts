@@ -10,6 +10,8 @@ import { store } from '../state/store';
 /**
  * Show a toast notification
  */
+import { t } from '../utils/i18n';
+
 /**
  * Show a notification in the status bar (footer) only
  */
@@ -37,17 +39,20 @@ export function updateStatusBar() {
         if (store.hasUnsavedChanges) {
             statusBar.classList.remove('saved');
             statusBar.classList.add('error'); // Use helpful color for attention
-            statusText.innerHTML = `⚠ <strong>${store.folderName}</strong> has unsaved changes.`;
+            statusText.innerHTML = `⚠ <strong>${store.folderName}</strong> ${t('notifications.unsavedChanges')}`;
         } else {
             statusBar.classList.remove('saved', 'error');
             // Neutral state
-            statusText.innerHTML = `📂 Current Game: <strong>${store.folderName}</strong>`;
+            statusText.innerHTML = `📂 ${t('notifications.currentGame')}: <strong>${store.folderName}</strong>`;
         }
     } else if (store.folderName) {
         // Memory only
         statusBar.style.display = 'block';
         statusBar.classList.remove('saved');
-        statusText.innerHTML = `⚠ <strong>${store.folderName}</strong> (Not saved to folder)`;
+        // Memory only
+        statusBar.style.display = 'block';
+        statusBar.classList.remove('saved');
+        statusText.innerHTML = `⚠ <strong>${store.folderName}</strong> (${t('notifications.notSaved')})`;
     } else {
         statusBar.style.display = 'none';
     }

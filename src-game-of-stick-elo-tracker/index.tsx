@@ -27,6 +27,9 @@ import { handleExportPlayers, createImportPlayersHandler } from './handlers/impo
 import { setupSyncListener } from './services/syncService';
 import { showNotification, updateStatusBar } from './ui/notificationSystem';
 
+// i18n
+import { initI18n, toggleLocale, updateLocaleButtons, t } from './utils/i18n';
+
 // UI & Renderers
 import { handleAutocompleteInput, handleKeydown, hideSuggestions } from './ui/autocomplete';
 import { renderRosterList } from './renderers/rosterRenderer';
@@ -114,6 +117,23 @@ function persist() {
             kFactor: store.kFactor
         });
     }
+}
+
+/**
+ * Update all DOM elements with data-i18n attributes
+ */
+function updateI18nTexts(): void {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (key) {
+            const text = t(key);
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                (el as HTMLInputElement).placeholder = text;
+            } else {
+                el.textContent = text;
+            }
+        }
+    });
 }
 
 function render() {
@@ -570,6 +590,20 @@ function setupGlobalListeners() {
 
 // --- MAIN ENTRY POINT ---
 function main() {
+    // Initialize i18n first
+    initI18n();
+    updateLocaleButtons();
+    updateI18nTexts();
+
+    // Setup locale toggle buttons
+    document.querySelectorAll('.locale-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            toggleLocale();
+            updateLocaleButtons();
+            updateI18nTexts();
+        });
+    });
+
     DOMElements = queryDOMElements();
     setupGlobalListeners();
 

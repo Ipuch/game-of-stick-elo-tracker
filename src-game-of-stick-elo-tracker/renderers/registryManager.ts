@@ -11,6 +11,7 @@ import { saveRegistry } from '../utils/registryPersistence';
 import { getPlayerAge, filterByAge, normalizeAlias, createGlobalPlayer, findPlayerByName } from '../utils/registryUtils';
 import { showNotification } from '../ui/notificationSystem';
 import { listGamesInLibrary, loadGameFromSession } from '../utils/fileSystemPersistence';
+import { t } from '../utils/i18n';
 
 export type RegistryManagerCallbacks = {
     onBack: () => void;
@@ -43,26 +44,26 @@ export function renderRegistryManager(callbacks: RegistryManagerCallbacks) {
     container.innerHTML = `
         <div class="registry-manager">
             <header class="registry-header">
-                <button id="registry-back-btn" class="button-secondary">← Back to Library</button>
-                <h1>👥 Player Registry</h1>
-                <p class="registry-subtitle">${store.registry.length} players in library</p>
+                <button id="registry-back-btn" class="button-secondary">${t('aggregated.backToLibrary')}</button>
+                <h1>${t('registry.title')}</h1>
+                <p class="registry-subtitle">${store.registry.length} ${t('registry.playersInLibrary')}</p>
             </header>
 
             <div class="registry-controls">
                 <div class="age-filter-group">
-                    <label>Age Filter:</label>
+                    <label>${t('registry.ageFilter')}</label>
                     <div class="filter-buttons">
-                        <button class="filter-btn ${currentAgeFilter === 'all' ? 'active' : ''}" data-filter="all">All</button>
-                        <button class="filter-btn ${currentAgeFilter === 'kids' ? 'active' : ''}" data-filter="kids">Kids (&lt;18)</button>
-                        <button class="filter-btn ${currentAgeFilter === 'adults' ? 'active' : ''}" data-filter="adults">Adults (18+)</button>
+                        <button class="filter-btn ${currentAgeFilter === 'all' ? 'active' : ''}" data-filter="all">${t('registry.all')}</button>
+                        <button class="filter-btn ${currentAgeFilter === 'kids' ? 'active' : ''}" data-filter="kids">${t('registry.kids')}</button>
+                        <button class="filter-btn ${currentAgeFilter === 'adults' ? 'active' : ''}" data-filter="adults">${t('registry.adults')}</button>
                     </div>
                 </div>
-                <button id="bootstrap-registry-btn" class="button-primary bootstrap-btn">🔄 Import from Games</button>
+                <button id="bootstrap-registry-btn" class="button-primary bootstrap-btn">${t('registry.importFromGames')}</button>
             </div>
 
             <div class="registry-list">
                 ${filteredPlayers.length === 0
-            ? '<div class="empty-registry">No players found. Add players in a game to populate the registry.</div>'
+            ? `<div class="empty-registry">${t('registry.empty')}</div>`
             : filteredPlayers.map(player => renderPlayerCard(player)).join('')
         }
             </div>
@@ -108,7 +109,7 @@ export function renderRegistryManager(callbacks: RegistryManagerCallbacks) {
 
 function renderPlayerCard(player: GlobalPlayer): string {
     const age = getPlayerAge(player);
-    const ageDisplay = age !== null ? `${age}yo` : '';
+    const ageDisplay = age !== null ? `${age}${t('registry.yo')}` : '';
     const aliasesDisplay = player.aliases
         .filter(a => normalizeAlias(a) !== normalizeAlias(player.name))
         .slice(0, 3)
@@ -118,16 +119,16 @@ function renderPlayerCard(player: GlobalPlayer): string {
         <div class="player-card ${player.status === 'INACTIVE' ? 'inactive' : ''}">
             <div class="player-main-info">
                 <span class="player-name">${player.name}</span>
-                ${player.status === 'INACTIVE' ? '<span class="status-badge inactive">Inactive</span>' : ''}
+                ${player.status === 'INACTIVE' ? `<span class="status-badge inactive">${t('registry.inactive')}</span>` : ''}
             </div>
             <div class="player-details">
                 ${ageDisplay ? `<span class="player-age">🎂 ${ageDisplay}</span>` : ''}
-                ${aliasesDisplay ? `<span class="player-aliases">aka: ${aliasesDisplay}</span>` : ''}
+                ${aliasesDisplay ? `<span class="player-aliases">${t('registry.aka')}: ${aliasesDisplay}</span>` : ''}
             </div>
             <div class="player-actions">
-                <button class="button-secondary player-edit-btn" data-id="${player.id}">✏️ Edit</button>
+                <button class="button-secondary player-edit-btn" data-id="${player.id}">${t('registry.edit')}</button>
                 <button class="button-secondary player-status-btn" data-id="${player.id}">
-                    ${player.status === 'ACTIVE' ? '🚫 Deactivate' : '✅ Activate'}
+                    ${player.status === 'ACTIVE' ? t('registry.deactivate') : t('registry.activate')}
                 </button>
             </div>
         </div>
@@ -143,9 +144,9 @@ async function togglePlayerStatus(playerId: string) {
     if (store.libraryHandle) {
         try {
             await saveRegistry(store.libraryHandle, store.registry);
-            showNotification(`${player.name} is now ${player.status.toLowerCase()}`);
+            showNotification(t('registry.statusChanged', player.name, player.status === 'ACTIVE' ? t('registry.statusActive') : t('registry.statusInactive')));
         } catch (e) {
-            showNotification('Failed to save registry', 'error');
+            showNotification(t('notifications.error'), 'error');
         }
     }
 }
@@ -159,23 +160,23 @@ function openEditModal(playerId: string, callbacks: RegistryManagerCallbacks) {
     modal.id = 'registry-edit-modal';
     modal.innerHTML = `
         <div class="registry-modal">
-            <h2>Edit Player</h2>
+            <h2>${t('registry.editPlayer')}</h2>
             <form id="edit-player-form">
                 <div class="form-group">
-                    <label for="edit-player-name">Name</label>
+                    <label for="edit-player-name">${t('registry.name')}</label>
                     <input type="text" id="edit-player-name" value="${player.name}" required />
                 </div>
                 <div class="form-group">
-                    <label for="edit-player-birthdate">Birth Date</label>
+                    <label for="edit-player-birthdate">${t('registry.birthDate')}</label>
                     <input type="date" id="edit-player-birthdate" value="${player.birthDate || ''}" />
                 </div>
                 <div class="form-group">
-                    <label for="edit-player-aliases">Aliases (comma-separated)</label>
+                    <label for="edit-player-aliases">${t('registry.aliases')}</label>
                     <input type="text" id="edit-player-aliases" value="${player.aliases.join(', ')}" />
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="button-secondary" id="cancel-edit-btn">Cancel</button>
-                    <button type="submit" class="button-primary">Save Changes</button>
+                    <button type="button" class="button-secondary" id="cancel-edit-btn">${t('registry.cancel')}</button>
+                    <button type="submit" class="button-primary">${t('registry.saveChanges')}</button>
                 </div>
             </form>
         </div>
@@ -216,9 +217,9 @@ function openEditModal(playerId: string, callbacks: RegistryManagerCallbacks) {
         if (store.libraryHandle) {
             try {
                 await saveRegistry(store.libraryHandle, store.registry);
-                showNotification(`${player.name} updated`);
+                showNotification(t('registry.updated', player.name));
             } catch (err) {
-                showNotification('Failed to save registry', 'error');
+                showNotification(t('notifications.error'), 'error');
             }
         }
 
@@ -241,11 +242,11 @@ export function hideRegistryManager() {
  */
 async function bootstrapRegistryFromGames(callbacks: RegistryManagerCallbacks) {
     if (!store.libraryHandle) {
-        showNotification('No library loaded', 'error');
+        showNotification(t('registry.noLibrary'), 'error');
         return;
     }
 
-    showNotification('Scanning games...');
+    showNotification(t('registry.scanning'));
 
     try {
         const games = await listGamesInLibrary(store.libraryHandle);
@@ -282,12 +283,12 @@ async function bootstrapRegistryFromGames(callbacks: RegistryManagerCallbacks) {
         // Save registry
         await saveRegistry(store.libraryHandle, store.registry);
 
-        showNotification(`Imported ${importedCount} new players (${skippedCount} already existed)`, 'success');
+        showNotification(t('registry.importedMsg', importedCount.toString(), skippedCount.toString()), 'success');
         renderRegistryManager(callbacks);
 
     } catch (e) {
         console.error('Bootstrap failed:', e);
-        showNotification('Failed to import players', 'error');
+        showNotification(t('registry.importFailed'), 'error');
     }
 }
 

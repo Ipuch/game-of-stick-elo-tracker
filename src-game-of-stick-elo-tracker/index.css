@@ -138,6 +138,54 @@ body {
     justify-content: flex-end;
 }
 
+/* Locale Toggle Button */
+.locale-toggle {
+    font-size: 1.3rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    margin-right: 0.5rem;
+    line-height: 1;
+}
+
+.locale-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 12px var(--primary-glow);
+    background: rgba(0, 243, 255, 0.1);
+}
+
+/* Large locale toggle for settings */
+.locale-toggle-large {
+    font-size: 2rem;
+    padding: 0.5rem 0.8rem;
+}
+
+.language-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.language-hint {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.settings-section {
+    margin: 2rem 0;
+    padding: 1rem 0;
+    border-top: 1px solid var(--surface-border);
+}
+
+.settings-section h3 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
 .nav-btn {
     background: transparent;
     border: 1px solid transparent;
@@ -455,6 +503,13 @@ tr:nth-child(3) .rank-number {
     max-width: 500px;
     /* Reverted to 500px */
     width: 100%;
+    position: relative;
+}
+
+.menu-header {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
 }
 
 .menu-logo {
