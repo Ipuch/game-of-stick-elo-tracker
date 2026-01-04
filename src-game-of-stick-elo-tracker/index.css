@@ -929,6 +929,186 @@ button {
     color: #fff;
 }
 
+/* --- Arena Rules Section --- */
+.arena-rules-panel {
+    background: linear-gradient(135deg, rgba(30, 35, 45, 0.8), rgba(20, 25, 35, 0.9));
+    border: 1px solid rgba(0, 243, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.arena-rules-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.arena-rules-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.rule-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.rule-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.rule-card:hover {
+    transform: translateX(8px);
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.rule-card:hover::after {
+    width: 6px;
+}
+
+/* Rule-specific colors */
+.rule-agreement::after {
+    background: linear-gradient(180deg, var(--primary-color), #00b8cc);
+}
+
+.rule-agreement:hover {
+    box-shadow: 0 4px 20px rgba(0, 243, 255, 0.15);
+}
+
+.rule-win::after {
+    background: linear-gradient(180deg, var(--gold-color), #cc9900);
+}
+
+.rule-win:hover {
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.15);
+}
+
+.rule-draw::after {
+    background: linear-gradient(180deg, var(--secondary-color), #8a0fc0);
+}
+
+.rule-draw:hover {
+    box-shadow: 0 4px 20px rgba(188, 19, 254, 0.15);
+}
+
+.rule-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.rule-card:hover .rule-icon {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+.rule-agreement:hover .rule-icon {
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+}
+
+.rule-win:hover .rule-icon {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.rule-draw:hover .rule-icon {
+    box-shadow: 0 0 20px rgba(188, 19, 254, 0.3);
+}
+
+.rule-content {
+    flex: 1;
+}
+
+.rule-content h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.rule-agreement .rule-content h3 {
+    color: var(--primary-color);
+}
+
+.rule-win .rule-content h3 {
+    color: var(--gold-color);
+}
+
+.rule-draw .rule-content h3 {
+    color: var(--secondary-color);
+}
+
+.rule-content p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Mobile responsiveness for rules */
+@media (max-width: 480px) {
+    .rule-card {
+        padding: 1rem;
+    }
+
+    .rule-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.5rem;
+    }
+
+    .rule-content h3 {
+        font-size: 0.9rem;
+    }
+
+    .rule-content p {
+        font-size: 0.85rem;
+    }
+}
+
+
 /* --- Battle History --- */
 .battle-history-entry {
     background: rgba(0, 0, 0, 0.2);

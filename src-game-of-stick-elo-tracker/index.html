@@ -117,6 +117,37 @@
     <!-- VIEW: ARENA -->
     <div id="view-arena" class="view">
       <div class="panel-container-center">
+        <!-- Arena Rules Section -->
+        <section class="panel arena-rules-panel" aria-labelledby="rules-heading">
+          <h2 id="rules-heading">⚔️ Challenge Rules</h2>
+          <div class="arena-rules-container">
+            <div class="rule-card rule-agreement">
+              <div class="rule-icon">🤝</div>
+              <div class="rule-content">
+                <h3>Mutual Agreement</h3>
+                <p>Both players must agree on the challenge before attempting it.</p>
+              </div>
+            </div>
+            <div class="rule-card rule-win">
+              <div class="rule-icon">🏆</div>
+              <div class="rule-content">
+                <h3>Victory</h3>
+                <p>First to succeed the challenge wins — whether it's a parkour run or a combo ending with a S.T.I.C.K.
+                </p>
+              </div>
+            </div>
+            <div class="rule-card rule-draw">
+              <div class="rule-icon">⚖️</div>
+              <div class="rule-content">
+                <h3>A draw</h3>
+                <p>A draw is declared when both players have given an equal number of attempts to complete the
+                  challenge.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="panel" aria-labelledby="match-heading">
           <h2 id="match-heading">Record Match</h2>
           <form id="record-match-form">
@@ -143,7 +174,7 @@
                 </div>
                 <div class="radio-option">
                   <input type="radio" id="winner-draw" name="winner" value="draw">
-                  <label for="winner-draw">Draw</label>
+                  <label for="winner-draw">A draw</label>
                 </div>
                 <div class="radio-option">
                   <input type="radio" id="winner-p2" name="winner" value="p2">
