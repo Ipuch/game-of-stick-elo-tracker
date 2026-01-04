@@ -481,9 +481,8 @@ tr:nth-child(3) .rank-number {
     height: 100vh;
     background: radial-gradient(circle at center, #0f1c2e 0%, #03080c 100%);
     display: flex;
-    justify-content: center;
-    align-items: center;
-    /* Center cleanly */
+    /* justify-content: center;  Removed to fix overflow clipping */
+    /* align-items: center;      Removed to fix overflow clipping */
     z-index: 9999;
     padding: 2rem;
     overflow-y: auto;
@@ -504,6 +503,8 @@ tr:nth-child(3) .rank-number {
     /* Reverted to 500px */
     width: 100%;
     position: relative;
+    margin: auto;
+    /* Safe centering */
 }
 
 .menu-header {
@@ -2273,17 +2274,18 @@ button {
 
 .registry-list {
     display: grid;
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 0.75rem;
 }
 
 .player-card {
     background: var(--surface-color);
     border: 1px solid var(--surface-border);
     border-radius: var(--radius-sm);
-    padding: 1.25rem;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
     transition: all 0.2s;
 }
 
@@ -2300,22 +2302,40 @@ button {
 .player-main-info {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: space-between;
+    gap: 0.5rem;
 }
 
 .player-name {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.player-identity {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    overflow: hidden;
+}
+
+.player-age-badge {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
 }
 
 .status-badge {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.5rem;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
     border-radius: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    flex-shrink: 0;
 }
 
 .status-badge.inactive {
@@ -2325,26 +2345,32 @@ button {
 
 .player-details {
     display: flex;
-    gap: 1.5rem;
-    font-size: 0.85rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
 }
 
 .player-aliases {
     font-style: italic;
     opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .player-card .player-actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
 }
 
 .player-card .player-actions button {
-    width: auto;
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+    justify-content: center;
 }
 
 .empty-registry {

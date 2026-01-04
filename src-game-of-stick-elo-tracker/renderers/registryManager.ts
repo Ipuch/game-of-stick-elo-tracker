@@ -118,11 +118,13 @@ function renderPlayerCard(player: GlobalPlayer): string {
     return `
         <div class="player-card ${player.status === 'INACTIVE' ? 'inactive' : ''}">
             <div class="player-main-info">
-                <span class="player-name">${player.name}</span>
+                <div class="player-identity">
+                    <span class="player-name">${player.name}</span>
+                    ${ageDisplay ? `<span class="player-age-badge">${ageDisplay}</span>` : ''}
+                </div>
                 ${player.status === 'INACTIVE' ? `<span class="status-badge inactive">${t('registry.inactive')}</span>` : ''}
             </div>
             <div class="player-details">
-                ${ageDisplay ? `<span class="player-age">🎂 ${ageDisplay}</span>` : ''}
                 ${aliasesDisplay ? `<span class="player-aliases">${t('registry.aka')}: ${aliasesDisplay}</span>` : ''}
             </div>
             <div class="player-actions">
