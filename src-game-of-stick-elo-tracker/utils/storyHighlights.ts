@@ -259,88 +259,98 @@ export function findMostActive(players: (Player | AggregatedPlayer)[]): StoryHig
 }
 
 /**
- * Find potential top duel (closest ELO between top 2 players)
+ * Find the most recent "Clash of Titans" (Match between Top 3 players)
  */
 export function findTopDuel(players: (Player | AggregatedPlayer)[], matches: Match[]): StoryHighlight | null {
     if (players.length < 2) return null;
 
+    // 1. Identify Top Players (e.g. Top 3)
     const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
+    const topPlayers = sortedPlayers.slice(0, 3);
+    const topPlayerIds = new Set(topPlayers.map(p => 'id' in p ? p.id : null).filter(Boolean));
+
+    // 2. Find most recent match between two Top Players
+    // Clone and reverse to iterate newest first
+    const recentMatches = [...matches].sort((a, b) => b.timestamp - a.timestamp);
+
+    let titanMatch: Match | null = null;
+
+    for (const match of recentMatches) {
+        if (topPlayerIds.has(match.player1Id) && topPlayerIds.has(match.player2Id)) {
+            titanMatch = match;
+            break;
+        }
+    }
+
+    // 3. If found, return THAT match as the highlight
+    if (titanMatch) {
+        const p1 = players.find(p => 'id' in p && p.id === titanMatch!.player1Id);
+        const p2 = players.find(p => 'id' in p && p.id === titanMatch!.player2Id);
+
+        if (p1 && p2) {
+            const firstWasPlayer1 = true; // Relative to the match object structure
+
+            // Outcome Logic
+            let winnerName = null;
+            let outcomeType = 'draw';
+            let eloGain = 0;
+            let description = '';
+
+            if (titanMatch.outcome === 'draw') {
+                description = t('match.draw');
+            } else {
+                const p1Won = titanMatch.outcome === 'p1';
+                winnerName = p1Won ? titanMatch.player1Name : titanMatch.player2Name;
+                outcomeType = 'win';
+
+                // Calculate Gain
+                if (p1Won) {
+                    eloGain = Math.abs(titanMatch.player1EloAfter - titanMatch.player1EloBefore);
+                } else {
+                    eloGain = Math.abs(titanMatch.player2EloAfter - titanMatch.player2EloBefore);
+                }
+                description = `${t('liveDisplay.lastDuel')}: ${winnerName} +${eloGain}`;
+            }
+
+            return {
+                type: 'top_duel',
+                playerName: p1.name,
+                value: titanMatch.player1EloBefore, // Initial ELO context
+                description,
+                emoji: '⚔️',
+                opponent: p2.name,
+                secondaryValue: titanMatch.player2EloBefore, // Initial ELO context
+                metadata: {
+                    p1Initial: titanMatch.player1EloBefore,
+                    p2Initial: titanMatch.player2EloBefore,
+                    winner: winnerName,
+                    outcome: outcomeType,
+                    eloGain
+                }
+            };
+        }
+    }
+
+    // 4. FALLBACK: If no recent titan match, show the #1 vs #2 Scenario (Hypothetical)
+    // Only if they are close in ELO
     const first = sortedPlayers[0];
     const second = sortedPlayers[1];
 
-    const eloDiff = first.elo - second.elo;
-
-    // Only show if the top 2 are close in ELO
-    if (eloDiff > 100) return null;
-
-    // For aggregated players, we don't have IDs to find matches
-    if (!('id' in first) || !('id' in second)) {
-        return {
-            type: 'top_duel',
-            playerName: first.name,
-            value: first.elo,
-            description: `#1 vs #2`,
-            emoji: '⚔️',
-            opponent: second.name,
-            secondaryValue: second.elo,
-        };
-    }
-
-    // Find the last match between these two players
-    const duelMatches = matches.filter(m =>
-        (m.player1Id === first.id && m.player2Id === second.id) ||
-        (m.player1Id === second.id && m.player2Id === first.id)
-    ).sort((a, b) => b.timestamp - a.timestamp);
-
-    let description = `#1 vs #2`;
-    let metadata: any = {};
-
-    if (duelMatches.length > 0) {
-        const lastMatch = duelMatches[0];
-        const firstWasPlayer1 = lastMatch.player1Id === first.id;
-
-        // Initial ELOs (Before the match)
-        const p1Initial = firstWasPlayer1 ? lastMatch.player1EloBefore : lastMatch.player2EloBefore;
-        const p2Initial = firstWasPlayer1 ? lastMatch.player2EloBefore : lastMatch.player1EloBefore;
-
-        metadata = {
-            p1Initial,
-            p2Initial,
-            winner: null
-        };
-
-        if (lastMatch.outcome === 'draw') {
-            description = t('liveDisplay.lastDuel') + ': ' + t('match.draw');
-            metadata.outcome = 'draw';
-        } else {
-            const firstWon = (firstWasPlayer1 && lastMatch.outcome === 'p1') ||
-                (!firstWasPlayer1 && lastMatch.outcome === 'p2');
-            const winner = firstWon ? first.name : second.name;
-            metadata.winner = winner;
-            metadata.outcome = 'win';
-
-            // Calculate ELO delta for the winner
-            let eloDelta = 0;
-            if (firstWasPlayer1) {
-                eloDelta = Math.abs(lastMatch.player1EloAfter - lastMatch.player1EloBefore);
-            } else {
-                eloDelta = Math.abs(lastMatch.player2EloAfter - lastMatch.player2EloBefore);
-            }
-            metadata.eloGain = eloDelta;
-
-            description = `${t('liveDisplay.lastDuel')}: ${winner} +${eloDelta}`;
-        }
-    }
+    if ((first.elo - second.elo) > 150) return null; // Not a clash if gap is huge
 
     return {
         type: 'top_duel',
         playerName: first.name,
         value: first.elo,
-        description,
+        description: `#1 vs #2`,
         emoji: '⚔️',
         opponent: second.name,
         secondaryValue: second.elo,
-        metadata
+        metadata: {
+            p1Initial: first.elo,
+            p2Initial: second.elo,
+            // No winner/outcome
+        }
     };
 }
 

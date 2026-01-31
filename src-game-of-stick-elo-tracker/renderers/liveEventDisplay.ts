@@ -109,7 +109,7 @@ export function renderLiveDisplay(
                         ${highlights.length > 0 ? renderHighlightCard(highlights[0]) : ''}
                     </div>
                     <div class="live-highlight-dots" id="live-highlight-dots">
-                        ${highlights.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}"></span>`).join('')}
+                        ${highlights.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('')}
                     </div>
                 </div>
             </div>
@@ -121,6 +121,7 @@ export function renderLiveDisplay(
 
     // Start animations
     startHighlightRotation(highlights);
+    setupDotListeners(highlights);
     startLeaderboardScroll(sortedPlayers.length);
 
     isActive = true;
@@ -255,9 +256,17 @@ function renderHighlightCard(highlight: StoryHighlight): string {
             break;
     }
 
-    if (highlight.type === 'top_duel' && highlight.metadata?.p1Initial !== undefined) {
+    if (highlight.type === 'top_duel') {
         // SPECIAL LAYOUT FOR CLASH OF TITANS
-        const { p1Initial, p2Initial, winner, outcome, eloGain } = highlight.metadata;
+        const metadata = highlight.metadata || {};
+        const p1Name = highlight.playerName;
+        const p2Name = highlight.opponent || '???';
+
+        // Use initial ELO from match if available, otherwise current ELO
+        const p1Elo = metadata.p1Initial ?? highlight.value;
+        const p2Elo = metadata.p2Initial ?? highlight.secondaryValue;
+
+        const { winner, outcome, eloGain } = metadata;
 
         let resultHtml = '';
         if (outcome === 'draw') {
@@ -270,6 +279,10 @@ function renderHighlightCard(highlight: StoryHighlight): string {
                     <span class="winner-gain">+${eloGain}</span>
                 </div>
              `;
+        } else {
+            // No match yet, or just a rivalry display
+            // Optional: Show "RIVALS" or just leave empty
+            resultHtml = `<div class="live-duel-result" style="background: transparent; border: none; font-size: 1.2rem; opacity: 0.7;">${t('liveDisplay.currentChampion')} vs #2</div>`;
         }
 
         return `
@@ -278,15 +291,15 @@ function renderHighlightCard(highlight: StoryHighlight): string {
                  
                  <div class="live-duel-versus">
                     <div class="duel-player p1">
-                        <div class="duel-name">${highlight.playerName}</div>
-                        <div class="duel-elo">${p1Initial}</div>
+                        <div class="duel-name">${p1Name}</div>
+                        <div class="duel-elo">${p1Elo}</div>
                     </div>
                     
                     <div class="duel-vs">Vs</div>
                     
                     <div class="duel-player p2">
-                        <div class="duel-name">${highlight.opponent}</div>
-                        <div class="duel-elo">${p2Initial}</div>
+                        <div class="duel-name">${p2Name}</div>
+                        <div class="duel-elo">${p2Elo}</div>
                     </div>
                  </div>
 
@@ -363,6 +376,42 @@ function stopHighlightRotation(): void {
         clearInterval(highlightRotationTimer);
         highlightRotationTimer = null;
     }
+}
+
+/**
+ * Handle manual dot navigation
+ */
+function setupDotListeners(highlights: StoryHighlight[]): void {
+    const dotsContainer = document.getElementById('live-highlight-dots');
+    if (!dotsContainer) return;
+
+    dotsContainer.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (!target.classList.contains('dot')) return;
+
+        const index = parseInt(target.getAttribute('data-index') || '0', 10);
+
+        // Update state
+        currentHighlightIndex = index;
+
+        // Reset rotation timer
+        stopHighlightRotation();
+        startHighlightRotation(highlights); // Restart timer so it doesn't auto-switch immediately
+
+        // Render immediately
+        const cardContainer = document.getElementById('live-highlight-container');
+        if (cardContainer) {
+            // No fade out for manual click, just snap
+            cardContainer.innerHTML = renderHighlightCard(highlights[currentHighlightIndex]);
+            cardContainer.style.opacity = '1';
+            cardContainer.style.transform = 'scale(1)';
+        }
+
+        // Update dots
+        dotsContainer.querySelectorAll('.dot').forEach((dot, i) => {
+            dot.classList.toggle('active', i === currentHighlightIndex);
+        });
+    });
 }
 
 // =============================================================================

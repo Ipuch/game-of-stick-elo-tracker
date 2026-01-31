@@ -3441,7 +3441,9 @@ button {
     background: var(--live-primary);
     transform: scale(1.4);
     box-shadow: 0 0 12px var(--live-primary);
-}/* Clash of Titans Card Styles */
+}
+
+/* Clash of Titans Card Styles */
 .live-highlight-card.duel-card {
     display: flex;
     flex-direction: column;
@@ -3487,37 +3489,102 @@ button {
     font-style: italic;
 }
 
-.live-duel-result {
-    font-size: 2rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 1rem;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
+
+
+/* --- Duel Card Special Layout --- */
+.live-highlight-card.duel-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.live-duel-versus {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 2rem 0;
+    width: 100%;
+}
+
+.duel-player {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    flex: 1;
+}
+
+.duel-name {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.duel-elo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.duel-vs {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--live-primary);
+    text-shadow: 0 0 15px var(--primary-glow);
+    margin: 0 0.5rem;
+}
+
+.live-duel-result {
+    margin-top: 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.live-duel-result.draw {
+    color: var(--live-text-muted);
+    font-size: 1.5rem;
+    font-style: italic;
 }
 
 .live-duel-result.win {
-    border: 1px solid var(--live-success);
-    background: rgba(0, 255, 157, 0.1);
+    color: var(--live-success);
 }
 
 .winner-name {
+    font-weight: 800;
     font-size: 2.5rem;
     color: #fff;
 }
 
 .winner-badge {
-    color: var(--live-success);
-    font-family: 'Orbitron', sans-serif;
-    letter-spacing: 2px;
+    background: var(--live-success);
+    color: #000;
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    margin: 0 0.5rem;
 }
 
 .winner-gain {
-    font-family: var(--live-font-mono);
+    font-family: 'Orbitron', sans-serif;
     color: var(--live-success);
-    font-size: 1.5rem;
+    font-weight: 700;
+    font-size: 2rem;
 }
