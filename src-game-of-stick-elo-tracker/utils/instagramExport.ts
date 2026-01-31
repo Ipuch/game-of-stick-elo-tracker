@@ -10,15 +10,15 @@ import { AggregatedPlayer, AggregatedStats } from './aggregationUtils';
 import { calculateWinRate } from './statsUtils';
 import html2canvas from 'html2canvas';
 import { t, formatDate } from './i18n';
-import { 
-    StoryHighlight, 
-    findBiggestWinStreak, 
-    findBiggestEloGain, 
-    findBiggestUpset 
+import {
+    StoryHighlight,
+    findTopWinStreaks,
+    findBiggestEloGain,
+    findBiggestUpset
 } from './storyHighlights';
 
 // Re-export for backwards compatibility
-export { findBiggestWinStreak, findBiggestEloGain, findBiggestUpset };
+export { findTopWinStreaks, findBiggestEloGain, findBiggestUpset };
 export type { StoryHighlight };
 
 // @ts-ignore - Import png to ensure bundle inclusion
@@ -845,8 +845,8 @@ export async function generateGameInstagramStories(
         }
 
         const highlights: StoryHighlight[] = [];
-        const streakHighlight = findBiggestWinStreak(sortedPlayers);
-        if (streakHighlight) highlights.push(streakHighlight);
+        const streakHighlights = findTopWinStreaks(sortedPlayers);
+        if (streakHighlights.length > 0) highlights.push(streakHighlights[0]);
         const eloGainHighlight = findBiggestEloGain(matches);
         if (eloGainHighlight) highlights.push(eloGainHighlight);
         const upsetHighlight = findBiggestUpset(matches);

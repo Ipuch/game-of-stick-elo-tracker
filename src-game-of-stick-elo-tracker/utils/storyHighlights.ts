@@ -13,7 +13,7 @@ import { t } from './i18n';
 // TYPES
 // =============================================================================
 
-export type HighlightType = 'streak' | 'elo_gain' | 'upset' | 'champion' | 'most_active' | 'top_duel';
+export type HighlightType = 'streak' | 'elo_gain' | 'upset' | 'champion' | 'most_active' | 'top_duel' | 'rank_climb';
 
 export interface StoryHighlight {
     type: HighlightType;
@@ -23,6 +23,7 @@ export interface StoryHighlight {
     emoji: string;
     opponent?: string;
     secondaryValue?: number; // For additional stats like win rate
+    metadata?: any; // Flexible field for custom card rendering
 }
 
 // =============================================================================
@@ -30,26 +31,94 @@ export interface StoryHighlight {
 // =============================================================================
 
 /**
- * Find the player with the biggest active win streak
+ * Find the top players with the biggest active win streaks
  */
-export function findBiggestWinStreak(players: (Player | AggregatedPlayer)[]): StoryHighlight | null {
+export function findTopWinStreaks(players: (Player | AggregatedPlayer)[]): StoryHighlight[] {
     const streakPlayers = players
-        .filter(p => 'currentStreakType' in p && p.currentStreakType === 'W' && p.currentStreakLength >= 2)
+        .filter(p => 'currentStreakType' in p && p.currentStreakType === 'W' && p.currentStreakLength >= 3) // Min 3 for highlight
         .sort((a, b) => {
             const aStreak = 'currentStreakLength' in a ? a.currentStreakLength : 0;
             const bStreak = 'currentStreakLength' in b ? b.currentStreakLength : 0;
             return bStreak - aStreak;
         });
 
-    if (streakPlayers.length === 0) return null;
+    if (streakPlayers.length === 0) return [];
 
+    const highlights: StoryHighlight[] = [];
+
+    // Top 1
     const top = streakPlayers[0] as Player;
-    return {
+    highlights.push({
         type: 'streak',
         playerName: top.name,
         value: top.currentStreakLength,
-        description: `${top.currentStreakLength}-win streak!`,
+        description: `${top.currentStreakLength} ${t('stories.consecutiveWins').toLowerCase()}`,
         emoji: '🔥',
+    });
+
+    // Top 2 (if exists and significant)
+    if (streakPlayers.length > 1) {
+        const second = streakPlayers[1] as Player;
+        if (second.currentStreakLength >= 3) {
+            highlights.push({
+                type: 'streak',
+                playerName: second.name,
+                value: second.currentStreakLength,
+                description: `${second.currentStreakLength} ${t('stories.consecutiveWins').toLowerCase()}`,
+                emoji: '🔥', // Same emoji or maybe '🧨'
+                metadata: { isSecond: true }
+            });
+        }
+    }
+
+    return highlights;
+}
+
+/**
+ * Find the player with the biggest rank climb
+ */
+export function findBiggestRankClimb(
+    players: (Player | AggregatedPlayer)[],
+    previousRankSnapshot?: Record<string, number>,
+    currentRankSnapshot?: Record<string, number>
+): StoryHighlight | null {
+    if (!previousRankSnapshot || !currentRankSnapshot) return null;
+
+    let bestClimb = 0;
+    let bestClimber: Player | AggregatedPlayer | null = null;
+    let oldRankVal = 0;
+    let newRankVal = 0;
+
+    players.forEach(p => {
+        // We need ID to lookup in snapshots
+        if (!('id' in p)) return;
+
+        const oldRank = previousRankSnapshot[p.id];
+        const newRank = currentRankSnapshot[p.id];
+
+        if (oldRank !== undefined && newRank !== undefined) {
+            // Climb means Rank decreased (e.g. 5 -> 2 is a climb of 3)
+            const climb = oldRank - newRank;
+            if (climb > bestClimb) {
+                bestClimb = climb;
+                bestClimber = p;
+                oldRankVal = oldRank;
+                newRankVal = newRank;
+            }
+        }
+    });
+
+    if (!bestClimber || bestClimb < 1) return null; // Min climb of 1 isn't much, let's say min 2? keep 1 for now if small pool
+
+    // Cast to access name property (we know it exists)
+    const climberName = (bestClimber as Player).name ?? (bestClimber as AggregatedPlayer).name ?? 'Unknown';
+
+    return {
+        type: 'rank_climb',
+        playerName: climberName,
+        value: bestClimb,
+        description: `#${oldRankVal} ➔ #${newRankVal}`,
+        emoji: '🚀',
     };
 }
 
@@ -218,24 +287,38 @@ export function findTopDuel(players: (Player | AggregatedPlayer)[], matches: Mat
     }
 
     // Find the last match between these two players
-    const duelMatches = matches.filter(m => 
+    const duelMatches = matches.filter(m =>
         (m.player1Id === first.id && m.player2Id === second.id) ||
         (m.player1Id === second.id && m.player2Id === first.id)
     ).sort((a, b) => b.timestamp - a.timestamp);
 
     let description = `#1 vs #2`;
+    let metadata: any = {};
 
     if (duelMatches.length > 0) {
         const lastMatch = duelMatches[0];
         const firstWasPlayer1 = lastMatch.player1Id === first.id;
-        
+
+        // Initial ELOs (Before the match)
+        const p1Initial = firstWasPlayer1 ? lastMatch.player1EloBefore : lastMatch.player2EloBefore;
+        const p2Initial = firstWasPlayer1 ? lastMatch.player2EloBefore : lastMatch.player1EloBefore;
+
+        metadata = {
+            p1Initial,
+            p2Initial,
+            winner: null
+        };
+
         if (lastMatch.outcome === 'draw') {
             description = t('liveDisplay.lastDuel') + ': ' + t('match.draw');
+            metadata.outcome = 'draw';
         } else {
-            const firstWon = (firstWasPlayer1 && lastMatch.outcome === 'p1') || 
-                           (!firstWasPlayer1 && lastMatch.outcome === 'p2');
+            const firstWon = (firstWasPlayer1 && lastMatch.outcome === 'p1') ||
+                (!firstWasPlayer1 && lastMatch.outcome === 'p2');
             const winner = firstWon ? first.name : second.name;
-            
+            metadata.winner = winner;
+            metadata.outcome = 'win';
+
             // Calculate ELO delta for the winner
             let eloDelta = 0;
             if (firstWasPlayer1) {
@@ -243,7 +326,8 @@ export function findTopDuel(players: (Player | AggregatedPlayer)[], matches: Mat
             } else {
                 eloDelta = Math.abs(lastMatch.player2EloAfter - lastMatch.player2EloBefore);
             }
-            
+            metadata.eloGain = eloDelta;
+
             description = `${t('liveDisplay.lastDuel')}: ${winner} +${eloDelta}`;
         }
     }
@@ -256,6 +340,7 @@ export function findTopDuel(players: (Player | AggregatedPlayer)[], matches: Mat
         emoji: '⚔️',
         opponent: second.name,
         secondaryValue: second.elo,
+        metadata
     };
 }
 
@@ -264,33 +349,48 @@ export function findTopDuel(players: (Player | AggregatedPlayer)[], matches: Mat
  */
 export function collectAllHighlights(
     players: (Player | AggregatedPlayer)[],
-    matches: Match[]
+    matches: Match[],
+    previousRankSnapshot?: Record<string, number>,
+    currentRankSnapshot?: Record<string, number>
 ): StoryHighlight[] {
     const highlights: StoryHighlight[] = [];
 
-    // Always try to add champion first
+    // 1. Champion
     const champion = findCurrentChampion(players);
     if (champion) highlights.push(champion);
 
-    // Add win streak if significant
-    const winStreak = findBiggestWinStreak(players);
-    if (winStreak) highlights.push(winStreak);
+    // 2. Win Streaks (Top 1 and possibly Top 2)
+    const streaks = findTopWinStreaks(players);
+    highlights.push(...streaks);
 
-    // Add biggest ELO gain
+    // 3. Biggest Rank Climb
+    const rankClimb = findBiggestRankClimb(players, previousRankSnapshot, currentRankSnapshot);
+    if (rankClimb) highlights.push(rankClimb);
+
+    // 4. Biggest ELO Gain
     const eloGain = findBiggestEloGain(matches);
     if (eloGain) highlights.push(eloGain);
 
-    // Add upset if any
+    // 5. Upset
     const upset = findBiggestUpset(matches);
     if (upset) highlights.push(upset);
 
-    // Add most active player
+    // 6. Most Active
     const mostActive = findMostActive(players);
     if (mostActive) highlights.push(mostActive);
 
-    // Add top duel if close
+    // 7. Top Duel
     const topDuel = findTopDuel(players, matches);
     if (topDuel) highlights.push(topDuel);
 
     return highlights;
+}
+
+/**
+ * Backwards compatibility wrapper for findTopWinStreaks
+ * Returns the single biggest win streak highlight (or null)
+ */
+export function findBiggestWinStreak(players: (Player | AggregatedPlayer)[]): StoryHighlight | null {
+    const streaks = findTopWinStreaks(players);
+    return streaks.length > 0 ? streaks[0] : null;
 }

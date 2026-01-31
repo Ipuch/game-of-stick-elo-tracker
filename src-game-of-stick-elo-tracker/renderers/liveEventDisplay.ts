@@ -7,10 +7,10 @@
 
 import { Player, Match } from '../types/appTypes';
 import { t } from '../utils/i18n';
-import { 
-    StoryHighlight, 
+import {
+    StoryHighlight,
     collectAllHighlights,
-    findCurrentChampion 
+    findCurrentChampion
 } from '../utils/storyHighlights';
 import { DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 
@@ -67,8 +67,8 @@ export function renderLiveDisplay(
     } else {
         sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
     }
-    
-    const highlights = collectAllHighlights(players, matches);
+
+    const highlights = collectAllHighlights(players, matches, previousRankSnapshot, currentRankSnapshot);
 
     // Ensure we have at least champion highlight
     if (highlights.length === 0) {
@@ -84,8 +84,8 @@ export function renderLiveDisplay(
                     <span class="live-game-name">${gameName}</span>
                 </div>
                 <div class="live-header-right">
-                    <button class="live-update-btn" id="live-update-btn" title="${t('leaderboard.updateLeaderboard')}">
-                        🔄 ${t('leaderboard.updateLeaderboard')}
+                    <button class="live-update-btn" id="live-update-btn" title="${t('leaderboard.updateBtn')}">
+                        🔄 ${t('leaderboard.updateBtn')}
                     </button>
                     <button class="live-exit-btn" id="live-exit-btn" title="${t('liveDisplay.exit')}">
                         ✕
@@ -120,7 +120,7 @@ export function renderLiveDisplay(
     container.dataset.highlights = JSON.stringify(highlights);
 
     // Start animations
-    startHighlightRotation(container, highlights);
+    startHighlightRotation(highlights);
     startLeaderboardScroll(sortedPlayers.length);
 
     isActive = true;
@@ -131,7 +131,7 @@ export function renderLiveDisplay(
 // =============================================================================
 
 function renderLeaderboardRows(
-    players: Player[], 
+    players: Player[],
     previousEloSnapshot: Record<string, number>,
     currentEloSnapshot?: Record<string, number>,
     previousRankSnapshot?: Record<string, number>,
@@ -145,17 +145,16 @@ function renderLeaderboardRows(
         // Use FROZEN rank from snapshot, not current sort position
         const displayedRank = currentRankSnapshot?.[player.id] ?? (index + 1);
         const previousRank = previousRankSnapshot?.[player.id];
-        const medal = getMedalEmoji(displayedRank);
-        
+
         // Calculate ELO diff: frozen diff = currentSnapshot - previousSnapshot
         const currentElo = currentEloSnapshot ? (currentEloSnapshot[player.id] ?? player.elo) : player.elo;
         const prevElo = previousEloSnapshot[player.id] ?? DEFAULT_ELO_CONFIG.initialRating;
         const eloDiff = currentElo - prevElo;
         const eloDiffHtml = eloDiff !== 0
             ? `<span class="live-elo-diff ${eloDiff > 0 ? 'elo-up' : 'elo-down'}">
-                ${eloDiff > 0 ? '▲' : '▼'} ${Math.abs(eloDiff)}
+                ${eloDiff > 0 ? '+' : '-'}${Math.abs(eloDiff)}
                </span>`
-            : '';
+            : '<span class="live-elo-diff placeholder"></span>';
 
         // Rank change indicator using frozen snapshots
         let rankChangeHtml = '';
@@ -172,33 +171,40 @@ function renderLeaderboardRows(
 
         return `
             <div class="live-leaderboard-row ${displayedRank <= 3 ? 'top-' + displayedRank : ''}">
-                <div class="live-rank">
+                <div class="live-rank-col">
                     <span class="live-rank-number">${displayedRank}</span>
-                    ${medal ? `<span class="live-medal">${medal}</span>` : ''}
-                    ${rankChangeHtml}
+                    <div class="live-rank-indicators">
+                        ${rankChangeHtml}
+                    </div>
                 </div>
-                <div class="live-player-name">${player.name}</div>
-                <div class="live-elo">
-                    <span class="live-elo-value">${player.elo}</span>
-                    ${eloDiffHtml}
+                
+                <div class="live-player-col">
+                    <div class="live-player-name">${player.name}</div>
                 </div>
-                <div class="live-stats">
-                    <span class="live-wins">${player.wins}W</span>
-                    <span class="live-losses">${player.losses}L</span>
+                
+                <div class="live-elo-col">
+                    <div class="live-elo-wrapper">
+                        <span class="live-elo-value">${player.elo}</span>
+                        ${eloDiffHtml}
+                    </div>
+                </div>
+                
+                <div class="live-stats-col">
+                    <div class="live-stat-item wins">
+                        <span class="stat-val">${player.wins}</span>
+                        <span class="stat-label">${t('leaderboard.wins')}</span>
+                    </div>
+                    <div class="live-stat-item losses">
+                        <span class="stat-val">${player.losses}</span>
+                        <span class="stat-label">${t('leaderboard.losses')}</span>
+                    </div>
                 </div>
             </div>
         `;
     }).join('');
 }
 
-function getMedalEmoji(rank: number): string {
-    switch (rank) {
-        case 1: return '🥇';
-        case 2: return '🥈';
-        case 3: return '🥉';
-        default: return '';
-    }
-}
+
 
 // =============================================================================
 // HIGHLIGHT CARD RENDERING
@@ -206,7 +212,11 @@ function getMedalEmoji(rank: number): string {
 
 function renderHighlightCard(highlight: StoryHighlight): string {
     const labels = getHighlightLabels();
-    const label = labels[highlight.type] || highlight.type;
+    let label = labels[highlight.type] || highlight.type;
+
+    if (highlight.type === 'streak' && highlight.metadata?.isSecond) {
+        label = t('stories.unstoppable2') || t('stories.unstoppable') + ' #2';
+    }
 
     let valueDisplay = '';
     let subDisplay = '';
@@ -215,6 +225,10 @@ function renderHighlightCard(highlight: StoryHighlight): string {
         case 'streak':
             valueDisplay = `${highlight.value}`;
             subDisplay = t('stories.consecutiveWins');
+            break;
+        case 'rank_climb':
+            valueDisplay = `+${highlight.value}`;
+            subDisplay = highlight.description;
             break;
         case 'elo_gain':
             valueDisplay = `+${highlight.value}`;
@@ -241,6 +255,46 @@ function renderHighlightCard(highlight: StoryHighlight): string {
             break;
     }
 
+    if (highlight.type === 'top_duel' && highlight.metadata?.p1Initial !== undefined) {
+        // SPECIAL LAYOUT FOR CLASH OF TITANS
+        const { p1Initial, p2Initial, winner, outcome, eloGain } = highlight.metadata;
+
+        let resultHtml = '';
+        if (outcome === 'draw') {
+            resultHtml = `<div class="live-duel-result draw">${t('match.draw')}</div>`;
+        } else if (winner) {
+            resultHtml = `
+                <div class="live-duel-result win">
+                    <span class="winner-name">${winner}</span>
+                    <span class="winner-badge">${t('arena.victory').toUpperCase()}</span>
+                    <span class="winner-gain">+${eloGain}</span>
+                </div>
+             `;
+        }
+
+        return `
+            <div class="live-highlight-card duel-card" data-type="${highlight.type}">
+                 <div class="live-highlight-label">${label}</div>
+                 
+                 <div class="live-duel-versus">
+                    <div class="duel-player p1">
+                        <div class="duel-name">${highlight.playerName}</div>
+                        <div class="duel-elo">${p1Initial}</div>
+                    </div>
+                    
+                    <div class="duel-vs">Vs</div>
+                    
+                    <div class="duel-player p2">
+                        <div class="duel-name">${highlight.opponent}</div>
+                        <div class="duel-elo">${p2Initial}</div>
+                    </div>
+                 </div>
+
+                 ${resultHtml}
+            </div>
+        `;
+    }
+
     return `
         <div class="live-highlight-card" data-type="${highlight.type}">
             <div class="live-highlight-emoji">${highlight.emoji}</div>
@@ -258,6 +312,7 @@ function renderHighlightCard(highlight: StoryHighlight): string {
 function getHighlightLabels(): Record<string, string> {
     return {
         streak: t('stories.unstoppable'),
+        rank_climb: t('stories.rankClimb'),
         elo_gain: t('stories.skyrocketing'),
         upset: t('stories.underdogWin'),
         champion: t('liveDisplay.currentChampion'),
@@ -270,22 +325,22 @@ function getHighlightLabels(): Record<string, string> {
 // HIGHLIGHT ROTATION
 // =============================================================================
 
-function startHighlightRotation(container: HTMLElement, highlights: StoryHighlight[]): void {
+function startHighlightRotation(highlights: StoryHighlight[]): void {
     if (highlights.length <= 1) return;
 
     stopHighlightRotation();
 
     highlightRotationTimer = window.setInterval(() => {
         currentHighlightIndex = (currentHighlightIndex + 1) % highlights.length;
-        
+
         const cardContainer = document.getElementById('live-highlight-container');
         const dotsContainer = document.getElementById('live-highlight-dots');
-        
+
         if (cardContainer) {
             // Fade out
             cardContainer.style.opacity = '0';
             cardContainer.style.transform = 'scale(0.95)';
-            
+
             setTimeout(() => {
                 cardContainer.innerHTML = renderHighlightCard(highlights[currentHighlightIndex]);
                 // Fade in
@@ -315,59 +370,74 @@ function stopHighlightRotation(): void {
 // =============================================================================
 
 function startLeaderboardScroll(playerCount: number): void {
-    if (playerCount <= CONFIG.VISIBLE_PLAYERS_THRESHOLD) return;
-
     stopLeaderboardScroll();
 
-    const container = document.getElementById('live-leaderboard-container');
-    const scrollEl = document.getElementById('live-leaderboard-scroll');
-    
-    if (!container || !scrollEl) return;
+    // Use a timeout to allow DOM to settle/render
+    setTimeout(() => {
+        const container = document.getElementById('live-leaderboard-container');
+        const scrollEl = document.getElementById('live-leaderboard-scroll');
 
-    const containerHeight = container.clientHeight;
-    const scrollHeight = scrollEl.scrollHeight;
-    const maxScroll = scrollHeight - containerHeight;
+        if (!container || !scrollEl) return;
 
-    if (maxScroll <= 0) return;
+        const containerHeight = container.clientHeight;
+        const scrollHeight = scrollEl.scrollHeight;
+        const maxScroll = scrollHeight - containerHeight;
 
-    const totalScrollDuration = (playerCount - CONFIG.VISIBLE_PLAYERS_THRESHOLD) * CONFIG.SCROLL_SECONDS_PER_ROW * 1000;
-    let startTime: number | null = null;
-    let currentScrollPos = 0;
-
-    const animate = (timestamp: number) => {
-        if (!isActive) return;
-
-        if (!startTime) startTime = timestamp;
-        const elapsed = timestamp - startTime;
-
-        if (isScrollingDown) {
-            const progress = Math.min(elapsed / totalScrollDuration, 1);
-            currentScrollPos = progress * maxScroll;
-        } else {
-            const progress = Math.min(elapsed / totalScrollDuration, 1);
-            currentScrollPos = maxScroll - (progress * maxScroll);
+        // Only scroll if there is content to scroll
+        if (maxScroll <= 0) {
+            // Reset position if no scroll needed
+            scrollEl.style.transform = `translateY(0px)`;
+            return;
         }
 
-        scrollEl.style.transform = `translateY(-${currentScrollPos}px)`;
+        // Calculate duration based on how much hidden content there is
+        // Estimate row height to keep speed consistent with config
+        const avgRowHeight = playerCount > 0 ? scrollHeight / playerCount : 60;
+        const hiddenRows = maxScroll / avgRowHeight;
 
-        if (elapsed >= totalScrollDuration) {
-            // Pause and reverse
-            scrollPauseTimeout = window.setTimeout(() => {
-                isScrollingDown = !isScrollingDown;
-                startTime = null;
-                if (isActive) {
-                    scrollAnimationId = requestAnimationFrame(animate);
-                }
-            }, CONFIG.SCROLL_PAUSE_DURATION);
-        } else {
+        // Duration: (seconds per row * hidden rows) + extra time
+        // Ensure at least a minimum duration for smoothness
+        const totalScrollDuration = Math.max(hiddenRows * CONFIG.SCROLL_SECONDS_PER_ROW * 1000, 3000);
+
+        let startTime: number | null = null;
+        let currentScrollPos = 0;
+
+        const animate = (timestamp: number) => {
+            if (!isActive) return;
+
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+
+            if (isScrollingDown) {
+                const progress = Math.min(elapsed / totalScrollDuration, 1);
+                // Ease in-out could be nice, but linear is standard for teleprompter style
+                currentScrollPos = progress * maxScroll;
+            } else {
+                const progress = Math.min(elapsed / totalScrollDuration, 1);
+                currentScrollPos = maxScroll - (progress * maxScroll);
+            }
+
+            scrollEl.style.transform = `translateY(-${currentScrollPos}px)`;
+
+            if (elapsed >= totalScrollDuration) {
+                // Pause and reverse
+                scrollPauseTimeout = window.setTimeout(() => {
+                    isScrollingDown = !isScrollingDown;
+                    startTime = null;
+                    if (isActive) {
+                        scrollAnimationId = requestAnimationFrame(animate);
+                    }
+                }, CONFIG.SCROLL_PAUSE_DURATION);
+            } else {
+                scrollAnimationId = requestAnimationFrame(animate);
+            }
+        };
+
+        // Initial pause at top
+        scrollPauseTimeout = window.setTimeout(() => {
             scrollAnimationId = requestAnimationFrame(animate);
-        }
-    };
-
-    // Initial pause at top
-    scrollPauseTimeout = window.setTimeout(() => {
-        scrollAnimationId = requestAnimationFrame(animate);
-    }, CONFIG.SCROLL_PAUSE_DURATION);
+        }, CONFIG.SCROLL_PAUSE_DURATION);
+    }, 100);
 }
 
 function stopLeaderboardScroll(): void {
@@ -402,7 +472,7 @@ export function refreshLiveDisplay(
 ): void {
     // Stop current animations
     stopLiveDisplay();
-    
+
     // Re-render with new data
     renderLiveDisplay(container, players, matches, gameName, lastLeaderboardElo);
 }
