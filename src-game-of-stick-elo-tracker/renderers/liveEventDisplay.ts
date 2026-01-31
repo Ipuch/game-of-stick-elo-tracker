@@ -76,6 +76,118 @@ export function renderLiveDisplay(
         if (champion) highlights.push(champion);
     }
 
+    // Check for existing partial update (FLIP Animation)
+    const scrollContainer = container.querySelector('#live-leaderboard-scroll') as HTMLElement | null;
+    if (scrollContainer && container.querySelector('.live-header')) {
+        // --- FLIP ANIMATION START ---
+        
+        // 0. Stop scrolling and reset to top before animation
+        stopLeaderboardScroll();
+        scrollContainer.style.transform = 'translateY(0px)';
+        isScrollingDown = true; // Reset scroll direction
+        
+        // 1. First: Capture old positions
+        const oldPositions = new Map<string, DOMRect>();
+        scrollContainer.querySelectorAll('.live-leaderboard-row').forEach(row => {
+            const id = row.getAttribute('data-id');
+            if (id) oldPositions.set(id, row.getBoundingClientRect());
+        });
+
+        // 2. Update DOM (Leaderboard rows only)
+        scrollContainer.innerHTML = renderLeaderboardRows(
+            sortedPlayers,
+            previousEloSnapshot,
+            currentEloSnapshot,
+            previousRankSnapshot,
+            currentRankSnapshot
+        );
+
+        // Update Highlights separately
+        // Note: highlights rotation logic usually handles its own timer, but we should update the data
+        container.dataset.highlights = JSON.stringify(highlights);
+
+        // If the highlights list text changed significantly, maybe refresh the card container?
+        // For now, let's just let the rotation continue or reset if needed. 
+        // User asked for leaderboard animation, so focus there.
+        // We DO need to update the dots if highlights count changed.
+        const dotsContainer = container.querySelector('#live-highlight-dots');
+        if (dotsContainer) {
+            dotsContainer.innerHTML = highlights.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('');
+        }
+
+        // 3. Last: Capture new positions and Animate
+        const newRows = Array.from(scrollContainer.querySelectorAll('.live-leaderboard-row')) as HTMLElement[];
+        const FLIP_ANIMATION_DURATION = 1500; // ms - must match CSS transition duration
+
+        newRows.forEach(newRow => {
+            const id = newRow.getAttribute('data-id');
+            if (!id) return;
+
+            const oldRect = oldPositions.get(id);
+            if (oldRect) {
+                const newRect = newRow.getBoundingClientRect();
+                const deltaY = oldRect.top - newRect.top;
+
+                // 4. Invert: Apply transform to put it back at old position
+                // We use requestAnimationFrame to ensure the browser registers the initial generic state
+
+                if (deltaY !== 0) {
+                    newRow.style.transform = `translateY(${deltaY}px)`;
+                    newRow.style.transition = 'none'; // value changes immediately
+                }
+
+                const oldRank = previousRankSnapshot?.[id] ?? 999;
+                const newRank = currentRankSnapshot?.[id] ?? 999;
+
+                // DOUBLE RAF PATTERN for robust FLIP
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        // 5. Play: Remove transform and enable transition
+                        newRow.style.transition = ''; // clear inline, revert to CSS
+                        newRow.style.transform = ''; // slide to 0
+
+                        if (newRank < oldRank) {
+                            // Climbed -> Front (they moved UP in ranking)
+                            newRow.classList.add('live-row-climb');
+                        } else if (newRank > oldRank) {
+                            // Fell -> Back (they moved DOWN in ranking)
+                            newRow.classList.add('live-row-fall');
+                        }
+
+                        // visual cleanup after animation completes
+                        setTimeout(() => {
+                            newRow.classList.remove('live-row-climb', 'live-row-fall');
+                        }, FLIP_ANIMATION_DURATION + 300);
+                    });
+                });
+            } else {
+                // New item (Fade in)
+                newRow.style.opacity = '0';
+                newRow.style.transform = 'scale(0.9)';
+
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        newRow.style.transition = 'all 1s ease';
+                        newRow.style.opacity = '1';
+                        newRow.style.transform = 'scale(1)';
+                    });
+                });
+            }
+        });
+
+        // Re-bind dots since we replaced them
+        setupDotListeners(highlights);
+
+        // 6. Restart auto-scroll AFTER FLIP animation completes
+        setTimeout(() => {
+            // Ensure isActive is true so scroll animation runs
+            isActive = true;
+            startLeaderboardScroll(sortedPlayers.length);
+        }, FLIP_ANIMATION_DURATION + 500); // Wait for FLIP to finish + buffer
+
+        return; // EXIT EARLY - Do not re-render entire container
+    }
+
     container.innerHTML = `
         <div class="live-display">
             <header class="live-header">
@@ -171,7 +283,7 @@ function renderLeaderboardRows(
         }
 
         return `
-            <div class="live-leaderboard-row ${displayedRank <= 3 ? 'top-' + displayedRank : ''}">
+            <div class="live-leaderboard-row ${displayedRank <= 3 ? 'top-' + displayedRank : ''}" data-id="${player.id}">
                 <div class="live-rank-col">
                     <span class="live-rank-number">${displayedRank}</span>
                     <div class="live-rank-indicators">

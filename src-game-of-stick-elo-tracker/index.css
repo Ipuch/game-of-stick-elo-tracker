@@ -3131,12 +3131,18 @@ button {
     padding: 1rem 2rem;
     border-radius: 12px;
     border: 1px solid transparent;
-    transition: all 0.3s ease;
+    /* Animation transition - must be here for FLIP animation to work */
+    transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+                opacity 1.5s ease,
+                filter 1.5s ease,
+                box-shadow 1.5s ease,
+                background 0.3s ease;
+    will-change: transform, opacity;
+    position: relative;
 }
 
 .live-leaderboard-row:hover {
     background: rgba(255, 255, 255, 0.08);
-    transform: translateX(8px) scale(1.01);
 }
 
 .live-leaderboard-row.top-1 {
@@ -3587,4 +3593,25 @@ button {
     color: var(--live-success);
     font-weight: 700;
     font-size: 2rem;
+}
+
+/* --- Live Leaderboard Animations (FLIP Animation) --- */
+/* NOTE: Main transition is defined in .live-leaderboard-row above */
+
+/* "Front" Effect for Rank Climbers - they POP UP */
+.live-row-climb {
+    z-index: 10 !important;
+    box-shadow: 0 10px 40px rgba(0, 255, 157, 0.4), 0 0 20px rgba(0, 255, 157, 0.2);
+    background: linear-gradient(90deg, rgba(0, 255, 157, 0.15), transparent) !important;
+    border-left: 4px solid var(--live-success) !important;
+    transform: scale(1.02);
+}
+
+/* "Back" Effect for Rank Fallers - they SINK DOWN */
+.live-row-fall {
+    z-index: 0 !important;
+    opacity: 0.6;
+    filter: brightness(0.7);
+    transform: scale(0.95);
+    box-shadow: none;
 }
