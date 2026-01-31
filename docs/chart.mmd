@@ -1,0 +1,35 @@
+flowchart TD
+
+A[🤺 Challenger] -->|🤝 Match ?| B{🤔 Adversaire Accepte ?}
+
+B -- ✅ Oui --> C[📜 Proposer un défi\navec des mouvements 🤸]
+
+B -- ❌ Non --> Z[🔍 Trouver Nouvel Adversaire]
+
+C --> D{🤷 Mouvements qui termine avec un stick OK ?}
+
+D -- ❌ Non --> C
+
+D -- ✅ Oui --> E[🚀 Essai du Challenger]
+
+E --> F{🎯 Réussi ?}
+
+F -- ✅ Oui --> G[👻 Essai de l'Adversaire]
+
+F -- ❌ Non --> H[👻 Essai de l'Adversaire]
+
+G --> I{🎯 Réussi ?}
+
+H --> J{🎯 Réussi ?}
+
+I -- ❌ Non --> L[🏆 Challenger Gagne !]
+
+J -- ✅ Oui --> M[🏆 Adversaire Gagne !]
+
+J -->|❌ Les deux ont échoué| E
+
+I -- ✅ Oui --> N{🤝 Accepter Match Nul ?}
+
+N -- ✅ Oui --> K[⚖️ Match Nul]
+
+N -->|❌ Réessayer| E

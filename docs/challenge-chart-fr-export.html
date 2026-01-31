@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau des Défis - Game of Stick</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            background: white;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #333;
+        }
+        
+        .subtitle {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .mermaid {
+            width: 100%;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .mermaid svg {
+            max-width: 100% !important;
+            max-height: 85vh !important;
+            height: auto !important;
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 5px;
+            }
+            
+            .subtitle {
+                margin-bottom: 10px;
+            }
+            
+            .mermaid svg {
+                max-height: 80vh !important;
+                width: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🤺 Tableau des Défis</h1>
+    <p class="subtitle">Diagramme de déroulement des défis - Game of Stick Elo Tracker</p>
+    
+    <div class="mermaid">
+flowchart TD
+    A[🤺 Challenger] -->|🤝 Match ?| B{🤔 Adversaire Accepte ?}
+    B -- ✅ Oui --> C[📜 Proposer un défi qui se<br/>termine par un stick 🤸]
+    B -- ❌ Non --> Z[🔍 Trouver Nouvel Adversaire]
+    C --> D{🤷 Mouvements qui termine avec<br/>un stick, les deux challengers<br/>sont d'accord entre eux}
+    D -- ❌ Non --> C
+    D -- ✅ Oui --> E[🚀 Essai du Challenger]
+    E --> F{🎯 Réussi ?}
+    F -- ✅ Oui --> G[👻 Essai de l'Adversaire]
+    F -- ❌ Non --> H[👻 Essai de l'Adversaire]
+    G --> I{🎯 Réussi ?}
+    H --> J{🎯 Réussi ?}
+    I -- ❌ Non --> L[🏆 Challenger Gagne !]
+    J -- ✅ Oui --> M[🏆 Adversaire Gagne !]
+    J -->|❌ Les deux ont échoué| E
+    I -- ✅ Oui --> N{🤝 Accepter Match Nul ?}
+    N -- ✅ Oui --> K[⚖️ Match Nul]
+    N -->|❌ Réessayer| E
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+</html>
