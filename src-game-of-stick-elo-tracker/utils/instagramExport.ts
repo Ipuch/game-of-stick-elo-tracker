@@ -1,5 +1,5 @@
 /**
- * Instagram Story Export utility for Game of S.T.I.C.K.
+ * Instagram Story Export utility for Game of STICK
  * Generates 1080x1920 (9:16) story images for Instagram
  * @author Pierre Puchaud
  * @copyright 2024 Pierre Puchaud
@@ -647,7 +647,7 @@ function generateChampionHTML(player: Player | AggregatedPlayer, gameName: strin
 
             <div class="content-layer">
                 ${logoHtml}
-                <div class="branding">Game of S.T.I.C.K.</div>
+                <div class="branding">Game of STICK</div>
                 <div class="game-name">${gameName}</div>
                 
                 <div class="glass-card champion-card">
@@ -730,7 +730,7 @@ function generatePodiumHTML(players: (Player | AggregatedPlayer)[], gameName: st
 
             <div class="content-layer">
                 ${logoHtml}
-                <div class="branding">Game of S.T.I.C.K.</div>
+                <div class="branding">Game of STICK</div>
                 <div class="game-name">${gameName}</div>
                 
                 <div class="podium-stack">
@@ -809,7 +809,7 @@ function generateHighlightsHTML(highlights: StoryHighlight[], gameName: string, 
 
             <div class="content-layer">
                 ${logoHtml}
-                <div class="branding">Game of S.T.I.C.K.</div>
+                <div class="branding">Game of STICK</div>
                 <div class="game-name">${gameName}</div>
                 
                 <div class="highlights-grid">

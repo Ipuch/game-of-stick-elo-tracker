@@ -1,5 +1,5 @@
 /**
- * Game of S.T.I.C.K. - ELO Tracker
+ * Game of STICK - ELO Tracker
  * Scoring system types and interfaces
  * @author Pierre Puchaud
  * @copyright 2024 Pierre Puchaud

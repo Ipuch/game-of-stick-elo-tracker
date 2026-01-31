@@ -1,5 +1,5 @@
 /**
- * PDF Export utility for Game of S.T.I.C.K.
+ * PDF Export utility for Game of STICK
  * Uses print-to-PDF approach for proper Unicode/emoji support
  * @author Pierre Puchaud
  * @copyright 2024 Pierre Puchaud
@@ -744,7 +744,7 @@ export function generateGamePDF(
     <style>${getPdfStyles()}</style>
 </head>
 <body>
-    ${renderPdfHeader('🏆 GAME OF S.T.I.C.K.', `${gameName} — ${dateStr}`)}
+    ${renderPdfHeader('🏆 GAME OF STICK', `${gameName} — ${dateStr}`)}
     ${renderPodium(pdfPlayers)}
     ${renderLeaderboard(pdfPlayers)}
 `;

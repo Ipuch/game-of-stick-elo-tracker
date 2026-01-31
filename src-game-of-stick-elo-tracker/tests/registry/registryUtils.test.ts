@@ -1,5 +1,5 @@
 /**
- * Game of S.T.I.C.K. - ELO Tracker
+ * Game of STICK - ELO Tracker
  * Tests for Registry Utilities
  * @author Pierre Puchaud
  * @copyright 2024 Pierre Puchaud

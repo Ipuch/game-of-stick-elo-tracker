@@ -1,5 +1,5 @@
 /**
- * Game of S.T.I.C.K. - ELO Tracker
+ * Game of STICK - ELO Tracker
  * Shared ELO Chart Utilities
  * Common types and builders for ELO evolution charts
  * @author Pierre Puchaud

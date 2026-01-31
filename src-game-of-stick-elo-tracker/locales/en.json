@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "Game of S.T.I.C.K.",
+    "title": "Game of STICK",
     "subtitle": "Parkour ELO Battle Tracker"
   },
   "nav": {
@@ -13,7 +13,7 @@
     "exit": "Exit"
   },
   "menu": {
-    "title": "Game of S.T.I.C.K.",
+    "title": "Game of STICK",
     "previousGames": "Previous Games",
     "newGame": "New Game",
     "operationName": "Game Name",
@@ -38,7 +38,7 @@
     "mutualAgreement": "Mutual Agreement",
     "mutualAgreementDesc": "Both players must agree on the challenge before attempting it.",
     "victory": "Victory",
-    "victoryDesc": "First to succeed the challenge wins — whether it's a parkour run or a combo ending with a S.T.I.C.K.",
+    "victoryDesc": "First to succeed the challenge wins — whether it's a parkour run or a combo ending with a STICK",
     "drawRule": "A draw",
     "drawRuleDesc": "A draw is declared when both players have given an equal number of attempts to complete the challenge.",
     "remainingOpponents": "Remaining Opponents",
@@ -175,7 +175,7 @@
   "rules": {
     "title": "Challenge Rules",
     "back": "Back",
-    "intro": "The Game of S.T.I.C.K. is a parkour duel where players challenge each other with moves ending in a 'stick' (clean landing).",
+    "intro": "The Game of STICK is a parkour duel where players challenge each other with moves ending in a 'stick' (clean landing).",
     "summaryTitle": "Quick Summary",
     "flowchartTitle": "Challenge Flow",
     "challenger": "Challenger",

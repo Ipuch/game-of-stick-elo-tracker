@@ -1,6 +1,6 @@
 # License
 
-**Game of S.T.I.C.K. - ELO Tracker**
+**Game of STICK - ELO Tracker**
 
 Copyright (c) 2024 Pierre Puchaud. All rights reserved.
 

@@ -1,5 +1,5 @@
 /**
- * Internationalization (i18n) module for Game of S.T.I.C.K.
+ * Internationalization (i18n) module for Game of STICK
  * Supports English and French with instant language switching.
  * @author Pierre Puchaud
  */

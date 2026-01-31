@@ -1,5 +1,5 @@
 /**
- * Game of S.T.I.C.K. - ELO Tracker
+ * Game of STICK - ELO Tracker
  * ELO Scoring System Implementation
  * @author Pierre Puchaud
  * @copyright 2024 Pierre Puchaud

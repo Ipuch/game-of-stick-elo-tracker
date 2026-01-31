@@ -1,6 +1,6 @@
 {
     "app": {
-        "title": "Game of S.T.I.C.K.",
+        "title": "Game of STICK",
         "subtitle": "Classement ELO de Parkour"
     },
     "nav": {
@@ -13,7 +13,7 @@
         "exit": "Quitter"
     },
     "menu": {
-        "title": "Game of S.T.I.C.K.",
+        "title": "Game of STICK",
         "previousGames": "Parties précédentes",
         "newGame": "Nouvelle Partie",
         "operationName": "Nom de la partie",
@@ -38,7 +38,7 @@
         "mutualAgreement": "Accord Mutuel",
         "mutualAgreementDesc": "Les deux joueurs doivent s'accorder sur le défi avant de l'essayer.",
         "victory": "Victoire",
-        "victoryDesc": "Le premier à réussir le défi gagne — que ce soit un parcours ou un combo finissant par S.T.I.C.K.",
+        "victoryDesc": "Le premier à réussir le défi gagne — que ce soit un parcours ou un combo finissant par STICK",
         "drawRule": "Match Nul",
         "drawRuleDesc": "Un Match Nul est déclaré quand les deux joueurs ont donné le même nombre d'essais, pour réussir un challenge.",
         "remainingOpponents": "Adversaires restants",

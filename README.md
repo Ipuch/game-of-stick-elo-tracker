@@ -1,4 +1,4 @@
-# 🎮 Game of S.T.I.C.K. — ELO Tracker
+# 🎮 Game of STICK — ELO Tracker
 
 > **Track player rankings, match history, and performance stats for Parkour "Stick" battles.**
 
@@ -10,7 +10,7 @@
 
 ## 🤺 Challenge Rules
 
-The **Game of S.T.I.C.K.** is a parkour duel where players challenge each other with moves ending in a "stick" (clean landing).
+The **Game of STICK** is a parkour duel where players challenge each other with moves ending in a "stick" (clean landing).
 
 ### How a Challenge Works
 

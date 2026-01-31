@@ -1,5 +1,5 @@
 /**
- * Game of S.T.I.C.K. - ELO Tracker
+ * Game of STICK - ELO Tracker
  * ELO Evolution Chart Renderer for Web View
  * @author Pierre Puchaud
  * @copyright 2024 Pierre Puchaud
