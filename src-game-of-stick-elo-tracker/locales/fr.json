@@ -244,5 +244,18 @@
         "statusChanged": "{0} est maintenant {1}",
         "statusActive": "actif",
         "statusInactive": "inactif"
+    },
+    "liveDisplay": {
+        "launchBtn": "📺 Affichage Live",
+        "title": "Affichage Live",
+        "leaderboard": "Classement en Direct",
+        "highlights": "Temps Forts",
+        "exit": "Quitter",
+        "lastMatch": "Dernier Match",
+        "lastDuel": "Dernier duel",
+        "clashOfTitans": "Choc des Titans",
+        "currentChampion": "Champion Actuel",
+        "hungriestDog": "Le Plus Actif",
+        "matchesPlayed": "Matchs"
     }
 }

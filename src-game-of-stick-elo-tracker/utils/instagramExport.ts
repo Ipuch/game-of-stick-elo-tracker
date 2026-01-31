@@ -10,6 +10,16 @@ import { AggregatedPlayer, AggregatedStats } from './aggregationUtils';
 import { calculateWinRate } from './statsUtils';
 import html2canvas from 'html2canvas';
 import { t, formatDate } from './i18n';
+import { 
+    StoryHighlight, 
+    findBiggestWinStreak, 
+    findBiggestEloGain, 
+    findBiggestUpset 
+} from './storyHighlights';
+
+// Re-export for backwards compatibility
+export { findBiggestWinStreak, findBiggestEloGain, findBiggestUpset };
+export type { StoryHighlight };
 
 // @ts-ignore - Import png to ensure bundle inclusion
 import WcaLogo from '../Logo-west-coast-academy02.png';
@@ -20,125 +30,6 @@ import WcaLogo from '../Logo-west-coast-academy02.png';
 
 const STORY_WIDTH = 1080;
 const STORY_HEIGHT = 1920;
-
-// =============================================================================
-// TYPES
-// =============================================================================
-
-interface StoryHighlight {
-    type: 'streak' | 'elo_gain' | 'upset';
-    playerName: string;
-    value: number;
-    description: string;
-    emoji: string;
-    opponent?: string;
-}
-
-// =============================================================================
-// STATS CALCULATION HELPERS
-// =============================================================================
-
-/**
- * Find the player with the biggest active win streak
- */
-export function findBiggestWinStreak(players: Player[]): StoryHighlight | null {
-    const streakPlayers = players
-        .filter(p => p.currentStreakType === 'W' && p.currentStreakLength >= 2)
-        .sort((a, b) => b.currentStreakLength - a.currentStreakLength);
-
-    if (streakPlayers.length === 0) return null;
-
-    const top = streakPlayers[0];
-    return {
-        type: 'streak',
-        playerName: top.name,
-        value: top.currentStreakLength,
-        description: `${top.currentStreakLength}-win streak!`,
-        emoji: '🔥',
-    };
-}
-
-/**
- * Find the match with the biggest ELO gain
- */
-export function findBiggestEloGain(matches: Match[]): StoryHighlight | null {
-    if (matches.length === 0) return null;
-
-    let bestMatch: Match | null = null;
-    let bestGain = 0;
-    let winnerName = '';
-    let loserName = '';
-
-    matches.forEach(match => {
-        const p1Change = match.player1EloChange ?? (match.player1EloAfter - match.player1EloBefore);
-        const p2Change = match.player2EloChange ?? (match.player2EloAfter - match.player2EloBefore);
-
-        if (p1Change > bestGain) {
-            bestGain = p1Change;
-            bestMatch = match;
-            winnerName = match.player1Name;
-            loserName = match.player2Name;
-        }
-        if (p2Change > bestGain) {
-            bestGain = p2Change;
-            bestMatch = match;
-            winnerName = match.player2Name;
-            loserName = match.player1Name;
-        }
-    });
-
-    if (!bestMatch || bestGain <= 0) return null;
-
-    return {
-        type: 'elo_gain',
-        playerName: winnerName,
-        value: bestGain,
-        description: `+${bestGain} ELO in a single match!`,
-        emoji: '⚡',
-        opponent: loserName,
-    };
-}
-
-/**
- * Find the biggest upset (lowest expected odds → win)
- */
-export function findBiggestUpset(matches: Match[]): StoryHighlight | null {
-    if (matches.length === 0) return null;
-
-    let bestUpset: { match: Match; odds: number; winnerName: string; loserName: string } | null = null;
-
-    for (const match of matches) {
-        if (match.outcome === 'draw') continue;
-
-        // Calculate expected odds (basic ELO formula)
-        const p1Expected = 1 / (1 + Math.pow(10, (match.player2EloBefore - match.player1EloBefore) / 400));
-        const p2Expected = 1 - p1Expected;
-
-        const isP1Winner = match.outcome === 'p1';
-        const winnerOdds = isP1Winner ? p1Expected : p2Expected;
-
-        if (winnerOdds < 0.4 && (bestUpset === null || winnerOdds < bestUpset.odds)) {
-            bestUpset = {
-                match,
-                odds: winnerOdds,
-                winnerName: isP1Winner ? match.player1Name : match.player2Name,
-                loserName: isP1Winner ? match.player2Name : match.player1Name,
-            };
-        }
-    }
-
-    if (bestUpset === null) return null;
-
-    const oddsPercent = Math.round(bestUpset.odds * 100);
-    return {
-        type: 'upset',
-        playerName: bestUpset.winnerName,
-        value: oddsPercent,
-        description: `Beat ${oddsPercent}% odds vs ${bestUpset.loserName}!`,
-        emoji: '💀',
-        opponent: bestUpset.loserName,
-    };
-}
 
 // =============================================================================
 // SHARED STYLES

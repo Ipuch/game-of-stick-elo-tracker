@@ -1,0 +1,130 @@
+
+I see the issue - the rank change needs to also show "=" for no change. Let me also look at the header and fix the issues:
+
+Read liveEventDisplay.ts, lines 50 to 100
+
+Summarized conversation history
+
+Read liveEventDisplay.ts, lines 115 to 180
+
+Now let me check the CSS for the exit button and ELO diff:
+
+Now I understand the issues. Let me check what's in the appTypes for the previousRank:
+
+Now let me check the leaderboard.ts to see how it handles the rank change:
+
+Read leaderboard.ts, lines 50 to 102
+
+I see - the leaderboard.ts includes rank-no-change for the "=" case, but the live display doesn't. Now let me make all the fixes. I need to:
+
+Add rank-no-change (equal) indicator in live display
+Add Update Leaderboard button to live view
+Make exit button smaller
+Verify ELO diff is showing properly (looks like it should work, may need CSS tweaks)
+Created 4 todos
+
+Edited
+liveEventDisplay.ts+2-0
+Starting: Add Update Leaderboard button (2/4)
+
+Now let me add the Update Leaderboard button to the live display header:
+
+Edited
+liveEventDisplay.ts+8-3
+Starting: Fix exit button size (3/4)
+
+Now let me fix the CSS - smaller exit button and add styles for update button and rank-no-change:
+
+Edited
+index.css+29-5
+Now add the CSS for rank-no-change:
+
+Edited
+index.css+5-0
+Completed: Fix exit button size (3/5)
+
+Now I need to wire up the update button click handler in index.tsx:
+
+I need to add the update button handler. Let me update the handleLaunchLiveDisplay function to also bind the update button:
+
+Edited
+index.tsx+45-0
+Completed: Wire update button handler (5/5)
+
+Let me verify there are no TypeScript errors:
+
+Checked liveEventDisplay.ts, index.tsx, index.css, 1 problem found
+
+Just a minor unused parameter warning which won't affect functionality. All the corrections are complete:
+
+✅ Rank change "=" indicator - Added else case for diff === 0 showing blue "=" sign
+✅ Update Leaderboard button - Added to live display header with handler that updates baseline ELO and previousRank
+✅ Exit button size - Reduced from 0.75rem 1.5rem padding to 0.4rem 0.6rem, and removed the text (just shows ✕ now)
+✅ CSS for rank-no-change - Added blue styling matching --live-accent
+The changes made:
+
+liveEventDisplay.ts:140-142 - Added rank-no-change case
+liveEventDisplay.ts:70-76 - Added Update button to header
+index.tsx:296-363 - Added handleLiveUpdateLeaderboard() function
+index.css:3001-3036 - Restyled exit button (smaller) and added update button + header-right styles
+index.css:3117-3120 - Added .rank-no-change blue styling
+
+
+I understand the issue. The Live Display and main Leaderboard are sharing store.lastLeaderboardElo but updating it independently, causing desync. Let me trace the problem:
+
+Now I see the issue! The live view update button (handleLiveUpdateLeaderboard) is updating store.lastLeaderboardElo, but the main leaderboard update button (handleUpdateLeaderboardClick) does the same. They need to be synchronized.
+
+Let me look at the full live handler and see the flow:
+
+Read index.tsx, lines 296 to 400
+
+I see the problem now. The solution is:
+
+Both update buttons should update the same shared state - store.lastLeaderboardElo and previousRank
+The main leaderboard also needs to re-render when live update is clicked (or vice versa)
+The main handleUpdateLeaderboardClick doesn't update previousRank - that's in renderLeaderboard itself
+Let me check what renderLeaderboard does:
+
+Read leaderboard.ts
+
+I see - renderLeaderboard mutates player.previousRank at the end! This is the problem:
+
+When Live View renders, it uses player.previousRank for comparison
+When renderLeaderboard runs (via render() in handleUpdateLeaderboardClick), it updates previousRank to current rank
+So when Live View shows diff, the previousRank has already been modified by the main leaderboard
+The fix is to make both update buttons call a single shared update function that:
+
+Updates store.lastLeaderboardElo
+Updates player.previousRank
+Re-renders both views appropriately
+Edited
+index.tsx+57-36
+Now I need to fix the renderLeaderboard function - it should NOT mutate previousRank because that's now handled by updateLeaderboardBaseline(). The render function should only display the data:
+
+Edited
+leaderboard.ts+2-6
+Let me verify there are no TypeScript errors:
+
+Checked index.tsx, leaderboard.ts, no problems found
+
+The fix is complete. Here's what was changed:
+
+Root cause: The main leaderboard's renderLeaderboard() was mutating player.previousRank every time it rendered, and both views were sharing store.lastLeaderboardElo but updating it at different times.
+
+Solution:
+
+Created updateLeaderboardBaseline() - A shared function that updates both store.lastLeaderboardElo and player.previousRank for all players
+
+Modified handleUpdateLeaderboardClick() - Now calls updateLeaderboardBaseline() BEFORE rendering (so diffs show correctly), then also refreshes live view if visible
+
+Modified handleLiveUpdateLeaderboard() - Now calls the same shared updateLeaderboardBaseline(), then also updates the main leaderboard to stay in sync
+
+Removed rank mutation from renderLeaderboard() - The renderer no longer modifies previousRank; that's now centralized in updateLeaderboardBaseline()
+
+Added refreshLiveDisplayIfVisible() - Helper to re-render live view only if it's currently shown
+
+Now both update buttons will:
+
+Update the same shared baseline state
+Re-render both views to stay synchronized
+Show correct diffs and rank changes in both places

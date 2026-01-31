@@ -13,7 +13,21 @@ export class AppStore {
     matchHistory: Match[] = [];
     kFactor: number = DEFAULT_ELO_CONFIG.parameters.kFactor;
     isRealtimeUpdate: boolean = true; // Kept for compatibility but always true
+    
+    // Two-snapshot system for diff display:
+    // - previousLeaderboardElo: baseline from the Update BEFORE the last one
+    // - lastLeaderboardElo: baseline from the most recent Update
+    // Diff shown = lastLeaderboardElo - previousLeaderboardElo
+    previousLeaderboardElo: Record<string, number> = {};
     lastLeaderboardElo: Record<string, number> = {};
+    
+    // Same two-snapshot system for ranks:
+    // - previousLeaderboardRanks: ranks from Update BEFORE the last one
+    // - lastLeaderboardRanks: ranks from most recent Update (displayed rank)
+    // Rank diff = lastLeaderboardRanks - previousLeaderboardRanks
+    previousLeaderboardRanks: Record<string, number> = {};
+    lastLeaderboardRanks: Record<string, number> = {};
+    
     currentSessionId: string | null = null;
     directoryHandle: FileSystemDirectoryHandle | null = null; // Used for "Library" mode
     libraryHandle: FileSystemDirectoryHandle | null = null; // Add library handle

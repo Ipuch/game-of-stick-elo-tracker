@@ -39,6 +39,7 @@ import { renderGameMenu } from './renderers/menuRenderer';
 import { renderAggregatedDashboard, hideAggregatedDashboard } from './renderers/aggregatedDashboard';
 import { renderRegistryManager, hideRegistryManager } from './renderers/registryManager';
 import { renderRulesView, showRulesView, hideRulesView } from './renderers/rulesRenderer';
+import { renderLiveDisplay, stopLiveDisplay, isLiveDisplayActive } from './renderers/liveEventDisplay';
 
 // Handlers
 import { handleRecordMatch, updateWinnerLabels, handleClearMatchHistory } from './handlers/matchHandlers';
@@ -138,8 +139,12 @@ function updateI18nTexts(): void {
 }
 
 function render() {
-    // Core Renderers
-    renderLeaderboard(store.players, DOMElements, store.matchHistory, store.lastLeaderboardElo);
+    // Core Renderers - pass both ELO and rank snapshots for frozen diff display
+    renderLeaderboard(
+        store.players, DOMElements, store.matchHistory,
+        store.previousLeaderboardElo, store.lastLeaderboardElo,
+        store.previousLeaderboardRanks, store.lastLeaderboardRanks
+    );
     renderPodium(store.players, DOMElements);
     renderBattleHistory(store.matchHistory, DOMElements);
     renderCombatMatrix(store.players, store.matchHistory, DOMElements);
@@ -168,11 +173,43 @@ function renderWithoutLeaderboard() {
     renderRemainingOpponents(store.players, store.matchHistory, DOMElements);
 }
 
-function handleUpdateLeaderboardClick() {
-    render();
-    // Update baseline for next diff
+/**
+ * Shared function to update leaderboard baseline (ELO snapshot and ranks).
+ * Called by both main leaderboard and live display update buttons.
+ */
+function updateLeaderboardBaseline() {
+    // Shift ELO snapshots: old "last" becomes "previous"
+    store.previousLeaderboardElo = { ...store.lastLeaderboardElo };
+    
+    // Capture current ELOs as new "last" snapshot
     store.lastLeaderboardElo = {};
-    store.players.forEach(p => store.lastLeaderboardElo[p.id] = p.elo);
+    store.players.forEach(p => {
+        store.lastLeaderboardElo[p.id] = p.elo;
+    });
+
+    // Shift rank snapshots: old "last" becomes "previous"
+    store.previousLeaderboardRanks = { ...store.lastLeaderboardRanks };
+    
+    // Capture current ranks as new "last" snapshot
+    const sortedPlayers = [...store.players].sort((a, b) => b.elo - a.elo);
+    store.lastLeaderboardRanks = {};
+    sortedPlayers.forEach((p, index) => {
+        store.lastLeaderboardRanks[p.id] = index + 1;
+    });
+
+    // Also update player.previousRank for backwards compatibility
+    store.players.forEach(p => {
+        p.previousRank = store.lastLeaderboardRanks[p.id];
+    });
+}
+
+function handleUpdateLeaderboardClick() {
+    // FIRST update baseline (shift: previous=last, last=current)
+    updateLeaderboardBaseline();
+    // THEN render - diffs shown = lastLeaderboardElo - previousLeaderboardElo
+    render();
+    // Also refresh live view if it's currently visible
+    refreshLiveDisplayIfVisible();
 }
 
 function handleKFactorChange(event: Event) {
@@ -291,6 +328,98 @@ function handleViewRules(from: 'menu' | 'game' | 'library' = 'menu') {
     }
 }
 
+// Live Display handlers
+function handleLaunchLiveDisplay() {
+    const liveContainer = document.getElementById('live-display-view');
+    if (!liveContainer) return;
+
+    const gameName = store.folderName || 'Game of Stick';
+    
+    // Hide main app, show live display
+    document.getElementById('app-main')!.style.display = 'none';
+    liveContainer.style.display = 'block';
+    
+    // Render live display - pass both ELO and rank snapshots for frozen display
+    renderLiveDisplay(
+        liveContainer,
+        store.players,
+        store.matchHistory,
+        gameName,
+        store.previousLeaderboardElo,
+        store.lastLeaderboardElo,
+        store.previousLeaderboardRanks,
+        store.lastLeaderboardRanks
+    );
+
+    // Bind exit button inside live display
+    const exitBtn = liveContainer.querySelector('#live-exit-btn');
+    if (exitBtn) {
+        exitBtn.addEventListener('click', handleExitLiveDisplay);
+    }
+
+    // Bind update leaderboard button inside live display
+    const updateBtn = liveContainer.querySelector('#live-update-btn');
+    if (updateBtn) {
+        updateBtn.addEventListener('click', handleLiveUpdateLeaderboard);
+    }
+}
+
+function handleLiveUpdateLeaderboard() {
+    // FIRST update baseline (shift: previous=last, last=current)
+    updateLeaderboardBaseline();
+    // THEN render - diffs shown = lastSnapshot - previousSnapshot (frozen)
+    renderLeaderboard(
+        store.players, DOMElements, store.matchHistory,
+        store.previousLeaderboardElo, store.lastLeaderboardElo,
+        store.previousLeaderboardRanks, store.lastLeaderboardRanks
+    );
+    // Refresh the live display
+    refreshLiveDisplayIfVisible();
+}
+
+/**
+ * Helper to refresh live display if it's currently visible.
+ * Re-renders and re-binds event listeners.
+ */
+function refreshLiveDisplayIfVisible() {
+    const liveContainer = document.getElementById('live-display-view');
+    if (!liveContainer || liveContainer.style.display === 'none') return;
+
+    const gameName = store.folderName || 'Game of Stick';
+    renderLiveDisplay(
+        liveContainer,
+        store.players,
+        store.matchHistory,
+        gameName,
+        store.previousLeaderboardElo,
+        store.lastLeaderboardElo,
+        store.previousLeaderboardRanks,
+        store.lastLeaderboardRanks
+    );
+
+    // Re-bind buttons after re-render
+    const exitBtn = liveContainer.querySelector('#live-exit-btn');
+    if (exitBtn) {
+        exitBtn.addEventListener('click', handleExitLiveDisplay);
+    }
+    const updateBtn = liveContainer.querySelector('#live-update-btn');
+    if (updateBtn) {
+        updateBtn.addEventListener('click', handleLiveUpdateLeaderboard);
+    }
+}
+
+function handleExitLiveDisplay() {
+    const liveContainer = document.getElementById('live-display-view');
+    if (!liveContainer) return;
+
+    // Stop animations
+    stopLiveDisplay();
+    
+    // Hide live display, show main app
+    liveContainer.style.display = 'none';
+    document.getElementById('app-main')!.style.display = 'block';
+}
+
 // Helper to get library callbacks (avoids repetition)
 function getLibraryCallbacks() {
     return {
@@ -353,10 +482,25 @@ async function loadGameFromLibrary(dirHandle: FileSystemDirectoryHandle, folderN
         store.matchHistory = state.matchHistory;
         store.kFactor = state.kFactor;
 
-        // Initialize lastLeaderboardElo with current player ELOs to prevent
-        // false ELO change display on first render after loading
+        // Initialize both snapshots with current ELOs so first render shows no diffs
+        // (previousLeaderboardElo = lastLeaderboardElo means diff = 0)
         store.lastLeaderboardElo = {};
-        store.players.forEach(p => store.lastLeaderboardElo[p.id] = p.elo);
+        store.previousLeaderboardElo = {};
+        store.players.forEach(p => {
+            store.lastLeaderboardElo[p.id] = p.elo;
+            store.previousLeaderboardElo[p.id] = p.elo;
+        });
+        
+        // Initialize rank snapshots (both same = no rank diff shown)
+        const sortedPlayers = [...store.players].sort((a, b) => b.elo - a.elo);
+        store.lastLeaderboardRanks = {};
+        store.previousLeaderboardRanks = {};
+        sortedPlayers.forEach((p, index) => {
+            const rank = index + 1;
+            store.lastLeaderboardRanks[p.id] = rank;
+            store.previousLeaderboardRanks[p.id] = rank;
+            p.previousRank = rank;
+        });
 
         if (store.libraryHandle) {
             saveLastLibraryName(store.libraryHandle.name);
@@ -582,6 +726,23 @@ function setupGlobalListeners() {
             } catch (e) {
                 console.error(e);
                 showNotification('Failed to export stories', 'error');
+            }
+        });
+    }
+
+    // Live Display
+    const liveDisplayBtn = document.getElementById('live-display-btn');
+    if (liveDisplayBtn && !liveDisplayBtn.hasAttribute('data-bound')) {
+        liveDisplayBtn.setAttribute('data-bound', 'true');
+        liveDisplayBtn.addEventListener('click', () => handleLaunchLiveDisplay());
+    }
+
+    // Keyboard listener for Escape to exit Live Display
+    if (!document.body.hasAttribute('data-live-key-listener')) {
+        document.body.setAttribute('data-live-key-listener', 'true');
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isLiveDisplayActive()) {
+                handleExitLiveDisplay();
             }
         });
     }

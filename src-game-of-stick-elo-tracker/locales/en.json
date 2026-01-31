@@ -260,5 +260,18 @@
     "statusChanged": "{0} is now {1}",
     "statusActive": "active",
     "statusInactive": "inactive"
+  },
+  "liveDisplay": {
+    "launchBtn": "📺 Live Display",
+    "title": "Live Display",
+    "leaderboard": "Live Leaderboard",
+    "highlights": "Highlights",
+    "exit": "Exit",
+    "lastMatch": "Last Match",
+    "lastDuel": "Last duel",
+    "clashOfTitans": "Clash of Titans",
+    "currentChampion": "Current Champion",
+    "hungriestDog": "Hungriest Dog",
+    "matchesPlayed": "Matches"
   }
 }

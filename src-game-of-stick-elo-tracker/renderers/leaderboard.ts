@@ -28,7 +28,10 @@ export function renderLeaderboard(
     players: Player[],
     _DOMElements: AppDOMElements,
     matchHistory: Match[],
-    lastLeaderboardElo: Record<string, number>
+    previousEloSnapshot: Record<string, number>,
+    currentEloSnapshot?: Record<string, number>,
+    previousRankSnapshot?: Record<string, number>,
+    currentRankSnapshot?: Record<string, number>
 ) {
     const tbody = document.getElementById('leaderboard-body');
     console.log('renderLeaderboard executing', { players, tbody });
@@ -37,7 +40,22 @@ export function renderLeaderboard(
         return;
     }
 
-    const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
+    // Calculate streaks BEFORE rendering so they appear in the HTML
+    calculatePlayerStreaks(players, matchHistory);
+
+    // Sort by SNAPSHOTTED rank if available (frozen display), otherwise by current ELO
+    let sortedPlayers: Player[];
+    if (currentRankSnapshot && Object.keys(currentRankSnapshot).length > 0) {
+        // Sort by frozen rank from snapshot
+        sortedPlayers = [...players].sort((a, b) => {
+            const rankA = currentRankSnapshot[a.id] ?? 9999;
+            const rankB = currentRankSnapshot[b.id] ?? 9999;
+            return rankA - rankB;
+        });
+    } else {
+        // Fallback: sort by current ELO
+        sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
+    }
 
 
 
@@ -50,12 +68,13 @@ export function renderLeaderboard(
 
     let rowsHtml = '';
     sortedPlayers.forEach((player, index) => {
-        const newRank = index + 1;
-        const oldRank = player.previousRank;
+        // Use FROZEN rank from snapshot, not current sort position
+        const displayedRank = currentRankSnapshot?.[player.id] ?? (index + 1);
+        const previousRank = previousRankSnapshot?.[player.id];
 
         let rankChangeIndicator = '';
-        if (oldRank) {
-            const diff = oldRank - newRank;
+        if (previousRank !== undefined) {
+            const diff = previousRank - displayedRank;
             if (diff > 0) {
                 rankChangeIndicator = `<span class="rank-change rank-up">▲ ${diff}</span>`;
             } else if (diff < 0) {
@@ -65,17 +84,17 @@ export function renderLeaderboard(
             }
         }
 
-        // Calculate ELO diff since last leaderboard update
-        // For new players not in baseline, use INITIAL_ELO as starting point
-        const prevElo = lastLeaderboardElo[player.id] ?? DEFAULT_ELO_CONFIG.initialRating;
-        const eloDiff = player.elo - prevElo;
+        // Calculate ELO diff: frozen diff = currentSnapshot - previousSnapshot
+        const currentElo = currentEloSnapshot ? (currentEloSnapshot[player.id] ?? player.elo) : player.elo;
+        const prevElo = previousEloSnapshot[player.id] ?? DEFAULT_ELO_CONFIG.initialRating;
+        const eloDiff = currentElo - prevElo;
         const eloDiffHtml = eloDiff !== 0
             ? `<span class="elo-change ${eloDiff > 0 ? 'elo-up' : 'elo-down'}">(${eloDiff > 0 ? '+' : ''}${eloDiff})</span>`
             : '';
 
         rowsHtml += `
             <tr>
-                <td><div>${newRank} ${rankChangeIndicator}</div></td>
+                <td><div>${displayedRank} ${rankChangeIndicator}</div></td>
                 <td>${player.name} ${renderStreak(player.currentStreakType, player.currentStreakLength)}</td>
                 <td>
                     ${player.elo}
@@ -91,12 +110,6 @@ export function renderLeaderboard(
     });
     tbody.innerHTML = rowsHtml;
 
-    players.forEach(p => {
-        const sortedIndex = sortedPlayers.findIndex(sp => sp.id === p.id);
-        if (sortedIndex !== -1) {
-            p.previousRank = sortedIndex + 1;
-        }
-    });
-
-    calculatePlayerStreaks(players, matchHistory);
+    // NOTE: previousRank is now updated by updateLeaderboardBaseline() in index.tsx
+    // This ensures both main leaderboard and live display stay in sync
 } 

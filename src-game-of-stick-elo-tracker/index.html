@@ -73,6 +73,11 @@
     <!-- Content rendered dynamically by rulesRenderer.ts -->
   </div>
 
+  <!-- LIVE EVENT DISPLAY VIEW -->
+  <div id="live-display-view" class="live-display-view" style="display: none;">
+    <!-- Content rendered dynamically by liveEventDisplay.ts -->
+  </div>
+
 
   <main class="container" id="app-main" style="display: none;">
     <header class="app-header">
@@ -102,9 +107,10 @@
     <div id="view-dashboard" class="view active">
       <section class="leaderboard-section">
         <div id="podium-container" class="podium-container"></div>
-        <div id="update-leaderboard-container">
+        <div id="update-leaderboard-container" class="leaderboard-actions">
           <button id="update-leaderboard-btn" class="button-primary" data-i18n="leaderboard.updateBtn">Update
             Leaderboard</button>
+          <button id="live-display-btn" class="button-secondary" data-i18n="liveDisplay.launchBtn">📺 Live Display</button>
         </div>
         <div class="table-container">
           <table>

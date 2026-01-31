@@ -2930,3 +2930,477 @@ button {
         min-width: 150px;
     }
 }
+
+/* =============================================================================
+   LIVE EVENT DISPLAY
+   ============================================================================= */
+
+.live-display-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background: var(--live-bg, #0a0a12);
+}
+
+.live-display {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--live-text, #ffffff);
+    
+    /* CSS Variables for Live Display */
+    --live-bg: #0a0a12;
+    --live-card: rgba(255, 255, 255, 0.05);
+    --live-card-border: rgba(255, 255, 255, 0.1);
+    --live-accent: #00f3ff;
+    --live-gold: #ffd700;
+    --live-silver: #c0c0c0;
+    --live-bronze: #cd7f32;
+    --live-text: #ffffff;
+    --live-text-muted: rgba(255, 255, 255, 0.6);
+    --live-success: #4caf50;
+    --live-danger: #f44336;
+}
+
+/* Header */
+.live-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid var(--live-card-border);
+}
+
+.live-header-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.live-branding {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--live-accent);
+    letter-spacing: 2px;
+}
+
+.live-game-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--live-text);
+    opacity: 0.9;
+}
+
+.live-exit-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--live-text);
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.live-exit-btn:hover {
+    background: rgba(244, 67, 54, 0.3);
+    border-color: rgba(244, 67, 54, 0.5);
+}
+
+.live-header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.live-update-btn {
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid rgba(76, 175, 80, 0.4);
+    color: var(--live-success);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 600;
+}
+
+.live-update-btn:hover {
+    background: rgba(76, 175, 80, 0.4);
+    border-color: rgba(76, 175, 80, 0.6);
+}
+
+/* Main Content */
+.live-content {
+    flex: 1;
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+    overflow: hidden;
+}
+
+/* Leaderboard Panel (70%) */
+.live-leaderboard-panel {
+    flex: 7;
+    display: flex;
+    flex-direction: column;
+    background: var(--live-card);
+    border: 1px solid var(--live-card-border);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.live-panel-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--live-accent);
+    padding: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px solid var(--live-card-border);
+    text-align: center;
+}
+
+.live-leaderboard-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.live-leaderboard-scroll {
+    transition: transform 0.1s linear;
+}
+
+.live-leaderboard-row {
+    display: flex;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.3s ease;
+}
+
+.live-leaderboard-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.live-leaderboard-row.top-1 {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%);
+    border-left: 4px solid var(--live-gold);
+}
+
+.live-leaderboard-row.top-2 {
+    background: linear-gradient(90deg, rgba(192, 192, 192, 0.1) 0%, transparent 100%);
+    border-left: 4px solid var(--live-silver);
+}
+
+.live-leaderboard-row.top-3 {
+    background: linear-gradient(90deg, rgba(205, 127, 50, 0.1) 0%, transparent 100%);
+    border-left: 4px solid var(--live-bronze);
+}
+
+.live-rank {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+}
+
+.live-rank-number {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--live-text);
+    min-width: 40px;
+}
+
+.live-medal {
+    font-size: 1.5rem;
+}
+
+.live-rank-change {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+}
+
+.live-rank-change.rank-up {
+    color: var(--live-success);
+    background: rgba(76, 175, 80, 0.2);
+}
+
+.live-rank-change.rank-down {
+    color: var(--live-danger);
+    background: rgba(244, 67, 54, 0.2);
+}
+
+.live-rank-change.rank-no-change {
+    color: var(--live-accent);
+    background: rgba(100, 181, 246, 0.2);
+}
+
+.live-player-name {
+    flex: 1;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--live-text);
+}
+
+.live-elo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 180px;
+    justify-content: flex-end;
+}
+
+.live-elo-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--live-text);
+}
+
+.live-elo-diff {
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.live-elo-diff.elo-up {
+    color: var(--live-success);
+    background: rgba(76, 175, 80, 0.2);
+}
+
+.live-elo-diff.elo-down {
+    color: var(--live-danger);
+    background: rgba(244, 67, 54, 0.2);
+}
+
+.live-stats {
+    display: flex;
+    gap: 1rem;
+    min-width: 120px;
+    justify-content: flex-end;
+}
+
+.live-wins {
+    color: var(--live-success);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.live-losses {
+    color: var(--live-danger);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.live-no-players {
+    text-align: center;
+    padding: 3rem;
+    color: var(--live-text-muted);
+    font-size: 1.2rem;
+}
+
+/* Highlights Panel (30%) */
+.live-highlights-panel {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    background: var(--live-card);
+    border: 1px solid var(--live-card-border);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.live-highlight-card-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.live-highlight-card {
+    width: 100%;
+    max-width: 400px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 2.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.live-highlight-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--live-accent);
+}
+
+.live-highlight-card[data-type="streak"]::before {
+    background: #ff6b35;
+}
+
+.live-highlight-card[data-type="elo_gain"]::before {
+    background: #00f3ff;
+}
+
+.live-highlight-card[data-type="upset"]::before {
+    background: #bc13fe;
+}
+
+.live-highlight-card[data-type="champion"]::before {
+    background: var(--live-gold);
+}
+
+.live-highlight-card[data-type="most_active"]::before {
+    background: #4caf50;
+}
+
+.live-highlight-card[data-type="top_duel"]::before {
+    background: #e91e63;
+}
+
+.live-highlight-emoji {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+}
+
+.live-highlight-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    color: var(--live-accent);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 1rem;
+}
+
+.live-highlight-card[data-type="streak"] .live-highlight-label { color: #ff6b35; }
+.live-highlight-card[data-type="elo_gain"] .live-highlight-label { color: #00f3ff; }
+.live-highlight-card[data-type="upset"] .live-highlight-label { color: #bc13fe; }
+.live-highlight-card[data-type="champion"] .live-highlight-label { color: var(--live-gold); }
+.live-highlight-card[data-type="most_active"] .live-highlight-label { color: #4caf50; }
+.live-highlight-card[data-type="top_duel"] .live-highlight-label { color: #e91e63; }
+
+.live-highlight-player {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--live-text);
+    margin-bottom: 0.75rem;
+    line-height: 1.2;
+}
+
+.live-highlight-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--live-text);
+    text-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.live-highlight-sub {
+    font-size: 1rem;
+    color: var(--live-text-muted);
+    line-height: 1.4;
+}
+
+.live-highlight-opponent {
+    font-size: 0.9rem;
+    color: var(--live-text-muted);
+    margin-top: 0.75rem;
+    opacity: 0.7;
+}
+
+/* Highlight Dots */
+.live-highlight-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-top: 1px solid var(--live-card-border);
+}
+
+.live-highlight-dots .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.live-highlight-dots .dot.active {
+    background: var(--live-accent);
+    box-shadow: 0 0 10px var(--live-accent);
+}
+
+/* Leaderboard actions button */
+.leaderboard-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .live-content {
+        flex-direction: column;
+    }
+    
+    .live-leaderboard-panel,
+    .live-highlights-panel {
+        flex: 1;
+    }
+    
+    .live-highlights-panel {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .live-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .live-header-left {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .live-leaderboard-row {
+        padding: 0.75rem 1rem;
+    }
+    
+    .live-player-name {
+        font-size: 1.2rem;
+    }
+    
+    .live-elo-value {
+        font-size: 1.2rem;
+    }
+    
+    .live-highlight-value {
+        font-size: 2.5rem;
+    }
+}
