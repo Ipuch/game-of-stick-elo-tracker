@@ -38,6 +38,7 @@ import { renderGameLibrary } from './renderers/libraryRenderer';
 import { renderGameMenu } from './renderers/menuRenderer';
 import { renderAggregatedDashboard, hideAggregatedDashboard } from './renderers/aggregatedDashboard';
 import { renderRegistryManager, hideRegistryManager } from './renderers/registryManager';
+import { renderRulesView, showRulesView, hideRulesView } from './renderers/rulesRenderer';
 
 // Handlers
 import { handleRecordMatch, updateWinnerLabels, handleClearMatchHistory } from './handlers/matchHandlers';
@@ -207,7 +208,8 @@ const getSessionContext = () => ({
         onOpenLibrary: handleOpenLibrary,
         onLoadExample: loadExampleGame,
         onStartNewGame: startNewGame,
-        renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks())
+        renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks()),
+        onViewRules: () => handleViewRules('menu')
     })
 });
 
@@ -266,13 +268,37 @@ function handleViewRegistry() {
     });
 }
 
+// Track where rules was opened from for correct back navigation
+let rulesOpenedFrom: 'menu' | 'game' | 'library' = 'menu';
+
+function handleViewRules(from: 'menu' | 'game' | 'library' = 'menu') {
+    rulesOpenedFrom = from;
+    const rulesContainer = document.getElementById('rules-view');
+    if (rulesContainer) {
+        renderRulesView(rulesContainer, {
+            onBack: () => {
+                hideRulesView();
+                if (rulesOpenedFrom === 'game') {
+                    document.getElementById('app-main')!.style.display = 'block';
+                } else if (rulesOpenedFrom === 'library' && store.libraryHandle) {
+                    renderGameLibrary(store.libraryHandle, getLibraryCallbacks());
+                } else {
+                    document.getElementById('game-menu')!.style.display = 'flex';
+                }
+            }
+        });
+        showRulesView();
+    }
+}
+
 // Helper to get library callbacks (avoids repetition)
 function getLibraryCallbacks() {
     return {
         onLoadGame: loadGameFromLibrary,
         onCreateGame: createNewGameInLibrary,
         onViewAggregatedStats: handleViewAggregatedStats,
-        onViewRegistry: handleViewRegistry
+        onViewRegistry: handleViewRegistry,
+        onViewRules: () => handleViewRules('library')
     };
 }
 
@@ -478,6 +504,7 @@ function setupGlobalListeners() {
     // Navigation
     document.querySelectorAll('.nav-btn').forEach(btn => {
         if (btn.classList.contains('nav-exit')) return;
+        if (btn.id === 'nav-rules-btn') return; // Rules has its own handler
         if (btn.hasAttribute('data-bound')) return;
         btn.setAttribute('data-bound', 'true');
         btn.addEventListener('click', () => {
@@ -502,6 +529,13 @@ function setupGlobalListeners() {
     if (saveBtn && !saveBtn.hasAttribute('data-bound')) {
         saveBtn.setAttribute('data-bound', 'true');
         saveBtn.addEventListener('click', () => handleSaveGame(getSessionContext()));
+    }
+
+    // Rules button listener (in-game)
+    const rulesBtn = document.getElementById('nav-rules-btn');
+    if (rulesBtn && !rulesBtn.hasAttribute('data-bound')) {
+        rulesBtn.setAttribute('data-bound', 'true');
+        rulesBtn.addEventListener('click', () => handleViewRules('game'));
     }
 
     // Global Click for Suggestions
@@ -581,7 +615,8 @@ function setupGlobalListeners() {
                     onOpenLibrary: handleOpenLibrary,
                     onLoadExample: loadExampleGame,
                     onStartNewGame: startNewGame,
-                    renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks())
+                    renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks()),
+                    onViewRules: () => handleViewRules('menu')
                 });
             }
         });
@@ -638,7 +673,8 @@ function main() {
         onOpenLibrary: handleOpenLibrary,
         onLoadExample: loadExampleGame,
         onStartNewGame: startNewGame,
-        renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks())
+        renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks()),
+        onViewRules: () => handleViewRules('menu')
     });
 }
 

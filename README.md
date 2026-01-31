@@ -8,6 +8,52 @@
 
 ---
 
+## 🤺 Challenge Rules
+
+The **Game of S.T.I.C.K.** is a parkour duel where players challenge each other with moves ending in a "stick" (clean landing).
+
+### How a Challenge Works
+
+```
+🤺 Challenger → 🤝 Proposes a match → 🤔 Opponent accepts?
+                                          │
+                    ❌ No → 🔍 Find another opponent
+                    ✅ Yes ↓
+                    
+📜 Propose a challenge (moves ending with a stick 🤸)
+                    ↓
+🤷 Both agree on the moves?
+    ❌ No → Propose again
+    ✅ Yes ↓
+    
+🚀 Challenger attempts → 🎯 Success?
+                              │
+    ┌─────────────────────────┴─────────────────────────┐
+    ✅ Yes                                           ❌ No
+    ↓                                                 ↓
+👻 Opponent attempts                          👻 Opponent attempts
+    ↓                                                 ↓
+🎯 Success?                                    🎯 Success?
+    │                                                 │
+✅ Yes → 🤝 Accept draw?                      ✅ Yes → 🏆 Opponent Wins!
+         ✅ → ⚖️ Draw                         ❌ No → 🔄 Both failed, retry!
+         ❌ → 🔄 Retry
+❌ No → 🏆 Challenger Wins!
+```
+
+### Summary
+
+| Challenger | Opponent | Result |
+|:----------:|:--------:|:------:|
+| ✅ Success | ❌ Fail | 🏆 **Challenger Wins** |
+| ❌ Fail | ✅ Success | 🏆 **Opponent Wins** |
+| ✅ Success | ✅ Success | ⚖️ **Draw** (or retry) |
+| ❌ Fail | ❌ Fail | 🔄 **Retry** |
+
+> 📄 See [docs/challenge-chart-fr.md](docs/challenge-chart-fr.md) for the full flowchart diagram.
+
+---
+
 ## ✨ Key Features
 
 | Feature | Description |

@@ -14,6 +14,7 @@ export type MenuCallbacks = {
     onLoadExample: () => void;
     onStartNewGame: (name: string, kFactor: number) => void;
     renderLibrary: () => void;
+    onViewRules?: () => void;
 };
 
 export function renderGameMenu(
@@ -88,6 +89,23 @@ export function renderGameMenu(
     `;
     exampleCard.onclick = callbacks.onLoadExample;
     list.appendChild(exampleCard);
+
+    // Rules button
+    const rulesContainer = document.createElement('div');
+    rulesContainer.style.width = '100%';
+    rulesContainer.style.textAlign = 'center';
+    rulesContainer.style.marginTop = '1.5rem';
+
+    const rulesBtn = document.createElement('button');
+    rulesBtn.id = 'menu-rules-btn';
+    rulesBtn.className = 'button-secondary';
+    rulesBtn.style.fontSize = '1rem';
+    rulesBtn.style.padding = '0.75rem 1.5rem';
+    rulesBtn.textContent = t('rules.menuButton');
+    rulesBtn.onclick = () => callbacks.onViewRules?.();
+
+    rulesContainer.appendChild(rulesBtn);
+    list.appendChild(rulesContainer);
 
     // Show and setup the new session form
     const form = document.getElementById('new-session-form') as HTMLFormElement;

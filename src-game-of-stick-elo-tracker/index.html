@@ -68,6 +68,11 @@
     <!-- Content rendered dynamically by registryManager.ts -->
   </div>
 
+  <!-- RULES VIEW -->
+  <div id="rules-view" class="rules-view" style="display: none;">
+    <!-- Content rendered dynamically by rulesRenderer.ts -->
+  </div>
+
 
   <main class="container" id="app-main" style="display: none;">
     <header class="app-header">
@@ -85,6 +90,7 @@
           <button class="nav-btn" data-view="view-arena" data-i18n="nav.arena">Arena</button>
           <button class="nav-btn" data-view="view-roster" data-i18n="nav.roster">Roster</button>
           <button class="nav-btn" data-view="view-stats" data-i18n="nav.stats">Stats</button>
+          <button class="nav-btn" id="nav-rules-btn" data-i18n="rules.menuButton">📜 Rules</button>
           <button class="nav-btn" data-view="view-settings" data-i18n="nav.settings">Settings</button>
           <button class="nav-btn" id="nav-save-btn" data-i18n="nav.save">Save</button>
           <button class="nav-btn nav-exit" id="nav-exit-btn" data-i18n="nav.exit">Exit</button>

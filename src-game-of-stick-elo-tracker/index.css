@@ -2444,3 +2444,489 @@ button {
     width: auto !important;
     padding: 0.75rem 1.5rem !important;
 }
+
+/* --- Rules Page --- */
+.rules-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at center, #0f1c2e 0%, #03080c 100%);
+    z-index: 9998;
+    padding: 2rem;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+}
+
+.rules-page {
+    max-width: 900px;
+    width: 100%;
+}
+
+.rules-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.rules-header .rules-back-btn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: auto;
+    padding: 0.5rem 1rem;
+}
+
+.rules-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #fff 0%, var(--primary-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.rules-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.rules-intro {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.8;
+}
+
+/* Flowchart Styles */
+.rules-flowchart {
+    background: var(--surface-color);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    backdrop-filter: blur(12px);
+}
+
+.rules-flowchart h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.flowchart-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.flow-step {
+    background: rgba(0, 243, 255, 0.1);
+    border: 1px solid rgba(0, 243, 255, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 280px;
+    justify-content: center;
+}
+
+.flow-step.flow-start {
+    background: rgba(188, 19, 254, 0.15);
+    border-color: rgba(188, 19, 254, 0.4);
+}
+
+.flow-step.flow-action {
+    background: rgba(0, 243, 255, 0.1);
+    border-color: rgba(0, 243, 255, 0.3);
+}
+
+.flow-step.flow-action.highlight {
+    background: rgba(0, 255, 157, 0.15);
+    border-color: rgba(0, 255, 157, 0.4);
+    box-shadow: 0 0 20px rgba(0, 255, 157, 0.2);
+}
+
+.flow-step.flow-end-alt {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.flow-icon {
+    font-size: 1.5rem;
+}
+
+.flow-text {
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+.flow-arrow {
+    font-size: 1.5rem;
+    color: var(--text-muted);
+}
+
+.flow-decision {
+    background: rgba(255, 204, 0, 0.1);
+    border: 2px solid rgba(255, 204, 0, 0.4);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.5rem;
+    text-align: center;
+    min-width: 300px;
+}
+
+.flow-decision .flow-icon {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.flow-decision .flow-text {
+    font-weight: 500;
+}
+
+.flow-branches {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 0.75rem;
+}
+
+.flow-branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.branch-label {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.branch-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.branch-continue {
+    font-size: 1.2rem;
+    color: var(--success-color);
+}
+
+/* Dual Branch Layout (Challenger Success/Fail) */
+.flow-dual-branch {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.flow-branch-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    min-width: 200px;
+    flex: 1;
+    max-width: 350px;
+}
+
+.flow-branch-column.flow-branch-success {
+    background: rgba(0, 255, 157, 0.05);
+    border: 1px solid rgba(0, 255, 157, 0.2);
+}
+
+.flow-branch-column.flow-branch-fail {
+    background: rgba(255, 51, 102, 0.05);
+    border: 1px solid rgba(255, 51, 102, 0.2);
+}
+
+.branch-header {
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.5rem;
+}
+
+.flow-branch-success .branch-header {
+    background: rgba(0, 255, 157, 0.15);
+    color: var(--success-color);
+}
+
+.flow-branch-fail .branch-header {
+    background: rgba(255, 51, 102, 0.15);
+    color: var(--error-color);
+}
+
+.flow-branch-column .flow-step {
+    min-width: 180px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.flow-mini-decision {
+    background: rgba(255, 204, 0, 0.1);
+    border: 1px solid rgba(255, 204, 0, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+.flow-mini-branches {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    justify-content: center;
+}
+
+.mini-branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.mini-label {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.flow-outcome {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+}
+
+.flow-outcome.outcome-win {
+    background: rgba(0, 255, 157, 0.15);
+    border: 1px solid rgba(0, 255, 157, 0.3);
+    color: var(--success-color);
+}
+
+.flow-outcome.outcome-loss {
+    background: rgba(255, 51, 102, 0.15);
+    border: 1px solid rgba(255, 51, 102, 0.3);
+    color: var(--error-color);
+}
+
+.flow-outcome.outcome-draw {
+    background: rgba(255, 204, 0, 0.15);
+    border: 1px solid rgba(255, 204, 0, 0.3);
+    color: var(--warning-color);
+}
+
+.flow-outcome.outcome-retry {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-muted);
+}
+
+.flow-outcome .outcome-icon {
+    font-size: 1.1rem;
+}
+
+.flow-outcome .outcome-text {
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+.flow-outcomes {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.outcome {
+    background: var(--surface-color);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.outcome.outcome-win {
+    background: rgba(0, 255, 157, 0.1);
+    border-color: rgba(0, 255, 157, 0.3);
+}
+
+.outcome.outcome-draw {
+    background: rgba(255, 204, 0, 0.1);
+    border-color: rgba(255, 204, 0, 0.3);
+}
+
+.outcome-icon {
+    font-size: 1.5rem;
+}
+
+.outcome-text {
+    font-weight: 500;
+}
+
+/* Summary Table */
+.rules-summary {
+    background: var(--surface-color);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    backdrop-filter: blur(12px);
+}
+
+.rules-summary h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.rules-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.rules-table th {
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.8rem;
+    font-size: 0.75rem;
+    border-bottom: 1px solid var(--surface-border);
+    text-align: center;
+}
+
+.rules-table td {
+    padding: 0.8rem;
+    border-bottom: 1px solid var(--surface-border);
+    text-align: center;
+}
+
+.rules-table tr.result-win td:last-child {
+    color: var(--success-color);
+}
+
+.rules-table tr.result-loss td:last-child {
+    color: var(--error-color);
+}
+
+.rules-table tr.result-draw td:last-child {
+    color: var(--warning-color);
+}
+
+.rules-table tr.result-retry td:last-child {
+    color: var(--text-muted);
+}
+
+/* Detail Cards */
+.rules-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.rule-detail-card {
+    background: var(--surface-color);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.rule-detail-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 243, 255, 0.15);
+}
+
+.rule-detail-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.rule-detail-card h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.rule-detail-card p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* Rules nav button in library */
+.rules-nav-btn {
+    margin-top: 0.5rem;
+    font-size: 0.9rem !important;
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+    .flow-dual-branch {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .flow-branch-column {
+        max-width: 100%;
+        min-width: 280px;
+    }
+}
+
+@media (max-width: 600px) {
+    .rules-title {
+        font-size: 1.8rem;
+    }
+    
+    .flow-step {
+        min-width: 200px;
+        padding: 0.5rem 1rem;
+    }
+    
+    .flow-decision {
+        min-width: 220px;
+    }
+    
+    .flow-branches {
+        gap: 1rem;
+    }
+    
+    .rules-header .rules-back-btn {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    
+    .flow-mini-branches {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .flow-branch-column .flow-step {
+        min-width: 150px;
+    }
+}

@@ -13,6 +13,7 @@ export type LibraryCallbacks = {
     onCreateGame: (name: string, kFactor: number) => Promise<void>;
     onViewAggregatedStats: () => void;
     onViewRegistry: () => void;
+    onViewRules?: () => void;
 };
 
 export async function renderGameLibrary(
@@ -71,6 +72,15 @@ export async function renderGameLibrary(
         regBtn.innerHTML = t('library.manageRegistry');
         regBtn.onclick = () => callbacks.onViewRegistry();
         statsArea.appendChild(regBtn);
+
+        // Rules Button
+        if (callbacks.onViewRules) {
+            const rulesBtn = document.createElement('button');
+            rulesBtn.className = 'button-secondary rules-nav-btn width-full';
+            rulesBtn.innerHTML = t('rules.menuButton');
+            rulesBtn.onclick = () => callbacks.onViewRules!();
+            statsArea.appendChild(rulesBtn);
+        }
     }
 
     // 3. Render Game List
