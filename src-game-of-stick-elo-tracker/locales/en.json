@@ -212,6 +212,25 @@
     },
     "menuButton": "📜 Rules"
   },
+  "stories": {
+    "champion": "THE CHAMPION",
+    "theChampion": "The Champion",
+    "leaderboard": "LEADERBOARD",
+    "topMoments": "TOP MOMENTS",
+    "wins": "Wins",
+    "losses": "Losses",
+    "winRate": "Win Rate",
+    "eloRating": "ELO RATING",
+    "consecutiveWins": "Consecutive Wins",
+    "pointsInOneMatch": "Points in one match",
+    "winProbability": "Win Probability",
+    "unstoppable": "Unstoppable",
+    "skyrocketing": "Skyrocketing",
+    "underdogWin": "Underdog Win",
+    "giantSlayer": "GIANT SLAYER",
+    "currentMeta": "#CurrentMeta",
+    "vs": "vs"
+  },
   "registry": {
     "title": "👥 Player Registry",
     "playersInLibrary": "players in library",

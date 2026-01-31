@@ -91,6 +91,7 @@
     },
     "stories": {
         "champion": "LE CHAMPION",
+        "theChampion": "Le Champion",
         "leaderboard": "CLASSEMENT",
         "topMoments": "TEMPS FORTS",
         "wins": "Victoires",
@@ -99,8 +100,10 @@
         "eloRating": "CLASSEMENT ELO",
         "consecutiveWins": "Victoires consécutives",
         "pointsInOneMatch": "Points en un match",
-        "unstoppable": "INARRÊTABLE",
-        "skyrocketing": "EN FLÈCHE",
+        "winProbability": "Probabilité de victoire",
+        "unstoppable": "Inarrêtable",
+        "skyrocketing": "En Flèche",
+        "underdogWin": "Victoire Surprise",
         "giantSlayer": "TUEUR DE GÉANTS",
         "currentMeta": "#ClassementActuel",
         "vs": "vs"

@@ -9,6 +9,7 @@ import { Player, Match } from '../types/appTypes';
 import { AggregatedPlayer, AggregatedStats } from './aggregationUtils';
 import { calculateWinRate } from './statsUtils';
 import html2canvas from 'html2canvas';
+import { t, formatDate } from './i18n';
 
 // @ts-ignore - Import png to ensure bundle inclusion
 import WcaLogo from '../Logo-west-coast-academy02.png';
@@ -627,7 +628,7 @@ function getCholetStyles(): string {
  */
 function generateChampionHTML(player: Player | AggregatedPlayer, gameName: string, theme: Theme, logoBase64: string): string {
     const winRate = calculateWinRate(player.wins, player.losses, player.draws);
-    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const dateStr = formatDate(new Date());
     const styles = getStyles(theme);
 
     const logoHtml = logoBase64 ? `<div class="logo-container"><img src="${logoBase64}" class="wca-logo" /></div>` : '';
@@ -652,32 +653,32 @@ function generateChampionHTML(player: Player | AggregatedPlayer, gameName: strin
                 
                 <div class="glass-card champion-card">
                     <div class="champion-rank">1</div>
-                    <div class="champion-title">The Champion</div>
+                    <div class="champion-title">${t('stories.theChampion')}</div>
                     <div class="champion-name">${player.name}</div>
                     
                     <div class="champion-elo-box">
                         <span class="champion-elo-val">${player.elo}</span>
-                        <span class="champion-elo-label">ELO RATING</span>
+                        <span class="champion-elo-label">${t('stories.eloRating')}</span>
                     </div>
                     
                     <div class="stats-row">
                         <div class="mini-stat">
                             <span class="mini-stat-val val-win">${player.wins}</span>
-                            <span class="mini-stat-label">Wins</span>
+                            <span class="mini-stat-label">${t('stories.wins')}</span>
                         </div>
                         <div class="mini-stat">
                             <span class="mini-stat-val val-rate">${winRate}%</span>
-                            <span class="mini-stat-label">Win Rate</span>
+                            <span class="mini-stat-label">${t('stories.winRate')}</span>
                         </div>
                         <div class="mini-stat">
                             <span class="mini-stat-val val-loss">${player.losses}</span>
-                            <span class="mini-stat-label">Losses</span>
+                            <span class="mini-stat-label">${t('stories.losses')}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="story-footer">
-                    <div class="footer-tag">#CurrentMeta</div>
+                    <div class="footer-tag">${t('stories.currentMeta')}</div>
                     <div class="footer-date">${dateStr}</div>
                 </div>
             </div>
@@ -692,7 +693,7 @@ function generateChampionHTML(player: Player | AggregatedPlayer, gameName: strin
  */
 function generatePodiumHTML(players: (Player | AggregatedPlayer)[], gameName: string, theme: Theme, logoBase64: string): string {
     const top3 = players.slice(0, 3);
-    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const dateStr = formatDate(new Date());
     const classes = ['gold', 'silver', 'bronze'];
     const styles = getStyles(theme);
 
@@ -705,7 +706,7 @@ function generatePodiumHTML(players: (Player | AggregatedPlayer)[], gameName: st
                 <div class="rank-badge">${i + 1}</div>
                 <div class="entry-info">
                     <div class="entry-name">${p.name}</div>
-                    <div class="entry-detail">${p.wins} Wins • ${winRate}% WR</div>
+                    <div class="entry-detail">${p.wins} ${t('stories.wins')} • ${winRate}% ${t('common.winRate')}</div>
                 </div>
                 <div class="entry-elo">
                     <div class="elo-big">${p.elo}</div>
@@ -738,7 +739,7 @@ function generatePodiumHTML(players: (Player | AggregatedPlayer)[], gameName: st
                 </div>
 
                 <div class="story-footer">
-                    <div class="footer-tag">Leaderboard</div>
+                    <div class="footer-tag">${t('stories.leaderboard')}</div>
                     <div class="footer-date">${dateStr}</div>
                 </div>
             </div>
@@ -752,7 +753,7 @@ function generatePodiumHTML(players: (Player | AggregatedPlayer)[], gameName: st
  * Generate Story 3: Match Highlights
  */
 function generateHighlightsHTML(highlights: StoryHighlight[], gameName: string, theme: Theme, logoBase64: string): string {
-    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const dateStr = formatDate(new Date());
     const styles = getStyles(theme);
 
     // Map highlight types to colors
@@ -763,9 +764,9 @@ function generateHighlightsHTML(highlights: StoryHighlight[], gameName: string, 
     };
 
     const labels: Record<string, string> = {
-        streak: 'Unstoppable',
-        elo_gain: 'Skyrocketing',
-        upset: 'Underdog Win',
+        streak: t('stories.unstoppable'),
+        elo_gain: t('stories.skyrocketing'),
+        upset: t('stories.underdogWin'),
     };
 
     // Cholet specific colors overrides (if needed, but usually CSS var handles main things, 
@@ -788,8 +789,8 @@ function generateHighlightsHTML(highlights: StoryHighlight[], gameName: string, 
                 ${h.type === 'streak' ? h.value : (h.type === 'elo_gain' ? '+' + h.value : h.value + '%')}
             </div>
             <div class="hl-sub">
-                ${h.type === 'streak' ? 'Consecutive Wins' : (h.type === 'elo_gain' ? 'Points in one match' : 'Win Probability')}
-                ${h.opponent ? `<br><span style="font-size: 0.8em; opacity: 0.7">vs ${h.opponent}</span>` : ''}
+                ${h.type === 'streak' ? t('stories.consecutiveWins') : (h.type === 'elo_gain' ? t('stories.pointsInOneMatch') : t('stories.winProbability'))}
+                ${h.opponent ? `<br><span style="font-size: 0.8em; opacity: 0.7">${t('stories.vs')} ${h.opponent}</span>` : ''}
             </div>
         </div>
     `).join('');
@@ -817,7 +818,7 @@ function generateHighlightsHTML(highlights: StoryHighlight[], gameName: string, 
                 </div>
 
                 <div class="story-footer">
-                    <div class="footer-tag">Top Moments</div>
+                    <div class="footer-tag">${t('stories.topMoments')}</div>
                     <div class="footer-date">${dateStr}</div>
                 </div>
             </div>
