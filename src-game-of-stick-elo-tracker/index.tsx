@@ -159,11 +159,12 @@ function render() {
 }
 
 /**
- * Render all UI elements EXCEPT the leaderboard.
- * Used after recording matches so leaderboard updates are manual.
+ * Render all UI elements EXCEPT the leaderboard and podium.
+ * Used after recording matches so leaderboard/podium updates are manual (via Update button).
  */
 function renderWithoutLeaderboard() {
-    renderPodium(store.players, DOMElements);
+    // NOTE: Podium is intentionally NOT rendered here - it should only update
+    // when the Update button is clicked (same as leaderboard)
     renderBattleHistory(store.matchHistory, DOMElements);
     renderCombatMatrix(store.players, store.matchHistory, DOMElements);
 
@@ -373,6 +374,8 @@ function handleLiveUpdateLeaderboard() {
         store.previousLeaderboardElo, store.lastLeaderboardElo,
         store.previousLeaderboardRanks, store.lastLeaderboardRanks
     );
+    // Also update podium to stay in sync with leaderboard
+    renderPodium(store.players, DOMElements);
     // Refresh the live display
     refreshLiveDisplayIfVisible();
 }
