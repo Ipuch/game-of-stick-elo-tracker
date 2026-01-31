@@ -288,7 +288,8 @@ export function findTopDuel(players: (Player | AggregatedPlayer)[], matches: Mat
         const p2 = players.find(p => 'id' in p && p.id === titanMatch!.player2Id);
 
         if (p1 && p2) {
-            const firstWasPlayer1 = true; // Relative to the match object structure
+            // Note: firstWasPlayer1 could be used for future functionality
+            // const firstWasPlayer1 = true; // Relative to the match object structure
 
             // Outcome Logic
             let winnerName = null;

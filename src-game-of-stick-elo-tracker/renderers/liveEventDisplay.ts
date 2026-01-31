@@ -427,7 +427,7 @@ function renderHighlightCard(highlight: StoryHighlight): string {
             <div class="live-highlight-player">${highlight.playerName}</div>
             <div class="live-highlight-value">${valueDisplay}</div>
             <div class="live-highlight-sub">${subDisplay}</div>
-            ${highlight.opponent && highlight.type !== 'top_duel' ? `
+            ${highlight.opponent ? `
                 <div class="live-highlight-opponent">${t('stories.vs')} ${highlight.opponent}</div>
             ` : ''}
         </div>

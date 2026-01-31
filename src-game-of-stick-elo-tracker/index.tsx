@@ -5,15 +5,14 @@
  * @license Apache-2.0
  */
 
-import { loadSession, saveSession, saveLastLibraryName } from './utils/localStoragePersistence';
+import { loadSession, saveSession } from './utils/localStoragePersistence';
 import { getExampleGameState, EXAMPLE_GAME_NAME } from './utils/exampleGameData';
 import { AppDOMElements, queryDOMElements } from './utils/domElements';
 import { renderLeaderboard } from './renderers/leaderboard';
 import { renderPodium } from './renderers/podium';
 import { renderBattleHistory } from './renderers/battleHistory';
 import { renderCombatMatrix } from './renderers/combatMatrix';
-import { loadGameFromSession, saveGameToSession, createGameInLibrary, saveTempBackup, loadTempBackup, deleteTempBackup } from './utils/fileSystemPersistence';
-import { loadRegistry } from './utils/registryPersistence';
+import { saveTempBackup } from './utils/fileSystemPersistence';
 
 // New Imports for Refactoring
 import { store } from './state/store';
@@ -22,6 +21,22 @@ import { renderEloEvolutionChart } from './renderers/eloEvolutionChart';
 import { generateGamePDF } from './utils/pdfExport';
 import { generateGameInstagramStories } from './utils/instagramExport';
 import { handleExportPlayers, createImportPlayersHandler } from './handlers/importExportHandlers';
+import { AppContext, MatchContext, SessionContext, createMatchContext, createImportContext } from './types/contextTypes';
+
+// Controllers
+import { 
+    initLibraryController, 
+    handleOpenLibrary, 
+    getLibraryCallbacks,
+    GameLoadCallbacks
+} from './controllers/libraryController';
+import {
+    initLiveDisplayController,
+    handleLaunchLiveDisplay,
+    isLiveDisplayActive,
+    handleExitLiveDisplay,
+    refreshLiveDisplayIfVisible
+} from './controllers/liveDisplayController';
 
 // Services
 import { setupSyncListener } from './services/syncService';
@@ -36,10 +51,7 @@ import { renderRosterList } from './renderers/rosterRenderer';
 import { renderRemainingOpponents } from './renderers/opponentsRenderer';
 import { renderGameLibrary } from './renderers/libraryRenderer';
 import { renderGameMenu } from './renderers/menuRenderer';
-import { renderAggregatedDashboard, hideAggregatedDashboard } from './renderers/aggregatedDashboard';
-import { renderRegistryManager, hideRegistryManager } from './renderers/registryManager';
 import { renderRulesView, showRulesView, hideRulesView } from './renderers/rulesRenderer';
-import { renderLiveDisplay, stopLiveDisplay, isLiveDisplayActive } from './renderers/liveEventDisplay';
 
 // Handlers
 import { handleRecordMatch, updateWinnerLabels, handleClearMatchHistory } from './handlers/matchHandlers';
@@ -223,86 +235,49 @@ function handleKFactorChange(event: Event) {
 }
 
 // --- CONTEXT PREPARATION ---
-// Prepare context objects for handlers to avoid passing too many args
-const getMatchContext = () => ({
-    render,
-    renderWithoutLeaderboard,
-    persist,
-    updateKFactorInputState,
-    DOMElements
-});
-
-const getPlayerContext = () => ({
+const getAppContext = (): AppContext => ({
     render,
     persist,
     updateKFactorInputState,
     DOMElements
 });
 
-const getSessionContext = () => ({
+const getMatchContext = (): MatchContext => createMatchContext(getAppContext(), renderWithoutLeaderboard);
+
+const getPlayerContext = getAppContext;
+
+// SessionContext definition matches expected type in handlers
+const getSessionContext = (): SessionContext => ({
     render,
     updateSaveButton,
     renderGameMenu: () => renderGameMenu(store, {
-        onOpenLibrary: handleOpenLibrary,
+        onOpenLibrary: () => handleOpenLibrary(() => handleViewRules('library')),
         onLoadExample: loadExampleGame,
         onStartNewGame: startNewGame,
-        renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks()),
+        renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks(() => handleViewRules('library'))),
         onViewRules: () => handleViewRules('menu')
     })
 });
 
 // --- LIBRARY LOGIC ---
-
-async function handleOpenLibrary() {
-    try {
-        // Implementation moved to renderer callback effectively, but imports need this logic
-        // Actually, logic for selecting folder is needed here to update store
-        const { selectLibraryFolder } = await import('./utils/fileSystemPersistence');
-        const libraryHandle = await selectLibraryFolder();
-        if (libraryHandle) {
-            store.libraryHandle = libraryHandle;
-
-            // Load global player registry
-            try {
-                store.registry = await loadRegistry(libraryHandle);
-                store.registryLoaded = true;
-                console.log(`Registry loaded: ${store.registry.length} players`);
-            } catch (e) {
-                console.warn('Failed to load registry:', e);
-                store.registry = [];
-            }
-
-            renderGameLibrary(libraryHandle, getLibraryCallbacks());
-        }
-    } catch (e) {
-        console.error(e);
-        showNotification('Failed to open library', 'error');
-    }
-}
-
-function handleViewAggregatedStats() {
-    if (!store.libraryHandle) {
-        showNotification('No library loaded', 'error');
-        return;
-    }
-    renderAggregatedDashboard(store.libraryHandle, {
-        onBack: () => {
-            hideAggregatedDashboard();
-            renderGameLibrary(store.libraryHandle!, getLibraryCallbacks());
-        }
-    });
-}
-
-function handleViewRegistry() {
-    if (!store.libraryHandle) {
-        showNotification('No library loaded', 'error');
-        return;
-    }
-    renderRegistryManager({
-        onBack: () => {
-            hideRegistryManager();
-            renderGameLibrary(store.libraryHandle!, getLibraryCallbacks());
-        }
+// Moved to controllers/libraryController.ts
+// But we need to initialize the controller with callbacks to accessing this file's functions
+function initControllers() {
+    const gameLoadCallbacks: GameLoadCallbacks = {
+        updateKFactorInputState,
+        updateSaveButton,
+        render,
+        setupEventListeners,
+        bindSaveExitListeners: () => bindSaveExitListeners(
+            () => handleSaveGame(getSessionContext()),
+            () => handleExit(getSessionContext())
+        )
+    };
+    initLibraryController(gameLoadCallbacks);
+    
+    initLiveDisplayController({
+        updateLeaderboardBaseline,
+        getDOMElements: () => DOMElements
     });
 }
 
@@ -319,7 +294,7 @@ function handleViewRules(from: 'menu' | 'game' | 'library' = 'menu') {
                 if (rulesOpenedFrom === 'game') {
                     document.getElementById('app-main')!.style.display = 'block';
                 } else if (rulesOpenedFrom === 'library' && store.libraryHandle) {
-                    renderGameLibrary(store.libraryHandle, getLibraryCallbacks());
+                    renderGameLibrary(store.libraryHandle, getLibraryCallbacks(() => handleViewRules('library')));
                 } else {
                     document.getElementById('game-menu')!.style.display = 'flex';
                 }
@@ -329,226 +304,9 @@ function handleViewRules(from: 'menu' | 'game' | 'library' = 'menu') {
     }
 }
 
-// Live Display handlers
-function handleLaunchLiveDisplay() {
-    const liveContainer = document.getElementById('live-display-view');
-    if (!liveContainer) return;
+// Live Display logic moved to controllers/liveDisplayController.ts
 
-    const gameName = store.folderName || 'Game of Stick';
-    
-    // Hide main app, show live display
-    document.getElementById('app-main')!.style.display = 'none';
-    liveContainer.style.display = 'block';
-    
-    // Render live display - pass both ELO and rank snapshots for frozen display
-    renderLiveDisplay(
-        liveContainer,
-        store.players,
-        store.matchHistory,
-        gameName,
-        store.previousLeaderboardElo,
-        store.lastLeaderboardElo,
-        store.previousLeaderboardRanks,
-        store.lastLeaderboardRanks
-    );
-
-    // Bind exit button inside live display
-    const exitBtn = liveContainer.querySelector('#live-exit-btn');
-    if (exitBtn) {
-        exitBtn.addEventListener('click', handleExitLiveDisplay);
-    }
-
-    // Bind update leaderboard button inside live display
-    const updateBtn = liveContainer.querySelector('#live-update-btn');
-    if (updateBtn) {
-        updateBtn.addEventListener('click', handleLiveUpdateLeaderboard);
-    }
-}
-
-function handleLiveUpdateLeaderboard() {
-    // FIRST update baseline (shift: previous=last, last=current)
-    updateLeaderboardBaseline();
-    // THEN render - diffs shown = lastSnapshot - previousSnapshot (frozen)
-    renderLeaderboard(
-        store.players, DOMElements, store.matchHistory,
-        store.previousLeaderboardElo, store.lastLeaderboardElo,
-        store.previousLeaderboardRanks, store.lastLeaderboardRanks
-    );
-    // Also update podium to stay in sync with leaderboard
-    renderPodium(store.players, DOMElements);
-    // Refresh the live display
-    refreshLiveDisplayIfVisible();
-}
-
-/**
- * Helper to refresh live display if it's currently visible.
- * Re-renders and re-binds event listeners.
- */
-function refreshLiveDisplayIfVisible() {
-    const liveContainer = document.getElementById('live-display-view');
-    if (!liveContainer || liveContainer.style.display === 'none') return;
-
-    const gameName = store.folderName || 'Game of Stick';
-    renderLiveDisplay(
-        liveContainer,
-        store.players,
-        store.matchHistory,
-        gameName,
-        store.previousLeaderboardElo,
-        store.lastLeaderboardElo,
-        store.previousLeaderboardRanks,
-        store.lastLeaderboardRanks
-    );
-
-    // Re-bind buttons after re-render
-    const exitBtn = liveContainer.querySelector('#live-exit-btn');
-    if (exitBtn) {
-        exitBtn.addEventListener('click', handleExitLiveDisplay);
-    }
-    const updateBtn = liveContainer.querySelector('#live-update-btn');
-    if (updateBtn) {
-        updateBtn.addEventListener('click', handleLiveUpdateLeaderboard);
-    }
-}
-
-function handleExitLiveDisplay() {
-    const liveContainer = document.getElementById('live-display-view');
-    if (!liveContainer) return;
-
-    // Stop animations
-    stopLiveDisplay();
-    
-    // Hide live display, show main app
-    liveContainer.style.display = 'none';
-    document.getElementById('app-main')!.style.display = 'block';
-}
-
-// Helper to get library callbacks (avoids repetition)
-function getLibraryCallbacks() {
-    return {
-        onLoadGame: loadGameFromLibrary,
-        onCreateGame: createNewGameInLibrary,
-        onViewAggregatedStats: handleViewAggregatedStats,
-        onViewRegistry: handleViewRegistry,
-        onViewRules: () => handleViewRules('library')
-    };
-}
-
-async function createNewGameInLibrary(name: string, kFactor: number) {
-    if (!store.libraryHandle) return;
-    try {
-        const newGameDir = await createGameInLibrary(store.libraryHandle, name);
-        const initialState = {
-            players: [],
-            matchHistory: [],
-            kFactor: kFactor
-        };
-        await saveGameToSession(newGameDir, initialState);
-        await loadGameFromLibrary(newGameDir, name);
-    } catch (err) {
-        console.error(err);
-        showNotification('Failed to create game folder', 'error');
-    }
-}
-
-async function loadGameFromLibrary(dirHandle: FileSystemDirectoryHandle, folderName: string) {
-    try {
-        store.directoryHandle = dirHandle;
-        store.folderName = folderName;
-        store.currentSessionId = null;
-
-        // Load standard state
-        let state = await loadGameFromSession(dirHandle);
-
-        // CHECK FOR BACKUP
-        if (store.libraryHandle) {
-            const backup = await loadTempBackup(store.libraryHandle, folderName);
-            if (backup) {
-                // Formulate date string for prompt
-                const dateStr = new Date(backup.timestamp).toLocaleString();
-                if (confirm(`⚠️ Unsaved crash recovery file found (${dateStr}).\n\nDo you want to restore it?`)) {
-                    console.log('Restoring from backup...');
-                    state = backup.state;
-                    store.hasUnsavedChanges = true; // Restored state counts as unsaved
-                } else {
-                    // If they reject the backup, we should probably delete it or leave it?
-                    // Leaving it might annoy them next time. Deleting it is safer to ask.
-                    // For now, let's keep it just in case they clicked wrong. 
-                    // Or maybe delete it if they explicitly say NO?
-                    // Let's safe-delete it to avoid loop.
-                    await deleteTempBackup(store.libraryHandle, folderName);
-                }
-            }
-        }
-
-        store.players = state.players;
-        store.matchHistory = state.matchHistory;
-        store.kFactor = state.kFactor;
-
-        // Initialize both snapshots with current ELOs so first render shows no diffs
-        // (previousLeaderboardElo = lastLeaderboardElo means diff = 0)
-        store.lastLeaderboardElo = {};
-        store.previousLeaderboardElo = {};
-        store.players.forEach(p => {
-            store.lastLeaderboardElo[p.id] = p.elo;
-            store.previousLeaderboardElo[p.id] = p.elo;
-        });
-        
-        // Initialize rank snapshots (both same = no rank diff shown)
-        const sortedPlayers = [...store.players].sort((a, b) => b.elo - a.elo);
-        store.lastLeaderboardRanks = {};
-        store.previousLeaderboardRanks = {};
-        sortedPlayers.forEach((p, index) => {
-            const rank = index + 1;
-            store.lastLeaderboardRanks[p.id] = rank;
-            store.previousLeaderboardRanks[p.id] = rank;
-            p.previousRank = rank;
-        });
-
-        if (store.libraryHandle) {
-            saveLastLibraryName(store.libraryHandle.name);
-
-            // Ensure registry is loaded (in case game was loaded directly)
-            if (!store.registryLoaded) {
-                try {
-                    store.registry = await loadRegistry(store.libraryHandle);
-                    store.registryLoaded = true;
-                } catch (e) {
-                    console.warn('Failed to load registry:', e);
-                }
-            }
-        }
-
-        document.getElementById('game-menu')!.style.display = 'none';
-        document.getElementById('app-main')!.style.display = 'block';
-
-        updateKFactorInputState();
-        updateSaveButton();
-
-        // If we restored a backup, make sure button shows unsaved
-        if (store.hasUnsavedChanges) {
-            const btn = document.getElementById('nav-save-btn');
-            if (btn) {
-                btn.textContent = 'Save Game *';
-                btn.classList.add('unsaved');
-            }
-        }
-
-        render();
-
-        showNotification(`Loaded game: ${folderName}`);
-
-        setupEventListeners();
-        bindSaveExitListeners(
-            () => handleSaveGame(getSessionContext()),
-            () => handleExit(getSessionContext())
-        );
-
-    } catch (e) {
-        console.error(e);
-        showNotification('Failed to load game', 'error');
-    }
-}
+// --- SESSION LOGIC ---
 
 function startNewGame(name: string, kFactor: number) {
     store.players = [];
@@ -776,10 +534,10 @@ function setupGlobalListeners() {
             }
             if (!store.currentSessionId && e.key === 'game-of-stick-sessions') {
                 renderGameMenu(store, {
-                    onOpenLibrary: handleOpenLibrary,
+                    onOpenLibrary: () => handleOpenLibrary(() => handleViewRules('library')),
                     onLoadExample: loadExampleGame,
                     onStartNewGame: startNewGame,
-                    renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks()),
+                    renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks(() => handleViewRules('library'))),
                     onViewRules: () => handleViewRules('menu')
                 });
             }
@@ -790,9 +548,13 @@ function setupGlobalListeners() {
 // --- MAIN ENTRY POINT ---
 function main() {
     // Initialize i18n first
-    initI18n();
-    updateLocaleButtons();
-    updateI18nTexts();
+    try {
+        initI18n();
+        updateLocaleButtons();
+        updateI18nTexts();
+    } catch (e) {
+        console.error('i18n initialization failed', e);
+    }
 
     // Setup locale toggle buttons
     document.querySelectorAll('.locale-toggle').forEach(btn => {
@@ -804,12 +566,66 @@ function main() {
     });
 
     DOMElements = queryDOMElements();
-    setupGlobalListeners();
+    
+    // Initialize controllers after DOM is ready
+    try {
+        initControllers();
+    } catch (e) {
+        console.error('Controller initialization failed', e);
+        showNotification('System initialization warning', 'error');
+    }
+    
+    try {
+        setupLiveDisplayKeyboardListener();
+        setupGlobalListeners();
+    } catch (e) {
+        console.error('Listener setup failed', e);
+    }
 
     if (!('showDirectoryPicker' in window)) {
         showNotification('⚠️ Your browser doesn\'t support saving to folders.', 'error');
         updateStatusBar(); // Will show error style
     }
+
+    // URL Hash Config (Legacy)
+    try {
+        const hash = window.location.hash;
+        if (hash.startsWith('#game_')) {
+            const id = hash.replace('#game_', '');
+            const state = loadSession(id);
+            if (state) {
+                store.currentSessionId = id;
+                store.players = state.players;
+                store.matchHistory = state.matchHistory;
+                store.kFactor = state.kFactor;
+
+                document.getElementById('game-menu')!.style.display = 'none';
+                document.getElementById('app-main')!.style.display = 'block';
+
+                updateKFactorInputState();
+                setupEventListeners();
+                render();
+                return;
+            }
+        }
+    } catch (e) {
+        console.error('Legacy load failed', e);
+    }
+
+    // Default: Show Menu
+    try {
+        renderGameMenu(store, {
+            onOpenLibrary: () => handleOpenLibrary(() => handleViewRules('library')),
+            onLoadExample: loadExampleGame,
+            onStartNewGame: startNewGame,
+            renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks(() => handleViewRules('library'))),
+            onViewRules: () => handleViewRules('menu')
+        });
+    } catch (e) {
+        console.error('Render menu failed', e);
+        showNotification('Failed to load menu', 'error');
+    }
+}
 
     // URL Hash Config (Legacy)
     const hash = window.location.hash;
@@ -834,10 +650,10 @@ function main() {
 
     // Default: Show Menu
     renderGameMenu(store, {
-        onOpenLibrary: handleOpenLibrary,
+        onOpenLibrary: () => handleOpenLibrary(() => handleViewRules('library')),
         onLoadExample: loadExampleGame,
         onStartNewGame: startNewGame,
-        renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks()),
+        renderLibrary: () => renderGameLibrary(store.libraryHandle!, getLibraryCallbacks(() => handleViewRules('library'))),
         onViewRules: () => handleViewRules('menu')
     });
 }

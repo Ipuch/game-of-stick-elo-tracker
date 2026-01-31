@@ -10,14 +10,10 @@ import { saveGameToSession, selectLibraryFolder, createGameInLibrary, deleteTemp
 import { saveLastLibraryName, clearTemporaryData } from '../utils/localStoragePersistence';
 import { showNotification } from '../ui/notificationSystem';
 import { broadcastGameUpdate } from '../services/syncService';
+import { SessionContext } from '../types/contextTypes';
+import { handleError } from '../utils/errorHandler';
 
-export type SessionHandlerContext = {
-    render: () => void;
-    updateSaveButton: () => void;
-    renderGameMenu: () => void; // To returning to menu
-};
-
-export async function handleSaveGame(context: SessionHandlerContext) {
+export async function handleSaveGame(context: SessionContext) {
     console.log('handleSaveGame called');
 
     // Case 1: Already a valid file system game
@@ -37,10 +33,12 @@ export async function handleSaveGame(context: SessionHandlerContext) {
             store.hasUnsavedChanges = false;
             context.updateSaveButton();
             broadcastGameUpdate();
-            showNotification('Game saved successfully');
+            showNotification('Game saved successfully', 'success');
         } catch (e) {
-            console.error(e);
-            showNotification('Failed to save game', 'error');
+            handleError(e, {
+                context: 'SaveGame',
+                userMessage: 'Failed to save game'
+            });
         }
         return;
     }
@@ -78,23 +76,30 @@ export async function handleSaveGame(context: SessionHandlerContext) {
         context.updateSaveButton();
         context.render();
 
-        showNotification(`Successfully saved to ${gameName}`);
+        showNotification(`Successfully saved to ${gameName}`, 'success');
 
     } catch (e: any) {
-        console.error(e);
         const msg = e.message || 'Unknown error occurred';
-        showNotification(`Failed to save: ${msg}`, 'error');
+        handleError(e, {
+            context: 'SaveGame',
+            userMessage: `Failed to save: ${msg}`
+        });
     }
 }
 
-export function handleExit(context: SessionHandlerContext) {
+export function handleExit(context: SessionContext) {
     if (store.hasUnsavedChanges) {
         if (!confirm('You have unsaved changes. Are you sure you want to exit without saving?')) {
             return;
         }
         // If they confirm exit without saving, we should cleanup the backup too
         if (store.libraryHandle && store.folderName) {
-            deleteTempBackup(store.libraryHandle, store.folderName).catch(console.error);
+            deleteTempBackup(store.libraryHandle, store.folderName).catch(error => {
+                handleError(error, {
+                    context: 'Exit:CleanupBackup',
+                    severity: 'warning'
+                });
+            });
         }
     }
 
@@ -125,13 +130,19 @@ export function bindSaveExitListeners(
         console.log('bindSaveExitListeners: Setting Save onclick handler');
         saveBtn.onclick = saveHandler;
     } else {
-        console.error('bindSaveExitListeners: Save button NOT FOUND!');
+        handleError('bindSaveExitListeners: Save button NOT FOUND!', {
+            context: 'BindListeners',
+            severity: 'error'
+        });
     }
 
     if (exitBtn) {
         console.log('bindSaveExitListeners: Setting Exit onclick handler');
         exitBtn.onclick = exitHandler;
     } else {
-        console.error('bindSaveExitListeners: Exit button NOT FOUND!');
+        handleError('bindSaveExitListeners: Exit button NOT FOUND!', {
+            context: 'BindListeners',
+            severity: 'error'
+        });
     }
 }

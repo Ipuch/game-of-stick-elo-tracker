@@ -6,7 +6,7 @@
 
 import { Player, Match } from '../types/appTypes';
 import { AppDOMElements } from '../utils/domElements';
-import { calculatePlayerStreaks } from '../utils/playerUtils';
+import { calculatePlayerStreaks } from '../utils/statsUtils';
 import { DEFAULT_ELO_CONFIG } from '../scoring/eloScoring';
 
 
@@ -24,15 +24,52 @@ function renderStreak(type: 'W' | 'L' | null, length: number): string {
     return `<span class="streak-indicator">${emoji} ${type}${length}</span>`;
 }
 
+/**
+ * Render options for the leaderboard
+ */
+export interface LeaderboardRenderOptions {
+    players: Player[];
+    matchHistory: Match[];
+    snapshots: {
+        previousElo: Record<string, number>;
+        currentElo?: Record<string, number>;
+        previousRank?: Record<string, number>;
+        currentRank?: Record<string, number>;
+    };
+}
+
+/**
+ * Render the leaderboard table with player rankings, ELO changes, and streaks.
+ * 
+ * @deprecated Use renderLeaderboardWithOptions for cleaner API
+ */
 export function renderLeaderboard(
     players: Player[],
-    _DOMElements: AppDOMElements,
+    _DOMElements: AppDOMElements, // eslint-disable-line @typescript-eslint/no-unused-vars
     matchHistory: Match[],
     previousEloSnapshot: Record<string, number>,
     currentEloSnapshot?: Record<string, number>,
     previousRankSnapshot?: Record<string, number>,
     currentRankSnapshot?: Record<string, number>
 ) {
+    renderLeaderboardWithOptions({
+        players,
+        matchHistory,
+        snapshots: {
+            previousElo: previousEloSnapshot,
+            currentElo: currentEloSnapshot,
+            previousRank: previousRankSnapshot,
+            currentRank: currentRankSnapshot,
+        }
+    });
+}
+
+/**
+ * Render the leaderboard table with player rankings, ELO changes, and streaks.
+ */
+export function renderLeaderboardWithOptions(options: LeaderboardRenderOptions) {
+    const { players, matchHistory, snapshots } = options;
+    const { previousElo: previousEloSnapshot, currentElo: currentEloSnapshot, previousRank: previousRankSnapshot, currentRank: currentRankSnapshot } = snapshots;
     const tbody = document.getElementById('leaderboard-body');
     console.log('renderLeaderboard executing', { players, tbody });
     if (!tbody) {
@@ -112,4 +149,4 @@ export function renderLeaderboard(
 
     // NOTE: previousRank is now updated by updateLeaderboardBaseline() in index.tsx
     // This ensures both main leaderboard and live display stay in sync
-} 
+}
