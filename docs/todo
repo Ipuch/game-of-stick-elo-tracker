@@ -1,0 +1,7 @@
+use @Capture vidéo du 2026-02-01 10-26-27
+
+-extract key frames from the jump and landing
+- use the frames to extract the shape of the jump 
+- keep the wall where he will land
+- keep the celebration images
+- turn all of them into a 2d contour to make an animation of it.
