@@ -2885,7 +2885,319 @@ button {
     font-size: 0.9rem !important;
 }
 
-/* Responsive */
+/* ===== NEW SECTIONS: Global Summary, ELO Examples, ELO Math ===== */
+
+/* Global Summary - Quick Start Box */
+.rules-global-summary {
+    background: linear-gradient(135deg, rgba(0, 255, 157, 0.1) 0%, rgba(0, 243, 255, 0.1) 100%);
+    border: 2px solid rgba(0, 255, 157, 0.3);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(0, 255, 157, 0.1);
+}
+
+.global-summary-content {
+    margin-bottom: 1rem;
+}
+
+.global-summary-main {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.global-summary-detail {
+    font-size: 1rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.global-summary-cta {
+    display: inline-block;
+    background: rgba(0, 255, 157, 0.2);
+    color: var(--success-color);
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* ELO Examples Section */
+.rules-elo-examples {
+    background: var(--surface-color);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    backdrop-filter: blur(12px);
+}
+
+.rules-elo-examples h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.elo-examples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.elo-example-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.elo-example-card:hover {
+    transform: translateY(-3px);
+}
+
+.elo-example-header {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.elo-example-card h4 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+}
+
+.elo-example-card p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+
+.elo-example-delta {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+}
+
+.elo-example-balanced .elo-example-delta {
+    background: rgba(0, 243, 255, 0.15);
+    color: var(--primary-color);
+}
+
+.elo-example-expected .elo-example-delta {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+}
+
+.elo-example-upset .elo-example-delta {
+    background: rgba(0, 255, 157, 0.15);
+    color: var(--success-color);
+}
+
+.elo-example-upset {
+    border-color: rgba(0, 255, 157, 0.3);
+}
+
+.elo-example-draw .elo-example-delta {
+    background: rgba(255, 204, 0, 0.15);
+    color: var(--warning-color);
+}
+
+.elo-example-draw {
+    border-color: rgba(255, 204, 0, 0.3);
+}
+
+.elo-example-draw-upset .elo-example-delta {
+    background: rgba(0, 255, 157, 0.15);
+    color: var(--success-color);
+}
+
+.elo-example-draw-upset {
+    border-color: rgba(0, 255, 157, 0.3);
+}
+
+.elo-examples-note {
+    text-align: center;
+    color: var(--primary-color);
+    font-size: 0.95rem;
+    font-style: italic;
+    margin-top: 1rem;
+}
+
+/* ELO Math Section */
+.rules-elo-math {
+    background: var(--surface-color);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    backdrop-filter: blur(12px);
+}
+
+.rules-elo-math h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.elo-math-intro {
+    text-align: center;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.elo-math-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Formula Section */
+.elo-formula-section h3,
+.elo-gaussians-section h3,
+.elo-probability-section h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    color: var(--text-main);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.elo-formula-box {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(188, 19, 254, 0.3);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.elo-formula {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.elo-formula sub,
+.elo-formula sup {
+    font-size: 0.75em;
+}
+
+.elo-formula .fraction {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.elo-formula .numerator {
+    border-bottom: 1px solid var(--text-muted);
+    padding: 0.2rem 0.5rem;
+}
+
+.elo-formula .denominator {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.9em;
+}
+
+.elo-formula-desc {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Gaussian Visualization - SVG */
+.elo-gaussians-visual {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.gaussian-svg {
+    width: 100%;
+    height: auto;
+    max-height: 160px;
+    display: block;
+}
+
+.elo-gaussians-desc {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* Probability Table */
+.elo-probability-table {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.elo-probability-table th {
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.7rem;
+    font-size: 0.75rem;
+    border-bottom: 1px solid var(--surface-border);
+}
+
+.elo-probability-table td {
+    padding: 0.6rem;
+    border-bottom: 1px solid var(--surface-border);
+    font-size: 0.9rem;
+}
+
+.elo-probability-table td:first-child {
+    text-align: left;
+    color: var(--text-muted);
+}
+
+.elo-probability-table td:last-child {
+    text-align: right;
+}
+
+.probability-value {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    color: var(--success-color);
+    background: rgba(0, 255, 157, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.elo-probability-caveat {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-style: italic;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(255, 204, 0, 0.08);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 204, 0, 0.2);
+}
+
 @media (max-width: 800px) {
     .flow-dual-branch {
         flex-direction: column;
@@ -3133,10 +3445,10 @@ button {
     border: 1px solid transparent;
     /* Animation transition - must be here for FLIP animation to work */
     transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1),
-                opacity 1.5s ease,
-                filter 1.5s ease,
-                box-shadow 1.5s ease,
-                background 0.3s ease;
+        opacity 1.5s ease,
+        filter 1.5s ease,
+        box-shadow 1.5s ease,
+        background 0.3s ease;
     will-change: transform, opacity;
     position: relative;
 }

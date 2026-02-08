@@ -24,9 +24,12 @@ export function renderRulesView(container: HTMLElement, callbacks: RulesCallback
             </div>
             
             <div class="rules-content">
+                <!-- 1. GLOBAL SUMMARY (NEW - Quick start) -->
+                ${renderGlobalSummary()}
+                
                 <p class="rules-intro">${t('rules.intro')}</p>
                 
-                <!-- 1. DEFINITIONS -->
+                <!-- 2. DEFINITIONS -->
                 <div class="rules-details">
                     <div class="rule-detail-card">
                         <div class="rule-detail-icon">🤝</div>
@@ -45,7 +48,7 @@ export function renderRulesView(container: HTMLElement, callbacks: RulesCallback
                     </div>
                 </div>
                 
-                <!-- 2. QUICK SUMMARY -->
+                <!-- 3. QUICK SUMMARY -->
                 <div class="rules-summary">
                     <h2>${t('rules.summaryTitle')}</h2>
                     <table class="rules-table">
@@ -81,13 +84,19 @@ export function renderRulesView(container: HTMLElement, callbacks: RulesCallback
                     </table>
                 </div>
                 
-                <!-- 3. FLOWCHART -->
+                <!-- 4. ELO EXAMPLES (BEFORE flowchart) -->
+                ${renderEloExamples()}
+                
+                <!-- 5. FLOWCHART -->
                 <div class="rules-flowchart">
                     <h2>${t('rules.flowchartTitle')}</h2>
                     <div class="flowchart-container">
                         ${renderFlowchart()}
                     </div>
                 </div>
+                
+                <!-- 6. ELO MATH (probability table only, without Gaussians) -->
+                ${renderEloMath()}
             </div>
         </div>
     `;
@@ -258,13 +267,127 @@ function renderFlowchart(): string {
 }
 
 /**
+ * Render the global summary section (quick start for players)
+ */
+function renderGlobalSummary(): string {
+    return `
+        <div class="rules-global-summary">
+            <div class="global-summary-content">
+                <p class="global-summary-main">${t('rules.globalSummary')}</p>
+                <p class="global-summary-detail">${t('rules.globalSummaryDetail')}</p>
+            </div>
+            <div class="global-summary-cta">${t('rules.readyToPlay')}</div>
+        </div>
+    `;
+}
+
+/**
+ * Render ELO examples section (concrete examples from Explications.md)
+ */
+function renderEloExamples(): string {
+    return `
+        <div class="rules-elo-examples">
+            <h2>${t('rules.eloExamplesTitle')}</h2>
+            <div class="elo-examples-grid">
+                <div class="elo-example-card elo-example-balanced">
+                    <div class="elo-example-header">⚖️</div>
+                    <h4>${t('rules.eloExample1Title')}</h4>
+                    <p>${t('rules.eloExample1Desc')}</p>
+                    <div class="elo-example-delta">+30 / -30</div>
+                </div>
+                <div class="elo-example-card elo-example-expected">
+                    <div class="elo-example-header">📉</div>
+                    <h4>${t('rules.eloExample2Title')}</h4>
+                    <p>${t('rules.eloExample2Desc')}</p>
+                    <div class="elo-example-delta">+2 / -2</div>
+                </div>
+                <div class="elo-example-card elo-example-upset">
+                    <div class="elo-example-header">🚀</div>
+                    <h4>${t('rules.eloExample3Title')}</h4>
+                    <p>${t('rules.eloExample3Desc')}</p>
+                    <div class="elo-example-delta">+58 / -58</div>
+                </div>
+                <div class="elo-example-card elo-example-draw">
+                    <div class="elo-example-header">⚖️</div>
+                    <h4>${t('rules.eloExample4Title')}</h4>
+                    <p>${t('rules.eloExample4Desc')}</p>
+                    <div class="elo-example-delta">+0 / -0</div>
+                </div>
+                <div class="elo-example-card elo-example-draw-upset">
+                    <div class="elo-example-header">🤝</div>
+                    <h4>${t('rules.eloExample5Title')}</h4>
+                    <p>${t('rules.eloExample5Desc')}</p>
+                    <div class="elo-example-delta">+27 / -27</div>
+                </div>
+            </div>
+            <p class="elo-examples-note">💡 ${t('rules.eloExampleNote')}</p>
+        </div>
+    `;
+}
+
+/**
+ * Render ELO math section (formulas, probability table, Gaussian concept)
+ * This is the most technical section, placed last for progressive complexity
+ */
+function renderEloMath(): string {
+    // Pre-calculate probabilities for the table
+    const gaps = [0, 100, 200, 300, 400, 500];
+    const probabilities = gaps.map(gap => {
+        const expected = 1 / (1 + Math.pow(10, -gap / 400));
+        return Math.round(expected * 100);
+    });
+
+    return `
+        <div class="rules-elo-math">
+            <h2>${t('rules.eloMathTitle')}</h2>
+            <p class="elo-math-intro">${t('rules.eloMathIntro')}</p>
+            
+            <div class="elo-math-content">
+                <!-- Formula Section -->
+                <div class="elo-formula-section">
+                    <h3>${t('rules.eloFormula')}</h3>
+                    <div class="elo-formula-box">
+                        <div class="elo-formula">
+                            E<sub>A</sub> = <span class="fraction"><span class="numerator">1</span><span class="denominator">1 + 10<sup>(R<sub>B</sub> - R<sub>A</sub>) / 400</sup></span></span>
+                        </div>
+                    </div>
+                    <p class="elo-formula-desc">${t('rules.eloFormulaDesc')}</p>
+                </div>
+                
+                <!-- Probability Table -->
+                <div class="elo-probability-section">
+                    <h3>${t('rules.eloProbabilityTable')}</h3>
+                    <table class="elo-probability-table">
+                        <thead>
+                            <tr>
+                                <th>Δ ELO</th>
+                                <th>${t('rules.eloWinProb')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${gaps.map((gap, i) => `
+                                <tr>
+                                    <td><strong>+${gap}</strong> ${t('rules.eloPoints')} ${t('rules.eloHigher')}</td>
+                                    <td><span class="probability-value">${probabilities[i]}%</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <p class="elo-probability-caveat">🎯 ${t('rules.eloProbabilityCaveat')}</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
  * Show the rules view
  */
 export function showRulesView(): void {
     const rulesView = document.getElementById('rules-view');
     const gameMenu = document.getElementById('game-menu');
     const appMain = document.getElementById('app-main');
-    
+
     if (rulesView) rulesView.style.display = 'flex';
     if (gameMenu) gameMenu.style.display = 'none';
     if (appMain) appMain.style.display = 'none';
