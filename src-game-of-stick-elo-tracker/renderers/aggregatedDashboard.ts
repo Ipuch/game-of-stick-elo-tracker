@@ -14,6 +14,7 @@ import { ChartData, buildChartData, getPlayerColor } from '../utils/chartUtils';
 import { showFullscreenChart, hideFullscreenChart } from './eloEvolutionChartEcharts';
 import { calculateWinRate } from '../utils/statsUtils';
 import { t } from '../utils/i18n';
+import { DEFAULT_K_FACTOR } from '../scoring/eloScoring';
 
 export type AggregatedDashboardCallbacks = {
     onBack: () => void;
@@ -138,7 +139,7 @@ function renderDashboardContent(
         <div class="agg-kfactor-panel">
             <div class="kfactor-info">
                 <span class="kfactor-badge" title="K-Factor used for ELO calculation in aggregated stats">
-                    K = 40
+                    K = ${DEFAULT_K_FACTOR}
                 </span>
                 <span class="kfactor-hint">
                     ${t('aggregated.kFactorHint')}

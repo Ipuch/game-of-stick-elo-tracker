@@ -8,12 +8,18 @@
 import { ScoringSystem, ScoringResult, MatchOutcome, ScoringConfig } from './scoringTypes';
 
 /**
+ * Default K-Factor for ELO calculations.
+ * This is the single source of truth — change here to propagate everywhere.
+ */
+export const DEFAULT_K_FACTOR = 40;
+
+/**
  * Default ELO configuration
  */
 export const DEFAULT_ELO_CONFIG: ScoringConfig = {
     initialRating: 1200,
     parameters: {
-        kFactor: 40,
+        kFactor: DEFAULT_K_FACTOR,
         scalingFactor: 400  // Standard ELO scaling factor
     }
 };

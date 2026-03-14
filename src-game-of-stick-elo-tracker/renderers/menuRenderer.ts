@@ -8,6 +8,7 @@
 import { getLastLibraryName } from '../utils/localStoragePersistence';
 import { EXAMPLE_GAME_NAME } from '../utils/exampleGameData';
 import { t } from '../utils/i18n';
+import { DEFAULT_K_FACTOR } from '../scoring/eloScoring';
 
 export type MenuCallbacks = {
     onOpenLibrary: () => void;
@@ -118,7 +119,7 @@ export function renderGameMenu(
 
             if (nameInput.value) {
                 // Start a new game with empty state (no folder yet)
-                callbacks.onStartNewGame(nameInput.value.trim(), parseInt(kInput.value) || 40);
+                callbacks.onStartNewGame(nameInput.value.trim(), parseInt(kInput.value) || DEFAULT_K_FACTOR);
             }
         };
     }

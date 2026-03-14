@@ -7,6 +7,7 @@
 
 import { listGamesInLibrary, getGameQuickStats } from '../utils/fileSystemPersistence';
 import { t } from '../utils/i18n';
+import { DEFAULT_K_FACTOR } from '../scoring/eloScoring';
 
 export type LibraryCallbacks = {
     onLoadGame: (handle: FileSystemDirectoryHandle, name: string) => Promise<void>;
@@ -130,7 +131,7 @@ export async function renderGameLibrary(
         const gameName = nameInput.value.trim();
 
         if (gameName) {
-            const kFactor = parseInt(kInput.value) || 40;
+            const kFactor = parseInt(kInput.value) || DEFAULT_K_FACTOR;
             await callbacks.onCreateGame(gameName, kFactor);
         }
     };

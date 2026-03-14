@@ -5,6 +5,7 @@
  */
 
 import { t } from '../utils/i18n';
+import { eloScoring, DEFAULT_K_FACTOR } from '../scoring/eloScoring';
 
 export type RulesCallbacks = {
     onBack: () => void;
@@ -285,6 +286,16 @@ function renderGlobalSummary(): string {
  * Render ELO examples section (concrete examples from Explications.md)
  */
 function renderEloExamples(): string {
+    // Compute all deltas dynamically from the real ELO formula
+    const ex1 = eloScoring.calculateNewRatings(1200, 1200, 'p1', DEFAULT_K_FACTOR);
+    const ex2 = eloScoring.calculateNewRatings(1400, 900, 'p1', DEFAULT_K_FACTOR);
+    const ex3 = eloScoring.calculateNewRatings(900, 1400, 'p1', DEFAULT_K_FACTOR);
+    const ex4 = eloScoring.calculateNewRatings(1200, 1200, 'draw', DEFAULT_K_FACTOR);
+    const ex5 = eloScoring.calculateNewRatings(900, 1400, 'draw', DEFAULT_K_FACTOR);
+
+    const fmt = (r: { p1Change: number; p2Change: number }) =>
+        `${r.p1Change >= 0 ? '+' : ''}${r.p1Change} / ${r.p2Change >= 0 ? '+' : ''}${r.p2Change}`;
+
     return `
         <div class="rules-elo-examples">
             <h2>${t('rules.eloExamplesTitle')}</h2>
@@ -293,31 +304,31 @@ function renderEloExamples(): string {
                     <div class="elo-example-header">⚖️</div>
                     <h4>${t('rules.eloExample1Title')}</h4>
                     <p>${t('rules.eloExample1Desc')}</p>
-                    <div class="elo-example-delta">+30 / -30</div>
+                    <div class="elo-example-delta">${fmt(ex1)}</div>
                 </div>
                 <div class="elo-example-card elo-example-expected">
                     <div class="elo-example-header">📉</div>
                     <h4>${t('rules.eloExample2Title')}</h4>
                     <p>${t('rules.eloExample2Desc')}</p>
-                    <div class="elo-example-delta">+2 / -2</div>
+                    <div class="elo-example-delta">${fmt(ex2)}</div>
                 </div>
                 <div class="elo-example-card elo-example-upset">
                     <div class="elo-example-header">🚀</div>
                     <h4>${t('rules.eloExample3Title')}</h4>
                     <p>${t('rules.eloExample3Desc')}</p>
-                    <div class="elo-example-delta">+58 / -58</div>
+                    <div class="elo-example-delta">${fmt(ex3)}</div>
                 </div>
                 <div class="elo-example-card elo-example-draw">
                     <div class="elo-example-header">⚖️</div>
                     <h4>${t('rules.eloExample4Title')}</h4>
                     <p>${t('rules.eloExample4Desc')}</p>
-                    <div class="elo-example-delta">+0 / -0</div>
+                    <div class="elo-example-delta">${fmt(ex4)}</div>
                 </div>
                 <div class="elo-example-card elo-example-draw-upset">
                     <div class="elo-example-header">🤝</div>
                     <h4>${t('rules.eloExample5Title')}</h4>
                     <p>${t('rules.eloExample5Desc')}</p>
-                    <div class="elo-example-delta">+27 / -27</div>
+                    <div class="elo-example-delta">${fmt(ex5)}</div>
                 </div>
             </div>
             <p class="elo-examples-note">💡 ${t('rules.eloExampleNote')}</p>

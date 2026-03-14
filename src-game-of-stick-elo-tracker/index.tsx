@@ -29,6 +29,7 @@ import { showNotification, updateStatusBar } from './ui/notificationSystem';
 
 // i18n
 import { initI18n, toggleLocale, updateLocaleButtons, t } from './utils/i18n';
+import { DEFAULT_K_FACTOR } from './scoring/eloScoring';
 
 // UI & Renderers
 import { handleAutocompleteInput, handleKeydown, hideSuggestions } from './ui/autocomplete';
@@ -122,13 +123,15 @@ function persist() {
 }
 
 /**
- * Update all DOM elements with data-i18n attributes
+ * Update all DOM elements with data-i18n attributes.
+ * Elements with data-i18n-args attribute receive DEFAULT_K_FACTOR as interpolation arg {0}.
  */
 function updateI18nTexts(): void {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (key) {
-            const text = t(key);
+            const hasArgs = el.hasAttribute('data-i18n-args');
+            const text = hasArgs ? t(key, String(DEFAULT_K_FACTOR)) : t(key);
             if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                 (el as HTMLInputElement).placeholder = text;
             } else {
@@ -181,7 +184,7 @@ function renderWithoutLeaderboard() {
 function updateLeaderboardBaseline() {
     // Shift ELO snapshots: old "last" becomes "previous"
     store.previousLeaderboardElo = { ...store.lastLeaderboardElo };
-    
+
     // Capture current ELOs as new "last" snapshot
     store.lastLeaderboardElo = {};
     store.players.forEach(p => {
@@ -190,7 +193,7 @@ function updateLeaderboardBaseline() {
 
     // Shift rank snapshots: old "last" becomes "previous"
     store.previousLeaderboardRanks = { ...store.lastLeaderboardRanks };
-    
+
     // Capture current ranks as new "last" snapshot
     const sortedPlayers = [...store.players].sort((a, b) => b.elo - a.elo);
     store.lastLeaderboardRanks = {};
@@ -335,11 +338,11 @@ function handleLaunchLiveDisplay() {
     if (!liveContainer) return;
 
     const gameName = store.folderName || 'Game of Stick';
-    
+
     // Hide main app, show live display
     document.getElementById('app-main')!.style.display = 'none';
     liveContainer.style.display = 'block';
-    
+
     // Render live display - pass both ELO and rank snapshots for frozen display
     renderLiveDisplay(
         liveContainer,
@@ -417,7 +420,7 @@ function handleExitLiveDisplay() {
 
     // Stop animations
     stopLiveDisplay();
-    
+
     // Hide live display, show main app
     liveContainer.style.display = 'none';
     document.getElementById('app-main')!.style.display = 'block';
@@ -493,7 +496,7 @@ async function loadGameFromLibrary(dirHandle: FileSystemDirectoryHandle, folderN
             store.lastLeaderboardElo[p.id] = p.elo;
             store.previousLeaderboardElo[p.id] = p.elo;
         });
-        
+
         // Initialize rank snapshots (both same = no rank diff shown)
         const sortedPlayers = [...store.players].sort((a, b) => b.elo - a.elo);
         store.lastLeaderboardRanks = {};
@@ -804,6 +807,11 @@ function main() {
     });
 
     DOMElements = queryDOMElements();
+
+    // Set k-factor input default from centralized constant
+    const kInput = document.getElementById('new-session-k') as HTMLInputElement;
+    if (kInput) kInput.value = String(DEFAULT_K_FACTOR);
+
     setupGlobalListeners();
 
     if (!('showDirectoryPicker' in window)) {
