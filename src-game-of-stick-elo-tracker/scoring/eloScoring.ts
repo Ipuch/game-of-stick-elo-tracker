@@ -13,7 +13,7 @@ import { ScoringSystem, ScoringResult, MatchOutcome, ScoringConfig } from './sco
 export const DEFAULT_ELO_CONFIG: ScoringConfig = {
     initialRating: 1200,
     parameters: {
-        kFactor: 60,
+        kFactor: 40,
         scalingFactor: 400  // Standard ELO scaling factor
     }
 };

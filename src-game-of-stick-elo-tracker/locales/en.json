@@ -73,7 +73,7 @@
   "settings": {
     "title": "System Configuration",
     "kFactor": "K-Factor",
-    "kFactorHint": "Determines ELO change. Default: 60.",
+    "kFactorHint": "Determines ELO change. Default: 40.",
     "dangerZone": "Danger Zone",
     "clearHistory": "Clear Match History",
     "clearPlayers": "Clear All Data",

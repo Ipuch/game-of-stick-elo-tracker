@@ -138,7 +138,7 @@ function renderDashboardContent(
         <div class="agg-kfactor-panel">
             <div class="kfactor-info">
                 <span class="kfactor-badge" title="K-Factor used for ELO calculation in aggregated stats">
-                    K = 60
+                    K = 40
                 </span>
                 <span class="kfactor-hint">
                     ${t('aggregated.kFactorHint')}

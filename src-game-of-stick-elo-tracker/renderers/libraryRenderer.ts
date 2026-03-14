@@ -130,7 +130,7 @@ export async function renderGameLibrary(
         const gameName = nameInput.value.trim();
 
         if (gameName) {
-            const kFactor = parseInt(kInput.value) || 60;
+            const kFactor = parseInt(kInput.value) || 40;
             await callbacks.onCreateGame(gameName, kFactor);
         }
     };

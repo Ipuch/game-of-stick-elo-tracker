@@ -21,8 +21,8 @@ describe('EloScoringSystem', () => {
     });
 
     describe('getDefaultKFactor', () => {
-        it('should return default K-factor of 60', () => {
-            expect(eloScoring.getDefaultKFactor()).toBe(60);
+        it('should return default K-factor of 40', () => {
+            expect(eloScoring.getDefaultKFactor()).toBe(40);
         });
 
         it('should return custom K-factor when configured', () => {
@@ -117,7 +117,7 @@ describe('EloScoringSystem', () => {
 
             it('should use default K-factor when not specified', () => {
                 const result = eloScoring.calculateNewRatings(1200, 1200, 'p1');
-                expect(result.p1Change).toBe(30); // Default K=60, so +30
+                expect(result.p1Change).toBe(20); // Default K=40, so +20
             });
         });
 
@@ -137,7 +137,7 @@ describe('EloScoringSystem', () => {
     describe('DEFAULT_ELO_CONFIG', () => {
         it('should have correct default values', () => {
             expect(DEFAULT_ELO_CONFIG.initialRating).toBe(1200);
-            expect(DEFAULT_ELO_CONFIG.parameters.kFactor).toBe(60);
+            expect(DEFAULT_ELO_CONFIG.parameters.kFactor).toBe(40);
             expect(DEFAULT_ELO_CONFIG.parameters.scalingFactor).toBe(400);
         });
     });

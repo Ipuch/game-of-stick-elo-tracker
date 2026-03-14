@@ -73,7 +73,7 @@
     "settings": {
         "title": "Configuration",
         "kFactor": "Facteur K",
-        "kFactorHint": "Détermine la variation ELO. Défaut : 60.",
+        "kFactorHint": "Détermine la variation ELO. Défaut : 40.",
         "dangerZone": "Zone Dangereuse",
         "clearHistory": "Effacer l'historique",
         "clearPlayers": "Tout effacer",

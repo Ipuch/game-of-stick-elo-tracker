@@ -118,7 +118,7 @@ export function renderGameMenu(
 
             if (nameInput.value) {
                 // Start a new game with empty state (no folder yet)
-                callbacks.onStartNewGame(nameInput.value.trim(), parseInt(kInput.value) || 60);
+                callbacks.onStartNewGame(nameInput.value.trim(), parseInt(kInput.value) || 40);
             }
         };
     }
